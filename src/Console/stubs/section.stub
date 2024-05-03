@@ -1,0 +1,25 @@
+<?php
+
+namespace {{ namespace }};
+
+use Mmb\Action\Section\Menu;
+use Mmb\Action\Section\Section;
+
+class {{ class }} extends Section
+{
+
+    public function main()
+    {
+        $this->menu('mainMenu')->response("Select:");
+    }
+
+    public function mainMenu(Menu $menu)
+    {
+        $menu
+            ->schema([
+                // Menu key
+            ])
+        ;
+    }
+
+}

@@ -1,0 +1,169 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Models\{{ model }};
+use Mmb\Action\Section\ResourceMaker;
+use Mmb\Action\Section\ResourceSection;
+use Mmb\Action\Section\Resource\ResourceInfoModule;
+use Mmb\Action\Section\Resource\ResourceListModule;
+use Mmb\Action\Section\Resource\ResourceEditModule;
+use Mmb\Action\Section\Resource\ResourceFormModule;
+use Mmb\Action\Section\Resource\ResourceOrderModule;
+use Mmb\Action\Section\Resource\ResourceCreateModule;
+use Mmb\Action\Section\Resource\ResourceDeleteModule;
+use Mmb\Action\Section\Resource\ResourceSearchModule;
+
+class {{ class }} extends ResourceSection
+{
+
+    protected $for = {{ model }}::class;
+
+    /**
+     * Base resources
+     *
+     * @param ResourceMaker $maker
+     * @return void
+     */
+    public function resource(ResourceMaker $maker)
+    {
+        $this->resourceList($maker->list()->default());
+
+        $this->resourceInfo($maker->info());
+    }
+
+    /**
+     * List menu
+     *
+     * @param ResourceListModule $list
+     * @return void
+     */
+    public function resourceList(ResourceListModule $list)
+    {
+        $list
+            ->label(fn({{ model }} $model) => $model->name)
+            ->orderable($this->resourceListOrder(...))
+            ->searchable($this->resourceListSearch(...))
+            ->creatable($this->resourceCreate(...))
+        ;
+    }
+
+    /**
+     * List order menu
+     *
+     * @param ResourceOrderModule $order
+     * @return void
+     */
+    public function resourceListOrder(ResourceOrderModule $order)
+    {
+    }
+
+    /**
+     * List search menu
+     *
+     * @param ResourceSearchModule $search
+     * @return void
+     */
+    public function resourceListSearch(ResourceSearchModule $search)
+    {
+    }
+
+    /**
+     * Single model info menu
+     *
+     * @param ResourceInfoModule $info
+     * @return void
+     */
+    public function resourceInfo(ResourceInfoModule $info)
+    {
+        $info
+            ->editable($this->resourceEdit(...))
+            ->deletable($this->resourceDelete(...))
+        ;
+
+        $this->resourceSingleEdits($info);
+    }
+
+    /**
+     * Create a new model
+     *
+     * @param ResourceCreateModule|ResourceFormModule $create
+     * @return void
+     */
+    public function resourceCreate(ResourceCreateModule|ResourceFormModule $create)
+    {
+        $create
+            ->textSingleLine('name', "Enter name:")
+        ;
+    }
+
+    /**
+     * Edit model
+     *
+     * @param ResourceEditModule $edit
+     * @return void
+     */
+    public function resourceEdit(ResourceEditModule $edit)
+    {
+        $this->resourceCreate($edit);
+
+        $edit
+            ->messages($this->resourceEditMessage(...))
+        ;
+    }
+
+    /**
+     * Edit single model attribute options
+     *
+     * @param ResourceInfoModule $info
+     * @return void
+     */
+    public function resourceSingleEdits(ResourceInfoModule $info)
+    {
+        $info
+            ->editableSingle("Name:", 'name', right: true)
+        ;
+    }
+
+    /**
+     * Delete model
+     *
+     * @param ResourceDeleteModule $delete
+     * @return void
+     */
+    public function resourceDelete(ResourceDeleteModule $delete)
+    {
+    }
+
+
+    /**
+     * Editing message
+     *
+     * @return string|array
+     */
+    public function resourceEditMessage($message, $old)
+    {
+        if(!is_array($message))
+        {
+            $message = ['text' => $message];
+        }
+
+        if(is_null($old))
+        {
+            $old = "[Not Set]";
+        }
+        elseif(is_bool($old))
+        {
+            $old = $old ? "True" : "False";
+        }
+
+        if(str_contains($old, "\n"))
+        {
+            $old = "\n$old";
+        }
+
+        $message['text'] .= "\n\nOld: $old";
+        return $message;
+    }
+
+}
