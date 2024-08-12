@@ -25,4 +25,13 @@ class Animation extends DataWithFile
             ] + parent::dataCasts();
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'animation',
+            'animation' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

@@ -76,6 +76,22 @@ abstract class RequestApi
         return $this->lowerMethod() == ($isLower ? $name : strtolower($name));
     }
 
+    /**
+     * Change the method name
+     *
+     * @param string $method
+     * @return $this
+     */
+    public function changeMethod(string $method)
+    {
+        $this->method = $method;
+        unset($this->_lowerMethod);
+        unset($this->_isSending);
+        unset($this->_isEditing);
+        return $this;
+    }
+
+
     private $_isSending;
 
     /**
@@ -86,6 +102,18 @@ abstract class RequestApi
     public function isSendMethod()
     {
         return $this->_isSending ??= str_starts_with($this->lowerMethod(), 'send');
+    }
+
+    private $_isEditing;
+
+    /**
+     * Check method is editing something method
+     *
+     * @return bool
+     */
+    public function isEditMethod()
+    {
+        return $this->_isEditing ??= str_starts_with($this->lowerMethod(), 'edit');
     }
 
 }

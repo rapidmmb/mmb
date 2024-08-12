@@ -92,7 +92,8 @@ class ResourceSearchModule extends ResourceModule
 
     public function allKeyEnable($condition = true)
     {
-        return $this->enableAllKey = $condition;
+        $this->enableAllKey = $condition;
+        return $this;
     }
 
     public function allKeyLabel($label)

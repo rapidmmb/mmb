@@ -22,4 +22,14 @@ class PhotoCollection extends Photo implements Countable, IteratorAggregate
     {
         return $this->last();
     }
+
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'photo',
+            'photo' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

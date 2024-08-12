@@ -4,6 +4,7 @@ namespace Mmb\Support\Db;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class FinderFactory
 {
@@ -186,10 +187,10 @@ class FinderFactory
         $this->store($model);
         $this->currents[$model::class] = $model;
 
-        if($model instanceof Authenticatable)
-        {
-            auth()->setUser($model);
-        }
+        // if($model instanceof Authenticatable)
+        // {
+            // auth()->setUser($model); // TODO: Remove
+        // }
 
         return $model;
     }
@@ -203,6 +204,11 @@ class FinderFactory
      */
     public function current(string $model)
     {
+        // if (!isset($this->currents[$model]) && is_a($model, Authenticatable::class))
+        // {
+        //     Auth::guard('bot')->user(); // TODO : Remove
+        // }
+
         return @$this->currents[$model];
     }
 

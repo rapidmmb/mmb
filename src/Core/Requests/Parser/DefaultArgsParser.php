@@ -43,7 +43,8 @@ class DefaultArgsParser extends ArgsParserFactory
             // 'results'           => '@parseResults',
             'until'             => 'untilDate',
             // 'per' TODO
-            // 'media'             => '@parseMedia',
+            'type'              => '@parseType',
+            'media'             => '@parseMedia',
             // 'medias'            => '@parseMedias',
             'anim'              => 'animation',
             'disableWebPreview' => 'disableWebPagePreview',
@@ -110,6 +111,18 @@ class DefaultArgsParser extends ArgsParserFactory
             return ['caption' => $value];
         }
 
+        // Edit text
+        if($request->isMethod('editmessagetext', true))
+        {
+            return [$key => $value];
+        }
+
+        // Edit media
+        if ($request->isEditMethod())
+        {
+            return ['caption' => $value];
+        }
+
         // Else
         return [$key => $value];
     }
@@ -124,6 +137,41 @@ class DefaultArgsParser extends ArgsParserFactory
     public function parseIgnore(RequestApi $request, $key, $value)
     {
         $request->ignore = (bool) $value;
+    }
+
+    public function parseType(RequestApi $request, $key, $value)
+    {
+        if ($request->isMethod('sendmessage', true))
+        {
+            $request->changeMethod('send' . $value);
+        }
+        else
+        {
+            throw new \InvalidArgumentException(
+                sprintf("Argument [type] is using on method [%s], method [sendMessage] supported", $request->method)
+            );
+        }
+    }
+
+    public function parseMedia(RequestApi $request, $key, $value)
+    {
+        if ($request->isSendMethod() && $type = substr($request->lowerMethod(), 4))
+        { }
+        elseif (isset($request->args['type']))
+        {
+            $type = $request->args['type'];
+        }
+        else
+        {
+            throw new \InvalidArgumentException("Argument [media] is using without any type");
+        }
+
+        if ($value && $type != 'text')
+        {
+            return [
+                $type => $value,
+            ];
+        }
     }
 
 }

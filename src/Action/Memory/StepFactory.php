@@ -22,6 +22,16 @@ class StepFactory
     }
 
     /**
+     * Get related model
+     *
+     * @return Stepping|null
+     */
+    public function getModel()
+    {
+        return $this->model;
+    }
+
+    /**
      * Set step
      *
      * @param StepHandler|ConvertableToStep|null $step

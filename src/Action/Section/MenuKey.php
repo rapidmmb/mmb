@@ -351,7 +351,7 @@ class MenuKey
     public function action($action, ...$args)
     {
         $this->action = is_null($action) ? null : (
-        $action instanceof ActionCallback ? $action : new ActionCallback($action, $args)
+            $action instanceof ActionCallback ? $action : new ActionCallback($action, $args)
         );
         return $this;
     }
@@ -381,6 +381,88 @@ class MenuKey
         return $this->action;
     }
 
+
+    protected string $type = 'text';
+    protected $typeOptions = null;
+
+    /**
+     * Set key type to contact type
+     *
+     * @return $this
+     */
+    public function requestContact()
+    {
+        $this->type = 'contact';
+        return $this;
+    }
+
+    /**
+     * Set key type to location type
+     *
+     * @return $this
+     */
+    public function requestLocation()
+    {
+        $this->type = 'location';
+        return $this;
+    }
+
+    /**
+     * Set key type to request user type
+     *
+     * @param int $id
+     * @param ...$namedArgs
+     * @return $this
+     */
+    public function requestUser(int $id, ...$namedArgs)
+    {
+        $this->type = 'user';
+        $this->typeOptions = $namedArgs + ['id' => $id];
+        return $this;
+    }
+
+    /**
+     * Set key type to request users type
+     *
+     * @param int $id
+     * @param int $max
+     * @param     ...$namedArgs
+     * @return $this
+     */
+    public function requestUsers(int $id, int $max = 10, ...$namedArgs)
+    {
+        $this->type = 'users';
+        $this->typeOptions = $namedArgs + ['id' => $id, 'max' => $max];
+        return $this;
+    }
+
+    /**
+     * Set key type to request chat type
+     *
+     * @param int $id
+     * @param ...$namedArgs
+     * @return $this
+     */
+    public function requestChat(int $id, ...$namedArgs)
+    {
+        $this->type = 'chat';
+        $this->typeOptions = $namedArgs + ['id' => $id];
+        return $this;
+    }
+
+    /**
+     * Set key type to request poll
+     *
+     * @param ...$namedArgs
+     * @return $this
+     */
+    public function requestPoll(...$namedArgs)
+    {
+        $this->type = 'poll';
+        $this->typeOptions = $namedArgs;
+        return $this;
+    }
+
     /**
      * Get action key to find match
      *
@@ -389,7 +471,16 @@ class MenuKey
      */
     public function getActionKey(bool $isInline = false)
     {
-        return static::actionKeyFor('text', $this->text, $isInline); // TODO: Other types
+        switch ($this->type)
+        {
+            case 'user':
+            case 'users':
+            case 'chat':
+                return static::actionKeyFor($this->type, $this->typeOptions['id'], $isInline);
+
+            default:
+                return static::actionKeyFor($this->type, $this->text, $isInline);
+        }
     }
 
     /**
@@ -417,6 +508,10 @@ class MenuKey
                 'text'     => '.' . $value,
                 'contact'  => 'c',
                 'location' => 'l',
+                'user' => 'u' . $value,
+                'users' => 'U' . $value,
+                'chat' => 'C' . $value,
+                'poll' => 'p',
             };
         }
     }
@@ -439,10 +534,47 @@ class MenuKey
             {
                 return 'l';
             }
-            else // TODO filter type == 'text'
+            elseif ($update->message->userShared)
+            {
+                return 'u' . $update->message->userShared->requestId;
+            }
+            elseif ($update->message->usersShared)
+            {
+                return 'U' . $update->message->usersShared->requestId;
+            }
+            elseif ($update->message->chatShared)
+            {
+                return 'C' . $update->message->chatShared->requestId;
+            }
+            elseif ($update->message->poll)
+            {
+                return 'p';
+            }
+            elseif($update->message->globalType == 'text')
             {
                 return '.' . $update->message->text;
             }
+        }
+        elseif ($update->callbackQuery)
+        {
+            if (str_starts_with($update->callbackQuery->data, '#dialog:'))
+            {
+                @[$target, $id, $action] = explode(':', substr($update->callbackQuery->data, 8), 3);
+                if ($target && $id)
+                {
+                    return 'D' . $action;
+                }
+            }
+            elseif (str_starts_with($update->callbackQuery->data, '#df:'))
+            {
+                @[$class, $method, $_, $action] = explode(':', substr($update->callbackQuery->data, 4), 3);
+                if ($class && $method)
+                {
+                    return 'D' . $action;
+                }
+            }
+
+            return 'C' . $update->callbackQuery->data;
         }
 
         return null;
@@ -475,9 +607,49 @@ class MenuKey
      */
     public function getAttributes()
     {
-        return [
-            'text' => $this->getText(),
-        ];
+        switch ($this->type)
+        {
+            case 'contact':
+                return [
+                    'text' => $this->getText(),
+                    'requestContact' => true,
+                ];
+
+            case 'location':
+                return [
+                    'text' => $this->getText(),
+                    'requestLocation' => true,
+                ];
+
+            case 'user':
+                return [
+                    'text' => $this->getText(),
+                    'requestUser' => $this->typeOptions,
+                ];
+
+            case 'users':
+                return [
+                    'text' => $this->getText(),
+                    'requestUsers' => $this->typeOptions,
+                ];
+
+            case 'chat':
+                return [
+                    'text' => $this->getText(),
+                    'requestChat' => $this->typeOptions,
+                ];
+
+            case 'poll':
+                return [
+                    'text' => $this->getText(),
+                    'requestPoll' => $this->typeOptions,
+                ];
+
+            default:
+                return [
+                    'text' => $this->getText(),
+                ];
+        }
     }
 
 }

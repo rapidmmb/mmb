@@ -25,4 +25,13 @@ class Audio extends DataWithFile
             ] + parent::dataCasts();
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'audio',
+            'audio' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

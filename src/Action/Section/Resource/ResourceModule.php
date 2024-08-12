@@ -2,9 +2,11 @@
 
 namespace Mmb\Action\Section\Resource;
 
+use BadMethodCallException;
 use Closure;
 use Illuminate\Support\Arr;
 use Mmb\Action\Form\Input;
+use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\ResourceMaker;
 use Mmb\Action\Section\Section;
@@ -402,6 +404,18 @@ class ResourceModule extends Section
     {
         $this->setDynArg($name, fn() => $this->get($name));
         return $this;
+    }
+
+    protected function getInlineCallbackFor(InlineRegister $register)
+    {
+        try
+        {
+            return parent::getInlineCallbackFor($register);
+        }
+        catch (BadMethodCallException $e)
+        {
+            return null;
+        }
     }
 
 }

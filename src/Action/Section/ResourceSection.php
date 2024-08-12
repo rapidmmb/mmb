@@ -2,9 +2,11 @@
 
 namespace Mmb\Action\Section;
 
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\InlineAction;
+use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Support\Db\ModelFinder;
 
 class ResourceSection extends Section
@@ -121,26 +123,16 @@ class ResourceSection extends Section
     /**
      * Get inline alias for a name
      *
-     * @param string       $name
-     * @param InlineAction $inline
-     * @return array|string|null
+     * @param InlineRegister $register
+     * @return Closure|null
      */
-    protected function getInlineAliasFor(string $name, InlineAction $inline)
+    protected function getInlineCallbackFor(InlineRegister $register)
     {
-        $inline->with('attrs', ...$this->with);
+        $register->inlineAction->with('attrs', ...$this->with);
         $module = $this->get('#') ? $this->getResource()->getModule($this->get('#')) : null;
 
-        if($module && $alias = $module->getInlineAliasFor($name, $inline))
-        {
-            if(is_string($alias))
-            {
-                return [$module, $alias];
-            }
-
-            return $alias;
-        }
-
-        return parent::getInlineAliasFor($name, $inline);
+        return $module?->getInlineCallbackFor($register) ??
+                parent::getInlineCallbackFor($register);
     }
 
 }

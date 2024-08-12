@@ -4,11 +4,22 @@ namespace Mmb\Support\Db\Attributes;
 
 use Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Mmb\Support\Caller\ParameterPassingInstead;
+use Mmb\Action\Form\Attributes\FormDynamicPropertyAttributeContract;
+use Mmb\Action\Form\Form;
+use Mmb\Action\Inline\Attributes\InlineParameterAttributeContract;
+use Mmb\Action\Inline\Attributes\InlineWithPropertyAttributeContract;
+use Mmb\Action\Inline\InlineAction;
+use Mmb\Action\Inline\Register\InlineCreateRegister;
+use Mmb\Action\Inline\Register\InlineLoadRegister;
+use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Support\Db\ModelFinder;
+use ReflectionType;
 
-#[Attribute(Attribute::TARGET_PARAMETER)]
-class FindDynamicBy extends ParameterPassingInstead
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
+class FindDynamicBy implements
+    InlineParameterAttributeContract,
+    InlineWithPropertyAttributeContract,
+    FormDynamicPropertyAttributeContract
 {
 
     public function __construct(
@@ -18,9 +29,58 @@ class FindDynamicBy extends ParameterPassingInstead
     {
     }
 
-    public function getInsteadOf($value)
+
+    private bool $allowNull;
+    private array $classType;
+
+    /**
+     * Try to find class type
+     *
+     * @param ReflectionType $type
+     * @return array
+     */
+    public function setClassTypeUsing(ReflectionType $type)
     {
-        if($value instanceof Model)
+        $this->allowNull = $type->allowsNull();
+
+        if ($type instanceof \ReflectionUnionType)
+            $types = $type->getTypes();
+        else
+            $types = [$type];
+
+        $result = [];
+        foreach ($types as $type)
+        {
+            if ($type instanceof \ReflectionNamedType)
+            {
+                if (!$type->isBuiltin() && is_a($type->getName(), Model::class, true))
+                {
+                    $result[] = $type->getName();
+                }
+            }
+            elseif ($type instanceof \ReflectionIntersectionType)
+            {
+                throw new \TypeError(sprintf("Attribute [%s] can't parse intersection types", static::class));
+            }
+        }
+
+        if (!$result)
+        {
+            throw new \TypeError(sprintf("Attribute [%s] required a model type", static::class));
+        }
+
+        return $this->classType = $result;
+    }
+
+    /**
+     * Get storable value
+     *
+     * @param $value
+     * @return mixed
+     */
+    protected function getStorableValue($value)
+    {
+        if ($value instanceof Model)
         {
             ModelFinder::store($value);
 
@@ -30,26 +90,83 @@ class FindDynamicBy extends ParameterPassingInstead
         return $value;
     }
 
-    public function cast($value, string $class)
+    /**
+     * Get usable value
+     *
+     * @param $value
+     * @return Model|mixed
+     */
+    protected function getUsableValue($value)
     {
-        return $this->castMultiple($value, [$class]);
+        if (is_string($value))
+        {
+            if($this->error)
+            {
+                return ModelFinder::findDynamicBy($this->classType, $this->key, $value, fn() => abort($this->error));
+            }
+            else
+            {
+                return ModelFinder::findDynamicBy($this->classType, $this->key, $value);
+            }
+        }
+
+        return $value;
     }
 
-    public function castMultiple($value, array $classes)
-    {
-        if(is_object($value) || $value === null)
-        {
-            return $value;
-        }
 
-        if($this->error)
+    public function registerInlineParameter(InlineRegister $register, string $name)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionParameter($register->init, $name))->getType()
+        );
+
+        if ($register instanceof InlineCreateRegister)
         {
-            return ModelFinder::findDynamicBy($classes, $this->key, $value, fn() => abort($this->error));
+            $register->before(
+                fn() => $register->shouldHave($name, $this->getStorableValue($register->getHaveItem($name))),
+            );
         }
-        else
+        elseif ($register instanceof InlineLoadRegister)
         {
-            return ModelFinder::findDynamicBy($classes, $this->key, $value);
+            $register->before(
+                fn() => $register->callArgs[$name] = $this->getUsableValue($register->callArgs[$name]),
+            );
         }
     }
 
+    public function getInlineWithPropertyForStore(InlineAction $inline, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($inline->getInitializer()[0], $name))->getType()
+        );
+
+        return $this->getStorableValue($value);
+    }
+
+    public function getInlineWithPropertyForLoad(InlineAction $inline, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($inline->getInitializer()[0], $name))->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
+
+    public function getFormDynamicPropertyForStore(Form $form, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($form, $name))->getType()
+        );
+
+        return $this->getStorableValue($value);
+    }
+
+    public function getFormDynamicPropertyForLoad(Form $form, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($form, $name))->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
 }

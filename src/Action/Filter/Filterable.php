@@ -53,6 +53,19 @@ trait Filterable
     }
 
     /**
+     * Use filter
+     *
+     * @param Closure(Filter $filter):void $callback
+     * @return $this
+     */
+    public function useFilter($callback)
+    {
+        $callback($this->getFilter());
+        
+        return $this;
+    }
+
+    /**
      * Catch filter error
      *
      * @param $callback

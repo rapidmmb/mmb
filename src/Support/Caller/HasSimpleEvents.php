@@ -35,10 +35,13 @@ trait HasSimpleEvents
      */
     public function fire(string $event, ...$args)
     {
+        [$normalArgs, $dynamicArgs] = Caller::splitArguments($args);
+        $dynamicArgs += $this->getEventDynamicArgs();
+
         $event = strtolower($event);
         foreach($this->_events[$event] ?? [] as $listener)
         {
-            if(Caller::invoke($listener, $args, $this->getEventDynamicArgs()))
+            if(Caller::invoke($listener, $normalArgs, $dynamicArgs))
             {
                 return true;
             }

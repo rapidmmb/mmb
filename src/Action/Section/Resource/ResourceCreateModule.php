@@ -8,8 +8,6 @@ use Mmb\Action\Section\ResourceMaker;
 
 class ResourceCreateModule extends ResourceFormModule
 {
-    use TResourceFormableModule;
-
     public function __construct(
         ResourceMaker $maker,
         string $name,
@@ -29,7 +27,7 @@ class ResourceCreateModule extends ResourceFormModule
 
     public function createdOpenInfo(string $name)
     {
-        return $this->created(fn($model) => $this->fireAction($name, [$model]));
+        return $this->created(fn($record) => $this->fireAction($name, [$record]));
     }
 
     protected $creating;

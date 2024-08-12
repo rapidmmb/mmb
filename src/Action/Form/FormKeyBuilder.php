@@ -156,7 +156,7 @@ class FormKeyBuilder implements Arrayable
                         continue;
                     }
 
-                    $resultRow[] = ['text' => $key->text];
+                    $resultRow[] = $key->getAttributes();
                     $this->keyMap[$key->getActionKey()] = $key->getAction();
 
                     if(!$fixed)
@@ -199,12 +199,10 @@ class FormKeyBuilder implements Arrayable
 
         $this->makeReady();
 
-        foreach($this->keyMap as $actionKey => $action)
+        $actionKey = FormKey::getActionKeyFromUpdate($update);
+        if ($actionKey && array_key_exists($actionKey, $this->keyMap))
         {
-            if($result = FormKey::getReactionFrom($update, $actionKey, $action))
-            {
-                return $result;
-            }
+            return FormKey::getReactionFrom($update, $actionKey, $this->keyMap[$actionKey]);
         }
 
         return false;

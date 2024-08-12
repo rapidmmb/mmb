@@ -82,7 +82,7 @@ class ResourceInfoModule extends ResourceModule
 
         $this->addHeadKey(
             fn() => $edit->getKeyLabel(),
-            fn($model) => $edit->request($model),
+            fn($record) => $edit->request($record),
             x: $x,
             y: $y,
         );
@@ -101,6 +101,19 @@ class ResourceInfoModule extends ResourceModule
         ]);
     }
 
+    protected $message;
+
+    public function message($message)
+    {
+        $this->message = $message;
+        return $this;
+    }
+
+    public function getMessage()
+    {
+        return $this->valueOf($this->message ?? __('mmb.resource.info.message'));
+    }
+
 
 
     public function main($id)
@@ -116,7 +129,7 @@ class ResourceInfoModule extends ResourceModule
     public function infoMenu(Menu $menu, $id)
     {
         $model = $this->getModelFrom($id);
-        $this->setDynArgs(model: $model);
+        $this->setDynArgs(record: $model);
 
         $menu
             ->schema($this->keyToSchema($menu, 'head', $model))
@@ -130,7 +143,7 @@ class ResourceInfoModule extends ResourceModule
 
         $menu
             ->schema($this->keyToSchema($menu, 'back'))
-            ->message("اطلاعات #{$model->id}:")
+            ->message($this->getMessage(...))
             ->on('back', fn() => $this->fireBack())
         ;
     }

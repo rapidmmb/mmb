@@ -17,4 +17,13 @@ class Voice extends DataWithFile
             ] + parent::dataCasts();
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'voice',
+            'voice' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

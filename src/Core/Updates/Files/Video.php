@@ -25,4 +25,13 @@ class Video extends DataWithFile
             ] + parent::dataCasts();
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'video',
+            'video' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

@@ -2,7 +2,6 @@
 
 namespace Mmb\Action\Form;
 
-use Mmb\Action\Section\MenuKey;
 use Mmb\Core\Updates\Update;
 
 class FormKey
@@ -12,6 +11,7 @@ class FormKey
         public string $text,
     )
     {
+        $this->text = trim($this->text);
     }
 
     /**
@@ -47,6 +47,7 @@ class FormKey
 
 
     public string $type = 'text';
+    public $typeOptions;
 
     public const ACTION_TYPE_NORMAL = 1;
     public const ACTION_TYPE_VALUE  = 2;
@@ -82,6 +83,90 @@ class FormKey
     {
         $this->actionType = static::ACTION_TYPE_ACTION;
         $this->actionValue = $action;
+
+        return $this;
+    }
+
+    /**
+     * Set type to request contact
+     *
+     * @return $this
+     */
+    public function requestContact()
+    {
+        $this->type = 'contact';
+
+        return $this;
+    }
+
+    /**
+     * Set type to request location
+     *
+     * @return $this
+     */
+    public function requestLocation()
+    {
+        $this->type = 'location';
+
+        return $this;
+    }
+
+    /**
+     * Set type to request poll
+     *
+     * @param ...$namedArgs
+     * @return $this
+     */
+    public function requestPoll(...$namedArgs)
+    {
+        $this->type = 'poll';
+        $this->typeOptions = $namedArgs;
+
+        return $this;
+    }
+
+    /**
+     * Set type to request user
+     *
+     * @param int $id
+     * @param     ...$namedArgs
+     * @return $this
+     */
+    public function requestUser(int $id, ...$namedArgs)
+    {
+        $this->type = 'user';
+        $this->typeOptions = $namedArgs + ['id' => $id];
+
+        return $this;
+    }
+
+    /**
+     * Set type to request users
+     *
+     * @param int $id
+     * @param int $max
+     * @param     ...$namedArgs
+     * @return $this
+     */
+    public function requestUsers(int $id, int $max = 10, ...$namedArgs)
+    {
+        $this->type = 'users';
+        $this->typeOptions = $namedArgs + ['id' => $id, 'max' => $max];
+
+        return $this;
+    }
+
+    /**
+     * Set type to request chat
+     *
+     * @param int $id
+     * @param     ...$namedArgs
+     * @return $this
+     */
+    public function requestChat(int $id, ...$namedArgs)
+    {
+        $this->type = 'chat';
+        $this->typeOptions = $namedArgs + ['id' => $id];
 
         return $this;
     }
@@ -122,69 +207,14 @@ class FormKey
     {
         return match ($this->type)
         {
-            'text'     => '.' . $this->text,
-            'contact'  => 'c',
+            'contact' => 'c',
             'location' => 'l',
+            'poll' => 'p',
+            'user' => 'u' . $this->typeOptions['id'],
+            'users' => 'U' . $this->typeOptions['id'],
+            'chat' => 'C' . $this->typeOptions['id'],
+            default => '.' . $this->text,
         };
-    }
-
-    /**
-     * @param Update $update
-     * @param string $actionKey
-     * @return bool
-     */
-    public static function is(Update $update, string $actionKey)
-    {
-        return match (@$actionKey[0])
-        {
-            '.'     => '.' . $update?->message?->text == $actionKey,
-            'c'     => (bool) $update?->message?->contact,
-            'l'     => (bool) $update?->message?->location,
-
-            default => false,
-        };
-    }
-
-    /**
-     * Get reaction from update
-     *
-     * @param Update $update
-     * @param string $actionKey
-     * @param mixed $action
-     * @return array|false
-     */
-    public static function getReactionFrom(Update $update, string $actionKey, $action)
-    {
-        if(!static::is($update, $actionKey))
-        {
-            return false;
-        }
-
-        if($action === null)
-        {
-            return [
-                static::ACTION_TYPE_NORMAL,
-                match (@$actionKey[0])
-                {
-                    '.' => substr($actionKey, 1),
-                    'c' => $update->message->contact,
-                    'l' => $update->message->location,
-                }
-            ];
-        }
-
-        if(is_array($action))
-        {
-            return [
-                static::ACTION_TYPE_VALUE,
-                $action[0],
-            ];
-        }
-
-        return [
-            static::ACTION_TYPE_ACTION,
-            $action,
-        ];
     }
 
     /**
@@ -215,6 +245,129 @@ class FormKey
         }
 
         return null;
+    }
+
+    public static function getActionKeyFromUpdate(Update $update)
+    {
+        if ($update->message)
+        {
+            if ($update->message->contact)
+            {
+                return 'c';
+            }
+            elseif ($update->message->location)
+            {
+                return 'l';
+            }
+            elseif ($update->message->userShared)
+            {
+                return 'u' . $update->message->userShared->requestId;
+            }
+            elseif ($update->message->usersShared)
+            {
+                return 'U' . $update->message->usersShared->requestId;
+            }
+            elseif ($update->message->chatShared)
+            {
+                return 'C' . $update->message->chatShared->requestId;
+            }
+            elseif ($update->message->poll)
+            {
+                return 'p';
+            }
+            elseif ($update->message->globalType == 'text')
+            {
+                return '.' . $update->message->text;
+            }
+        }
+
+        return null;
+    }
+
+    public static function getReactionFrom(Update $update, $actionKey, $action)
+    {
+        if($action === null)
+        {
+            return [
+                static::ACTION_TYPE_NORMAL,
+                match (@$actionKey[0])
+                {
+                    '.' => $update->message->text,
+                    'c' => $update->message->contact,
+                    'l' => $update->message->location,
+                    'p' => $update->message->poll,
+                    'u' => $update->message->userShared,
+                    'U' => $update->message->usersShared,
+                    'C' => $update->message->chatShared,
+                    default => $update,
+                }
+            ];
+        }
+
+        if(is_array($action))
+        {
+            return [
+                static::ACTION_TYPE_VALUE,
+                $action[0],
+            ];
+        }
+
+        return [
+            static::ACTION_TYPE_ACTION,
+            $action,
+        ];
+    }
+
+    /**
+     * Get attributes
+     *
+     * @return array
+     */
+    public function getAttributes()
+    {
+        switch ($this->type)
+        {
+            case 'contact':
+                return [
+                    'text' => $this->text,
+                    'requestContact' => true,
+                ];
+
+            case 'location':
+                return [
+                    'text' => $this->text,
+                    'requestLocation' => true,
+                ];
+
+            case 'user':
+                return [
+                    'text' => $this->text,
+                    'requestUser' => $this->typeOptions,
+                ];
+
+            case 'users':
+                return [
+                    'text' => $this->text,
+                    'requestUsers' => $this->typeOptions,
+                ];
+
+            case 'chat':
+                return [
+                    'text' => $this->text,
+                    'requestChat' => $this->typeOptions,
+                ];
+
+            case 'poll':
+                return [
+                    'text' => $this->text,
+                    'requestPoll' => $this->typeOptions,
+                ];
+
+            default:
+                return [
+                    'text' => $this->text,
+                ];
+        }
     }
 
 }

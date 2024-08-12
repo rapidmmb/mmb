@@ -2,14 +2,18 @@
 
 namespace Mmb\Action;
 
+use BadMethodCallException;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Arr;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\Attributes\InlineAttribute;
 use Mmb\Action\Inline\InlineAction;
+use Mmb\Action\Inline\Register\InlineCreateRegister;
+use Mmb\Action\Inline\Register\InlineLoadRegister;
+use Mmb\Action\Inline\Register\InlineRegister;
+use Mmb\Action\Inline\Register\InlineReloadRegister;
+use Mmb\Action\Section\Dialog;
 use Mmb\Action\Section\Menu;
 use Mmb\Auth\AreaRegister;
 use Mmb\Core\Bot;
@@ -237,137 +241,100 @@ abstract class Action
     /**
      * Get inline alias for inline action
      *
-     * @param string       $name
-     * @param InlineAction $inline
-     * @return array|string|null
+     * @param InlineRegister $register
+     * @return Closure|null
      */
-    protected function getInlineAliasFor(string $name, InlineAction $inline)
+    protected function getInlineCallbackFor(InlineRegister $register)
     {
-        if($alias = $this->getInlineAliases()[$name] ?? false)
+        if ($alias = $this->getInlineAliases()[$register->method] ?? false)
         {
-            return $alias;
+            return $this->$alias(...);
         }
 
-        if(!method_exists($this, $name))
+        if (!method_exists($this, $register->method))
         {
-            if($inline instanceof Menu)
+            if ($register->inlineAction instanceof Dialog)
             {
-                if(method_exists($this, $name . 'menu'))
+                if (method_exists($this, $register->method . 'dialog'))
                 {
-                    return $name . 'menu';
+                    return $this->{$register->method . 'dialog'}(...);
                 }
             }
-            elseif($inline instanceof InlineForm)
+            elseif ($register->inlineAction instanceof Menu)
             {
-                if(method_exists($this, $name . 'form'))
+                if (method_exists($this, $register->method . 'menu'))
                 {
-                    return $name . 'form';
+                    return $this->{$register->method . 'menu'}(...);
                 }
             }
+            elseif ($register->inlineAction instanceof InlineForm)
+            {
+                if (method_exists($this, $register->method . 'form'))
+                {
+                    return $this->{$register->method . 'form'}(...);
+                }
+            }
+
+            throw new BadMethodCallException(sprintf("Call to undefined inline method [%s] on [%s]", $register->method, static::class));
         }
 
-        return null;
+        return $this->{$register->method}(...);
     }
 
-    /**
-     * Load inline action from
-     *
-     * @template T of InlineAction
-     * @param string              $name
-     * @param class-string<T>|InlineAction $inline
-     * @param array               $args
-     * @return T
-     */
-    public function initializeInline(string $name, string|InlineAction $inline, array $args = [])
+    protected function onInitializeInlineRegister(InlineRegister $register)
     {
-        if(is_string($inline))
-            $inline = new $inline($this->update);
-        $this->initializeInlineObject($name, $inline);
+    }
 
-        $alias = $this->getInlineAliasFor($name, $inline) ?? $name;
-
-        if(is_string($alias))
-        {
-            $class = static::class;
-            $object = $this;
-            $name = $alias;
-            $attrs = static::getMethodAttributesOf($name, InlineAttribute::class);
-        }
-        elseif(is_array($alias) && count($alias) == 2)
-        {
-            $class = $alias[0];
-            if(!is_a($class, Action::class, true))
-                throw new \TypeError(sprintf("Invalid alias class type, required [%s], given [%s]", Alias::class, is_string($class) ? $class : smartTypeOf($class)));
-            $object = is_string($class) ? (method_exists($class, 'make') ? $class::make() : new $class()) : $class;
-            $name = $alias[1];
-            $attrs = $class::getMethodAttributesOf($name, InlineAttribute::class);
-        }
-        else
-        {
-            throw new \InvalidArgumentException(sprintf("Invalid alias type of [%s], should be string or array<2>", smartTypeOf($alias)));
-        }
-
-        foreach($attrs as $attr)
-        {
-            $attr->before($inline);
-        }
-
-        if($inline->isCreating())
-        {
-            $args = $class::getNormalizedCallingMethod(
-                $name, $args,
-                fn(\ReflectionParameter $parameter, $value) => $inline->have(
-                    $parameter->getName(),
-                    $_,
-                    $value
-                ),
-            );
-        }
-        elseif($inline->isLoading())
-        {
-            $parameters = (new \ReflectionMethod($object, $name))->getParameters();
-            unset($parameters[0]);
-            foreach($parameters as $parameter)
-            {
-                $inline->have($parameter->getName(), $argument);
-                $args[$parameter->getName()] = $argument;
-            }
-        }
-
-        foreach($attrs as $attr)
-        {
-            $attr->modifyArgs($inline, $args);
-        }
-
-        $object->invokeDynamic(
-            $name, [$inline, ...$args], []
+    public function createInlineRegister(string|InlineAction $inlineAction, string $name, array $args)
+    {
+        $register = new InlineCreateRegister(
+            $this->update,
+            $inlineAction,
+            target: $this,
+            method: $name,
+            callArgs: $args,
         );
 
-        foreach($attrs as $attr)
-        {
-            $attr->after($inline);
-        }
+        $register->init = $this->getInlineCallbackFor($register);
 
-        return $inline;
+        $this->onInitializeInlineRegister($register);
+
+        return $register;
     }
 
-    protected function initializeInlineObject(string $name, InlineAction $inline)
+    public function loadInlineRegister(InlineAction $inlineAction, string $name)
     {
-        $inline->initializer($this, $name);
+        $register = new InlineLoadRegister(
+            $this->update,
+            $inlineAction,
+            target: $this,
+            method: $name,
+        );
+
+        $register->init = $this->getInlineCallbackFor($register);
+
+        $this->onInitializeInlineRegister($register);
+
+        return $register;
     }
 
-    /**
-     * Make menu
-     *
-     * @param string      $name
-     * @param InlineAction        $inline
-     * @param Update|null $update
-     * @return InlineAction
-     */
-    public static function initializeInlineOf(string $name, InlineAction $inline, Update $update = null)
+    public function reloadInlineRegister(InlineAction $inlineAction)
     {
-        $instance = new static($update);
-        return $instance->initializeInline($name, $inline);
+        $newInlineAction = new (get_class($inlineAction))($this->update);
+
+        $register = new InlineReloadRegister(
+            $this->update,
+            $newInlineAction,
+            target: $this,
+            method: $inlineAction->getInitializer()[1],
+        );
+
+        $register->init = $this->getInlineCallbackFor($register);
+
+        $register->from($inlineAction);
+        $this->onInitializeInlineRegister($register);
+
+        return $register;
     }
 
     /**
@@ -389,12 +356,12 @@ abstract class Action
      */
     public static function allowed(?string $method = null)
     {
-        if(!app(AreaRegister::class)->can(static::class))
+        if (!app(AreaRegister::class)->can(static::class))
         {
             return false;
         }
 
-        foreach(static::getClassAttributesOf(AuthorizeClass::class) as $auth)
+        foreach (static::getClassAttributesOf(AuthorizeClass::class) as $auth)
         {
             if(!$auth->can())
             {
@@ -402,19 +369,19 @@ abstract class Action
             }
         }
 
-        if(isset($method))
+        if (isset($method))
         {
             try
             {
-                foreach(static::getMethodAttributesOf($method, AuthorizeClass::class) as $auth)
+                foreach (static::getMethodAttributesOf($method, AuthorizeClass::class) as $auth)
                 {
-                    if(!$auth->can())
+                    if (!$auth->can())
                     {
                         return false;
                     }
                 }
             }
-            catch(\Exception $e) { }
+            catch (\Exception $e) { }
         }
 
         return true;
@@ -451,7 +418,7 @@ abstract class Action
      * @param mixed ...$namedArgs
      * @return void
      */
-    public function tell($message, array $args = [], ...$namedArgs)
+    public function tell($message = null, array $args = [], ...$namedArgs)
     {
         return $this->update->tell($message, $args, ...$namedArgs);
     }

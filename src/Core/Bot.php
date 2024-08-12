@@ -8,7 +8,11 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Traits\Macroable;
+use Mmb\Action\Update\HandlerFactory;
+use Mmb\Action\Update\HandlerNotMatchedException;
+use Mmb\Action\Update\UpdateHandler;
 use Mmb\Core\Requests\HasRequest;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
@@ -23,13 +27,18 @@ class Bot
         Traits\ApiBotCallbacks,
         Traits\ApiBotChats,
         Traits\ApiBotUsers,
-        Traits\ApiBotFiles;
+        Traits\ApiBotFiles,
+        Traits\ApiBotStickers;
 
     public function __construct(
-        private string $token,
-        public ?string $username = null,
+        public InternalBotInfo $info,
     )
     {
+    }
+
+    public function guard()
+    {
+        return Auth::guard($this->info->guardName);
     }
 
     public function getUpdate()
@@ -104,7 +113,7 @@ class Bot
     {
         try
         {
-            $request = request();
+            // $request = request();
             // $request->merge(['update' => $update]);
             Container::getInstance()->instance(Update::class, $update);
 
@@ -115,12 +124,18 @@ class Bot
 
             foreach($this->updateHandlers as $updateHandler)
             {
+                /** @var UpdateHandler $updateHandler */
                 $updateHandler = new $updateHandler($update);
 
-                if($updateHandler->condition())
+                try
                 {
-                    $updateHandler->handle();
+                    $updateHandler->handle(new HandlerFactory($this, $update));
                     break;
+                }
+                catch (HandlerNotMatchedException $e)
+                {
+                    // Continue handling
+                    continue;
                 }
             }
         }

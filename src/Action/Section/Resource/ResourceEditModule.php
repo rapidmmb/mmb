@@ -48,9 +48,9 @@ class ResourceEditModule extends ResourceFormModule
     }
 
 
-    public function request($model)
+    public function request($record)
     {
-        $this->fireAction($this->name, [$model]);
+        $this->fireAction($this->name, [$record]);
     }
 
     public function requestChunk($model, $chunk)

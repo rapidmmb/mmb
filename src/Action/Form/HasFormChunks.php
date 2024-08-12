@@ -108,18 +108,29 @@ trait HasFormChunks
         return in_array($input, $this->inputs());
     }
 
+
+    /**
+     * Add chunk request
+     *
+     * @param string|array $chunk
+     * @return $this
+     */
+    public function withChunk(string|array $chunk)
+    {
+        $this->put('#', $chunk);
+        return $this;
+    }
+
     /**
      * Request form chunk
      *
      * @param string|array $chunk
      * @param array        $attributes
-     * @param Update|null  $update
      * @return void
      */
-    public static function requestChunk(string|array $chunk, array $attributes = [], Update $update = null)
+    public function requestChunk(string|array $chunk, array $attributes = [])
     {
-        $attributes['#'] = $chunk;
-        static::request($attributes, $update);
+        $this->withChunk($chunk)->request($attributes);
     }
 
 }

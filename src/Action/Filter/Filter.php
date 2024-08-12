@@ -261,6 +261,42 @@ class Filter extends FilterRule
     }
 
     /**
+     * Add media filter
+     *
+     * @param $mediaError
+     * @param $messageError
+     * @return $this
+     */
+    public function media($mediaError = null, $messageError = null)
+    {
+        return $this->add(new Rules\BeMedia($mediaError, $messageError));
+    }
+
+    /**
+     * Add media or text filter
+     *
+     * @param $mediaError
+     * @param $messageError
+     * @return $this
+     */
+    public function mediaOrText($mediaError = null, $messageError = null)
+    {
+        return $this->add(new Rules\BeMediaOrText($mediaError, $messageError));
+    }
+
+    /**
+     * Add message builder filter
+     *
+     * @param $mediaError
+     * @param $messageError
+     * @return $this
+     */
+    public function messageBuilder($mediaError = null, $messageError = null)
+    {
+        return $this->add(new Rules\BeMessageBuilder($mediaError, $messageError));
+    }
+
+    /**
      * Add text message filter
      *
      * @param $textError
@@ -421,6 +457,18 @@ class Filter extends FilterRule
     }
 
     /**
+     * Filter divisible number
+     *
+     * @param      $number
+     * @param      $error
+     * @return $this
+     */
+    public function divisible($number, $error = null)
+    {
+        return $this->add(new Rules\FilterDivisible($number, $error));
+    }
+
+    /**
      * Filter regex pattern
      *
      * @param string $pattern
@@ -431,6 +479,78 @@ class Filter extends FilterRule
     public function regex(string $pattern, int $result = -1, $error = null)
     {
         return $this->add(new Rules\FilterRegex($pattern, $result, $error));
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param bool $fromUser
+     * @param bool $fromChannel
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function forwarded(
+        bool $fromUser = true,
+        bool $fromChannel = true,
+        $message = null,
+        $messageError = null
+    )
+    {
+        return $this->add(new Rules\FilterForwarded(
+            $fromUser,
+            $fromChannel,
+            $message,
+            $messageError,
+        ));
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function shouldForward($message = null, $messageError = null)
+    {
+        return $this->forwarded(message: $message, messageError: $messageError);
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function shouldForwardFromUser($message = null, $messageError = null)
+    {
+        return $this->forwarded(true, false, message: $message, messageError: $messageError);
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function shouldForwardFromChannel($message = null, $messageError = null)
+    {
+        return $this->forwarded(false, true, message: $message, messageError: $messageError);
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function notForwarded($message = null, $messageError = null)
+    {
+        return $this->add(new Rules\FilterNotForwarded($message, $messageError));
     }
 
 

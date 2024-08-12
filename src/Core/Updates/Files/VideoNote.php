@@ -32,4 +32,13 @@ class VideoNote extends DataWithFile
         return $this->allData['length'];
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'video_note',
+            'video_note' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

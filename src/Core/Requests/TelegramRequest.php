@@ -19,7 +19,6 @@ class TelegramRequest extends RequestApi
                 [
                     'query'       => $this->getFinalArgs(),
                     'http_errors' => false,
-                    'proxy' => '192.168.96.216:10809',
                 ]
             )
         );

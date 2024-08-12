@@ -5,7 +5,7 @@ namespace Mmb\Support\Db\Attributes;
 use Attribute;
 use Mmb\Support\Db\ModelFinder;
 
-#[Attribute(Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 class FindById extends FindBy
 {
 

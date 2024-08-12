@@ -1,0 +1,17 @@
+<?php
+
+namespace {{ namespace }};
+
+use Mmb\Auth\Area;
+
+class {{ class }} extends Area
+{
+
+    // protected string $namespace = 'App\Mmb\Sections\Something';
+
+    public function boot()
+    {
+        // $this->auth('Ability');
+    }
+
+}

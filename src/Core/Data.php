@@ -7,16 +7,18 @@ use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Mmb\Core\Traits\HasBot;
 use Mmb\Support\Macroable\ExtendableMacroable;
+use Mmb\Support\Serialize\Shortable;
 
-abstract class Data implements Arrayable, Jsonable, ArrayAccess
+abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
 {
     use HasBot, ExtendableMacroable;
 
-    private array   $realData;
+    protected array $realData;
     protected array $allData;
 
     public function __construct(array $data, Bot $bot = null, bool $trustedData = false)
@@ -287,5 +289,16 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess
     public function offsetUnset(mixed $offset) : void
     {
         $this->__set($offset, null);
+    }
+
+    public function shortSerialize() : array
+    {
+        return Arr::whereNotNull($this->realData);
+    }
+
+    public function shortUnserialize(array $data) : void
+    {
+        $this->realData = $data;
+        $this->initialize($data, true);
     }
 }

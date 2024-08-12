@@ -17,4 +17,13 @@ class Photo extends DataWithFile
             ] + parent::dataCasts();
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'photo',
+            'photo' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

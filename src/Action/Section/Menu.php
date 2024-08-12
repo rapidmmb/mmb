@@ -29,6 +29,7 @@ use Mmb\Support\Db\ModelFinder;
 class Menu extends InlineAction
 {
     use Macroable, Filterable, HasEventFilter;
+    use Traits\CustomizesKeyboard;
 
 
     protected array $keyInitializer = [];
@@ -344,6 +345,17 @@ class Menu extends InlineAction
         return false;
     }
 
+    /**
+     * Save the action using message
+     *
+     * @param Message $message
+     * @return void
+     */
+    protected function saveMenuAction(Message $message)
+    {
+        $this->saveAction();
+    }
+
     protected $message;
 
     /**
@@ -355,6 +367,20 @@ class Menu extends InlineAction
     public function message($message)
     {
         $this->message = $message;
+        return $this;
+    }
+
+    protected $responseUsing;
+
+    /**
+     * Set response callback
+     *
+     * @param Closure(array $args): ?Message $callback
+     * @return $this
+     */
+    public function responseUsing(Closure $callback)
+    {
+        $this->responseUsing = $callback;
         return $this;
     }
 
@@ -373,11 +399,11 @@ class Menu extends InlineAction
 
         return tap(
             $this->update->getChat()->sendMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
-            function($value)
+            function($message)
             {
-                if($value)
+                if($message)
                 {
-                    Step::set($this);
+                    $this->saveMenuAction($message);
                 }
             }
         );
@@ -398,11 +424,11 @@ class Menu extends InlineAction
 
         return tap(
             $this->update->getMessage()->replyMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
-            function($value)
+            function($message)
             {
-                if($value)
+                if($message)
                 {
-                    Step::set($this);
+                    $this->saveMenuAction($message);
                 }
             }
         );
@@ -421,13 +447,18 @@ class Menu extends InlineAction
         $this->makeReady();
         $message ??= value($this->message);
 
+        if (is_array($message))
+            $args = $message + $args;
+        elseif (!is_null($message))
+            $args = ['text' => $message] + $args;
+
         return tap(
-            $this->update->response($message, $args + $namedArgs + ['key' => $this->cachedKey]),
-            function($value)
+            ($this->responseUsing ?? $this->update->response(...))($args + $namedArgs + ['key' => $this->cachedKey]),
+            function($message)
             {
-                if($value)
+                if($message)
                 {
-                    Step::set($this);
+                    $this->saveMenuAction($message);
                 }
             }
         );
@@ -516,8 +547,18 @@ class Menu extends InlineAction
      */
     public function findActionFrom(Update $update)
     {
+        return $this->findActionFromString(MenuKey::findActionKeyFrom($update));
+    }
+
+    /**
+     * Find action name from string action name
+     *
+     * @param string|null $actionKey
+     * @return ?ActionCallback
+     */
+    public function findActionFromString(?string $actionKey)
+    {
         $action = null;
-        $actionKey = MenuKey::findActionKeyFrom($update);
 
         if($actionKey !== null)
         {
@@ -622,6 +663,8 @@ class Menu extends InlineAction
      */
     public function handle(Update $update)
     {
+        $this->makeReady();
+
         return (bool) $this->fire($update);
     }
 
@@ -649,6 +692,16 @@ class Menu extends InlineAction
         parent::loadFromStep($step, $update);
 
         $this->makeReadyFromStore($step->actionMap ?: []);
+    }
+
+    /**
+     * Invoke the default response
+     *
+     * @return Message|null
+     */
+    public function invoke()
+    {
+        return $this->response();
     }
 
 }

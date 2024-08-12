@@ -7,6 +7,19 @@ abstract class StartCommandAction extends CommandAction
 
     protected $command = '/start';
 
+    protected $ignoreCase = true;
+
+    /**
+     * Create url from arguments
+     *
+     * @param ...$args
+     * @return string
+     */
+    public static function url(...$args)
+    {
+        return static::makeLink(...$args);
+    }
+
     /**
      * Create redirect start url from arguments.
      *
@@ -32,14 +45,14 @@ abstract class StartCommandAction extends CommandAction
      */
     public static function makeLinkQuery(string $query)
     {
-        $username = config('mmb.username');
+        $username = bot()->info->username;
 
-        if(!$username)
+        if (!$username)
         {
-            throw new \Exception("makeLinkQuery() method requires a username. Fill it in 'mmb.username' config");
+            throw new \Exception("makeLinkQuery() method requires a username. Fill it in 'mmb...username' config");
         }
 
-        if($query == '')
+        if ($query == '')
         {
             return "https://t.me/$username";
         }

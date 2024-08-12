@@ -166,4 +166,16 @@ trait ApiBotUpdates
         return $this->request('setWebhook', $args + $namedArgs);
     }
 
+    /**
+     * Set webhook url to current application webhook url
+     *
+     * @param array $args
+     * @param       ...$namedArgs
+     * @return bool
+     */
+    public function setMyWebhook(array $args = [], ...$namedArgs)
+    {
+        return $this->setWebhook($args + $namedArgs + ['url' => $this->info->getWebhookUrl()]);
+    }
+
 }

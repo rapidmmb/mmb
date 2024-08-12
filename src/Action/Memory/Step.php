@@ -7,6 +7,7 @@ use Mmb\Support\Step\Stepping;
 
 /**
  * @method static void setModel(?Stepping $model)
+ * @method static Stepping|null getModel()
  * @method static void set(StepHandler|ConvertableToStep|null $step)
  * @method static StepHandler|null get()
  */

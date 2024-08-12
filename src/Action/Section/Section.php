@@ -5,9 +5,8 @@ namespace Mmb\Action\Section;
 use Mmb\Action\Action;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\InlineAction;
-use Mmb\Action\Memory\Step;
 use Mmb\Core\Updates\Update;
-use Mmb\Support\Action\EventInstance;
+use Mmb\Support\Action\EventProxy;
 
 class Section extends Action
 {
@@ -26,13 +25,13 @@ class Section extends Action
     }
 
     /**
-     * Create new event instance
+     * Create new proxy instance
      *
-     * @return EventInstance|static
+     * @return EventProxy|static
      */
-    public static function instance()
+    public static function proxy()
     {
-        return new EventInstance(static::make());
+        return EventProxy::make(static::make());
     }
 
     /**
@@ -44,7 +43,7 @@ class Section extends Action
      */
     public function menu(string $name, ...$args)
     {
-        return $this->initializeInline($name, Menu::class, $args);
+        return $this->createInlineRegister(Menu::class, $name, $args)->register();
     }
 
     /**
@@ -56,7 +55,19 @@ class Section extends Action
      */
     public function inlineForm(string $name, ...$args)
     {
-        return $this->initializeInline($name, InlineForm::class, $args);
+        return $this->createInlineRegister(InlineForm::class, $name, $args)->register();
+    }
+
+    /**
+     * Make dialog from method
+     *
+     * @param string $name
+     * @param        ...$args
+     * @return Dialog
+     */
+    public function dialog(string $name, ...$args)
+    {
+        return $this->createInlineRegister(Dialog::class, $name, $args)->register();
     }
 
     /**

@@ -27,4 +27,18 @@ class Location extends Data
         ];
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        $this->bot()->send([
+            'type' => 'location',
+            'longitude' => $this->longitude,
+            'latitude' => $this->latitude,
+            'horizontal_accuracy' => $this->horizontalAccuracy,
+            'live_period' => $this->livePeriods,
+            'heading' => $this->heading,
+            'proximity_alert_radius' => $this->proximityAlertRadius,
+        ], $args, ...$namedArgs);
+    }
+
 }

@@ -5,12 +5,18 @@ namespace Mmb\Action\Form;
 use Illuminate\Support\Collection;
 use Mmb\Action\Action;
 use Mmb\Action\Filter\FilterFailException;
+use Mmb\Action\Form\Attributes\FormClassModifierAttributeContract;
+use Mmb\Action\Form\Attributes\FormDynamicPropertyAttributeContract;
+use Mmb\Action\Form\Attributes\FormMethodModifierAttributeContract;
+use Mmb\Action\Form\Attributes\FormPropertyModifierAttributeContract;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Caller\HasSimpleEvents;
 
 class Form extends Action
 {
     use HasSimpleEvents;
+    use Concerns\InteractWithAttributes;
 
     protected $inputs = null;
 
@@ -41,22 +47,36 @@ class Form extends Action
      */
     public function getPath()
     {
-        return $this->_cached_path ??= $this->getInputs();
+        return $this->_cached_path ??= $this->path ?? $this->getInputs();
+    }
+
+    /**
+     * Make new form
+     *
+     * @param array       $attributes
+     * @param Update|null $update
+     * @return static
+     */
+    public static function make(array $attributes = [], Update $update = null)
+    {
+        $form = new static($update);
+        $form->setInAttributes($attributes);
+
+        return $form;
     }
 
     /**
      * Request form
      *
      * @param array       $attributes
-     * @param Update|null $update
      * @return void
      */
-    public static function request(array $attributes = [], Update $update = null)
+    public function request(array $attributes = [])
     {
-        $form = new static($update);
-        $form->attributes = $attributes;
-        $form->startForm();
+        $this->with($attributes)->startForm();
     }
+
+    private $_isBooted = false;
 
     /**
      * Boot form when loaded
@@ -65,6 +85,39 @@ class Form extends Action
      */
     protected function bootForm()
     {
+        if (!$this->_isBooted)
+        {
+            foreach (AttributeLoader::getClassAttributesOf($this, FormClassModifierAttributeContract::class) as $attr)
+            {
+                $attr->registerFormClassModifier($this);
+            }
+
+            foreach (get_class_methods($this) as $method)
+            {
+                foreach (AttributeLoader::getMethodAttributesOf(
+                    $this, $method, FormMethodModifierAttributeContract::class
+                ) as $attr)
+                {
+                    $attr->registerFormMethodModifier($this, $method);
+                }
+            }
+
+            foreach ((new \ReflectionClass($this))->getProperties() as $property)
+            {
+                foreach (AttributeLoader::getPropertyAttributesOf(
+                    $this, $property->name, FormPropertyModifierAttributeContract::class
+                ) as $attr)
+                {
+                    $attr->registerFormPropertyModifier($this, $property->name);
+                }
+            }
+
+            $this->loadDynamicAttributesFromIn();
+
+            $this->fire('booted');
+
+            $this->_isBooted = true;
+        }
     }
 
     /**
@@ -75,7 +128,7 @@ class Form extends Action
      */
     protected function attrRequired(string $name)
     {
-        if($this->has($name))
+        if (!$this->has($name))
         {
             throw new \InvalidArgumentException(
                 sprintf("%s::request() required attribute [%s]", static::class, $name)
@@ -89,108 +142,6 @@ class Form extends Action
     }
 
 
-    private array $attributes = [];
-
-    /**
-     * Get attribute
-     *
-     * @param string $name
-     * @param        $default
-     * @return mixed
-     */
-    public function get(string $name, $default = null)
-    {
-        return $this->has($name) ? $this->attributes[$name] : value($default);
-    }
-
-    /**
-     * Get all attributes
-     *
-     * @return Collection
-     */
-    public function all()
-    {
-        return collect($this->attributes);
-    }
-
-    /**
-     * Get attributes with specified name
-     *
-     * @param $keys
-     * @return Collection
-     */
-    public function only($keys)
-    {
-        return $this->all()->only($keys);
-    }
-
-    /**
-     * Get all attributes for inputs
-     *
-     * @return array
-     */
-    public function values()
-    {
-        return $this->only($this->inputs())->toArray();
-    }
-
-    /**
-     * Merge attribute collection
-     *
-     * @param array ...$attrs
-     * @return $this
-     */
-    public function merge(array ...$attrs)
-    {
-        $this->attributes = array_merge($this->attributes, ...$attrs);
-        return $this;
-    }
-
-    /**
-     * Set attribute value
-     *
-     * @param string $name
-     * @param        $value
-     * @return void
-     */
-    public function put(string $name, $value)
-    {
-        $this->attributes[$name] = $value;
-    }
-
-    /**
-     * Checks have attribute
-     *
-     * @param string $name
-     * @return bool
-     */
-    public function has(string $name)
-    {
-        return array_key_exists($name, $this->attributes);
-    }
-
-    /**
-     * Get attribute
-     *
-     * @param string $name
-     * @return mixed
-     */
-    public function __get(string $name)
-    {
-        return $this->get($name);
-    }
-
-    /**
-     * Set attribute
-     *
-     * @param string $name
-     * @param        $value
-     * @return void
-     */
-    public function __set(string $name, $value) : void
-    {
-        $this->put($name, $value);
-    }
 
 
     /**
@@ -423,6 +374,7 @@ class Form extends Action
     public function reset()
     {
         $this->attributes = [];
+        // TODO: Reset dynamic attributes
     }
 
     public function error(string|FilterFailException $message)
@@ -444,7 +396,7 @@ class Form extends Action
     public function storeStepHandler(bool $keep = true)
     {
         $stepHandler = FormStepHandler::make();
-        $stepHandler->attributes = $this->attributes ?: null;
+        $stepHandler->attributes = $this->getOutAttributes() ?: null;
         $stepHandler->currentInput = $this->currentInput?->name;
         $stepHandler->keyMap =
             $this->currentInput?->isStoring() ?
@@ -464,7 +416,7 @@ class Form extends Action
      */
     public function loadStepHandler(FormStepHandler $stepHandler)
     {
-        $this->attributes = $stepHandler->attributes ?? [];
+        $this->setInAttributes($stepHandler->attributes ?? []);
         $this->loadedInInput = $stepHandler->currentInput;
         $this->loadedKeyMap = $stepHandler->keyMap ?? [];
     }
@@ -578,6 +530,20 @@ class Form extends Action
     protected $skipKey = false;
 
     /**
+     * Enable ineffective key
+     *
+     * @var bool
+     */
+    protected $ineffectiveKey = false;
+
+    /**
+     * Enable without changes key
+     *
+     * @var bool
+     */
+    protected $withoutChangesKey = false;
+
+    /**
      * Enable previous key
      *
      * @var bool|string
@@ -606,6 +572,8 @@ class Form extends Action
             $skipKey = $input->enableSkipKey ?? $this->skipKey;
             $previousKey = $input->enablePreviousKey ?? $this->previousKey;
             $mirrorKey = $input->enableMirrorKey ?? $this->mirrorKey;
+            $ineffectiveKey = $input->enableIneffectiveKey ?? $this->ineffectiveKey;
+            $withoutChangesKey = $input->enableWithoutChangesKey ?? $this->withoutChangesKey;
 
             if($cancelKey !== false)
             {
@@ -629,27 +597,40 @@ class Form extends Action
                     $previousKey === true ? __('mmb.form.key.previous') : $previousKey,
                     fn() => $this->before(),
                 );
-
-                if(isset($cancel))
-                {
-                    $cancel = [
-                        $cancel, $prev,
-                    ];
-                    unset($prev);
-                }
             }
 
-            if($mirrorKey && isset($cancel))
-                $input->addHeader($cancel);
-            if(isset($skip))
-                $input->addHeader($skip);
+            if($ineffectiveKey !== false)
+            {
+                $ineffective = $input->keyAction(
+                    $ineffectiveKey === true ? __('mmb.form.key.ineffective') : $ineffectiveKey,
+                    function () use ($input)
+                    {
+                        unset($this->attributes[$input->name]);
+                        $this->next();
+                    },
+                );
+            }
 
-            if($mirrorKey && isset($skip))
-                $input->addFooter($skip);
-            if(isset($prev))
-                $input->addFooter($prev);
-            if(isset($cancel))
-                $input->addFooter($cancel);
+            if($withoutChangesKey !== false)
+            {
+                $withoutChanges = $input->keyAction(
+                    $withoutChangesKey === true ? __('mmb.form.key.without-changes') : $withoutChangesKey,
+                    function () use ($input)
+                    {
+                        unset($this->attributes[$input->name]);
+                        $this->next();
+                    },
+                );
+            }
+
+            if($mirrorKey)
+                $input->addHeader([@$cancel, @$prev]);
+            $input->addHeader([@$skip, @$ineffective, @$withoutChanges]);
+
+            if($mirrorKey)
+                $input->addFooter([@$skip, @$ineffective, @$withoutChanges]);
+
+            $input->addFooter([@$cancel, @$prev]);
         }
     }
 
@@ -772,10 +753,11 @@ class Form extends Action
     public function onRequest(Input $input, $message)
     {
         $this->response(
-            $message + [
+            $message /* + [
                 'key' => $input->getKeyBuilder()->toArray(),
-            ]
+            ]*/
         );
+        // TODO : Remove comments
     }
 
 }

@@ -8,9 +8,13 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use Mmb\Action\Action;
+use Mmb\Action\Inline\InlineAction;
+use Mmb\Action\Section\Section;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use ReflectionFunction;
 use ReflectionNamedType;
 use ReflectionParameter;
+use ReflectionProperty;
 
 class CallerFactory
 {
@@ -26,9 +30,17 @@ class CallerFactory
         // Load class attributes
         if(is_array($callable) && count($callable) == 2 && is_a($class = $callable[0], Action::class, true))
         {
+            // Invoke inline actions
+            // if (!($normalArgs && $normalArgs[0] instanceof InlineAction) &&
+            //     $class instanceof Section &&
+            //     $inline = $class->tryCreateInlineFor($callable[1], ...$normalArgs + $dynamicArgs))
+            // {
+            //     return $inline->invoke();
+            // }
+
             /** @var Action|string $class */
-            $classAttrs = $class::getClassAttributesOf(CallingClassAttribute::class);
-            $methodAttrs = $class::getMethodAttributesOf($callable[1], CallingMethodAttribute::class);
+            $classAttrs = AttributeLoader::getClassAttributesOf($class, CallingClassAttribute::class);
+            $methodAttrs = AttributeLoader::getMethodAttributesOf($class, $callable[1], CallingMethodAttribute::class);
         }
         else
         {
@@ -95,9 +107,9 @@ class CallerFactory
         return $func->invokeArgs($params);
     }
 
-    private function getParameterValue(
-        ReflectionParameter $parameter,
-        $value
+    public function getParameterValue(
+        ReflectionParameter|ReflectionProperty $parameter,
+                                               $value
     )
     {
         $type = $parameter->getType();
@@ -145,8 +157,29 @@ class CallerFactory
     //     return $value;
     // }
 
+    /**
+     * Split arguments to normalArgs & dynamicArgs
+     *
+     * @param array $args
+     * @return array
+     */
+    public function splitArguments(array $args)
+    {
+        $dynamicArgs = [];
+        foreach ($args as $key => $value)
+        {
+            if (is_string($key))
+            {
+                $dynamicArgs[$key] = $value;
+                unset($args[$key]);
+            }
+        }
 
-    private function getGlobalInstanceOf(
+        return [$args, $dynamicArgs];
+    }
+
+
+    public function getGlobalInstanceOf(
         ReflectionParameter $parameter,
         &$value
     )
@@ -165,12 +198,12 @@ class CallerFactory
         return false;
     }
 
-    private function hasGlobalInstance(string $class)
+    public function hasGlobalInstance(string $class)
     {
         return Container::getInstance()->bound($class);
     }
 
-    private function getGlobalInstance(string $class)
+    public function getGlobalInstance(string $class)
     {
         return Container::getInstance()->make($class);
     }

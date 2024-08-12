@@ -3,19 +3,71 @@
 namespace Mmb\Support\Cast;
 
 use Attribute;
-use Mmb\Support\Caller\ParameterPassingInstead;
+use Mmb\Action\Form\Attributes\FormDynamicPropertyAttributeContract;
+use Mmb\Action\Form\Form;
+use Mmb\Action\Inline\Attributes\InlineParameterAttributeContract;
+use Mmb\Action\Inline\Attributes\InlineWithPropertyAttributeContract;
+use Mmb\Action\Inline\InlineAction;
+use Mmb\Action\Inline\Register\InlineCreateRegister;
+use Mmb\Action\Inline\Register\InlineLoadRegister;
+use Mmb\Action\Inline\Register\InlineRegister;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
-class CastEnum extends ParameterPassingInstead
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER)]
+class CastEnum implements
+    InlineParameterAttributeContract,
+    InlineWithPropertyAttributeContract,
+    FormDynamicPropertyAttributeContract
 {
 
-    public function getInsteadOf($value)
+    private bool $allowNull;
+    private string $classType;
+
+    /**
+     * Try to find class type
+     *
+     * @param \ReflectionType $type
+     * @return string
+     */
+    public function setClassTypeUsing(\ReflectionType $type)
     {
-        if($value instanceof \BackedEnum)
+        $this->allowNull = $type->allowsNull();
+
+        if ($type instanceof \ReflectionUnionType)
+            $types = $type->getTypes();
+        else
+            $types = [$type];
+
+        foreach ($types as $type)
+        {
+            if ($type instanceof \ReflectionNamedType)
+            {
+                if (!$type->isBuiltin() && is_a($type->getName(), Model::class, true))
+                {
+                    return $this->classType = $type->getName();
+                }
+            }
+            elseif ($type instanceof \ReflectionIntersectionType)
+            {
+                throw new \TypeError(sprintf("Attribute [%s] can't parse intersection types", static::class));
+            }
+        }
+
+        throw new \TypeError(sprintf("Attribute [%s] required a model type", static::class));
+    }
+
+    /**
+     * Get storable value
+     *
+     * @param $value
+     * @return mixed
+     */
+    protected function getStorableValue($value)
+    {
+        if ($value instanceof \BackedEnum)
         {
             return $value->value;
         }
-        elseif($value instanceof \UnitEnum)
+        elseif ($value instanceof \UnitEnum)
         {
             return $value->name;
         }
@@ -23,23 +75,30 @@ class CastEnum extends ParameterPassingInstead
         return $value;
     }
 
-    public function cast($value, string $class)
+    /**
+     * Get usable value
+     *
+     * @param $value
+     * @return Model|mixed
+     */
+    protected function getUsableValue($value)
     {
-        if(!($value instanceof $class))
+        if (!is_object($value) && !is_null($value))
         {
-            if(is_a($class, \BackedEnum::class, true))
+            if (is_a($this->classType, \BackedEnum::class, true))
             {
-                return $class::tryFrom($value);
+                return $this->classType::tryFrom($value);
             }
-            elseif(is_a($class, \UnitEnum::class, true))
+            elseif (is_a($this->classType, \UnitEnum::class, true))
             {
-                foreach($class::cases() as $case)
+                foreach($this->classType::cases() as $case)
                 {
                     if($case->name == $value)
                     {
                         return $case;
                     }
                 }
+
                 return null;
             }
         }
@@ -47,4 +106,60 @@ class CastEnum extends ParameterPassingInstead
         return $value;
     }
 
+
+    public function registerInlineParameter(InlineRegister $register, string $name)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionParameter($register->init, $name))->getType()
+        );
+
+        if ($register instanceof InlineCreateRegister)
+        {
+            $register->before(
+                fn() => $register->shouldHave($name, $this->getStorableValue($register->getHaveItem($name))),
+            );
+        }
+        elseif ($register instanceof InlineLoadRegister)
+        {
+            $register->before(
+                fn() => $register->callArgs[$name] = $this->getUsableValue($register->callArgs[$name]),
+            );
+        }
+    }
+
+    public function getInlineWithPropertyForStore(InlineAction $inline, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($inline->getInitializer()[0], $name))->getType()
+        );
+
+        return $this->getStorableValue($value);
+    }
+
+    public function getInlineWithPropertyForLoad(InlineAction $inline, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($inline->getInitializer()[0], $name))->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
+
+    public function getFormDynamicPropertyForStore(Form $form, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($form, $name))->getType()
+        );
+
+        return $this->getStorableValue($value);
+    }
+
+    public function getFormDynamicPropertyForLoad(Form $form, string $name, $value)
+    {
+        $this->setClassTypeUsing(
+            (new \ReflectionProperty($form, $name))->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
 }

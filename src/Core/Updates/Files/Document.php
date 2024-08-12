@@ -19,4 +19,13 @@ class Document extends DataWithFile
             ] + parent::dataCasts();
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        return $this->bot()->send([
+            'type' => 'document',
+            'document' => $this->id,
+        ], $args, ...$namedArgs);
+    }
+
 }

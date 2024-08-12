@@ -94,17 +94,17 @@ class ResourceListModule extends ResourceModule
     }
 
     /**
-     * @param Model $model
+     * @param Model $record
      * @return string
      */
-    public function getLabelOf(Model $model)
+    public function getLabelOf(Model $record)
     {
         if(is_string($this->label))
         {
-            return $model->{$this->label};
+            return $record->{$this->label};
         }
 
-        return $this->valueOf($this->label, model: $model) ?? $model->name ?? $model->id;
+        return $this->valueOf($this->label, record: $record) ?? $record->name ?? $record->getKey();
     }
 
 
@@ -144,7 +144,7 @@ class ResourceListModule extends ResourceModule
     /**
      * Add top listener for menu
      *
-     * @param Closure(Menu $menu, $page, $paginator):mixed $callback
+     * @param Closure(Menu $menu, $page, $paginate):mixed $callback
      * @return $this
      */
     public function top(Closure $callback)
@@ -158,7 +158,7 @@ class ResourceListModule extends ResourceModule
     /**
      * Add bottom listener for menu
      *
-     * @param Closure(Menu $menu, $page, $paginator):mixed $callback
+     * @param Closure(Menu $menu, $page, $paginate):mixed $callback
      * @return $this
      */
     public function bottom(Closure $callback)
@@ -443,7 +443,7 @@ class ResourceListModule extends ResourceModule
                 $event, [], [
                     'menu'      => $menu,
                     'page'      => $page,
-                    'paginator' => $models,
+                    'paginate' => $models,
                     'all'       => $models,
                 ]
             );
@@ -527,7 +527,7 @@ class ResourceListModule extends ResourceModule
                 $event, [], [
                     'menu'      => $menu,
                     'page'      => $page,
-                    'paginator' => $models,
+                    'paginate' => $models,
                     'all'       => $models,
                 ]
             );

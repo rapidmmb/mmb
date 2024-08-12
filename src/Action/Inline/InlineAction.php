@@ -5,10 +5,12 @@ namespace Mmb\Action\Inline;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Action;
+use Mmb\Action\Inline\Attributes\InlineWithPropertyAttributeContract;
 use Mmb\Action\Memory\ConvertableToStep;
+use Mmb\Action\Memory\Step;
 use Mmb\Action\Memory\StepHandler;
-use Mmb\Action\Section\Menu;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Db\ModelFinder;
 
 abstract class InlineAction implements ConvertableToStep
@@ -65,6 +67,16 @@ abstract class InlineAction implements ConvertableToStep
                 get_class($this->initializerClass),
             $this->initializerMethod,
         ];
+    }
+
+    /**
+     * Get init name
+     *
+     * @return string|null
+     */
+    public function getInitName()
+    {
+        return $this->initializerMethod;
     }
 
 
@@ -132,6 +144,21 @@ abstract class InlineAction implements ConvertableToStep
     public ?array   $cachedWithinData = null;
 
     /**
+     * Get within data once
+     *
+     * @return array|null
+     */
+    public function getWithinData()
+    {
+        if (!isset($this->cachedWithinData))
+        {
+            $this->makeReadyWithinData();
+        }
+
+        return $this->cachedWithinData;
+    }
+
+    /**
      * With properties
      *
      * If menu is loading, load properties from stored data
@@ -143,13 +170,39 @@ abstract class InlineAction implements ConvertableToStep
     {
         array_push($this->withs, ...$names);
 
+        if ($this->isCreating() && $this->initializerClass)
+        {
+            foreach ($names as $name)
+            {
+                if (array_key_exists($name, $this->haveData))
+                {
+                    $value = $this->haveData[$name];
+
+                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
+                    {
+                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                    }
+
+                    $this->initializerClass->$name = $value;
+                    unset($this->haveData[$name]);
+                }
+            }
+        }
+
         if($this->isLoading() && isset($this->storedWithData) && $this->initializerClass)
         {
             foreach($names as $name)
             {
                 if(array_key_exists($name, $this->storedWithData))
                 {
-                    $this->initializerClass->$name = $this->storedWithData[$name];
+                    $value = $this->storedWithData[$name];
+
+                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
+                    {
+                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                    }
+
+                    $this->initializerClass->$name = $value;
                 }
             }
         }
@@ -334,7 +387,14 @@ abstract class InlineAction implements ConvertableToStep
 
             foreach($this->withs as $with)
             {
-                $this->cachedWithinData[$with] = $this->initializerClass->$with;
+                $value = $this->initializerClass->$with;
+
+                foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $with, InlineWithPropertyAttributeContract::class) as $attr)
+                {
+                    $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
+                }
+
+                $this->cachedWithinData[$with] = $value;
             }
         }
     }
@@ -413,6 +473,16 @@ abstract class InlineAction implements ConvertableToStep
         );
     }
 
+    /**
+     * Save the action
+     *
+     * @return void
+     */
+    protected function saveAction()
+    {
+        Step::set($this);
+    }
+
 
     /**
      * @var class-string
@@ -435,7 +505,9 @@ abstract class InlineAction implements ConvertableToStep
             is_a($step->initalizeClass, Action::class, true)
         )
         {
-            $step->initalizeClass::initializeInlineOf($step->initalizeMethod, $this, $update);
+            /** @var Action $instance */
+            $instance = new ($step->initalizeClass)($update);
+            $instance->loadInlineRegister($this, $step->initalizeMethod)->register();
         }
     }
 
@@ -489,5 +561,12 @@ abstract class InlineAction implements ConvertableToStep
      * @return mixed
      */
     public abstract function handle(Update $update);
+
+    /**
+     * Handle default invokes
+     *
+     * @return mixed
+     */
+    public abstract function invoke();
 
 }

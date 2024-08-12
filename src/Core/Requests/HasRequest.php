@@ -9,7 +9,7 @@ trait HasRequest
 
     public function newRequest(string $method, array $args)
     {
-        return new TelegramRequest($this, $this->token, $method, $args);
+        return new TelegramRequest($this, $this->info->token, $method, $args);
     }
 
     /**

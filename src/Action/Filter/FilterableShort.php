@@ -18,6 +18,45 @@ trait FilterableShort
     }
 
     /**
+     * Add message media filter
+     *
+     * @param $mediaError
+     * @param $messageError
+     * @return $this
+     */
+    public function media($mediaError = null, $messageError = null)
+    {
+        $this->getFilter()->media(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Add message media or text filter
+     *
+     * @param $mediaError
+     * @param $messageError
+     * @return $this
+     */
+    public function mediaOrText($mediaError = null, $messageError = null)
+    {
+        $this->getFilter()->mediaOrText(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Add message builder filter
+     *
+     * @param $mediaError
+     * @param $messageError
+     * @return $this
+     */
+    public function messageBuilder($mediaError = null, $messageError = null)
+    {
+        $this->getFilter()->messageBuilder(...func_get_args());
+        return $this;
+    }
+
+    /**
      * Add text message filter
      *
      * @param $textError
@@ -190,6 +229,19 @@ trait FilterableShort
     }
 
     /**
+     * Filter divisible number
+     *
+     * @param $number
+     * @param $error
+     * @return $this
+     */
+    public function divisible($number, $error = null)
+    {
+        $this->getFilter()->divisible(...func_get_args());
+        return $this;
+    }
+
+    /**
      * Filter regex pattern
      *
      * @param string $pattern
@@ -200,6 +252,78 @@ trait FilterableShort
     public function regex(string $pattern, int $result = -1, $error = null)
     {
         $this->getFilter()->regex(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param bool $fromUser
+     * @param bool $fromChannel
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function forwarded(
+        bool $fromUser = true,
+        bool $fromChannel = true,
+             $message = null,
+             $messageError = null
+    )
+    {
+        $this->getFilter()->forwarded(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function shouldForward($message = null, $messageError = null)
+    {
+        $this->getFilter()->shouldForward(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function shouldForwardFromUser($message = null, $messageError = null)
+    {
+        $this->getFilter()->shouldForwardFromUser(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function shouldForwardFromChannel($message = null, $messageError = null)
+    {
+        $this->getFilter()->shouldForwardFromChannel(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Filter force forward
+     *
+     * @param $message
+     * @param $messageError
+     * @return $this
+     */
+    public function notForwarded($message = null, $messageError = null)
+    {
+        $this->getFilter()->notForwarded(...func_get_args());
         return $this;
     }
 

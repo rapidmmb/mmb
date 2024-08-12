@@ -3,6 +3,7 @@
 namespace Mmb\Core;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Mmb\Support\Db\ModelFinder;
 
@@ -41,29 +42,36 @@ class CreativeBotChanneling extends DefaultBotChanneling
     /**
      * Get bot from configs or database
      *
-     * @param string $name
+     * @param string      $name
+     * @param string|null $hookToken
      * @return Bot
      */
-    public function getBot(string $name)
+    public function getBot(string $name, ?string $hookToken)
     {
-        if(!isset($this->args[$name]))
+        if (!isset($this->args[$name]['token']) && isset($hookToken))
         {
             /** @var Model $info */
-            if($info = ModelFinder::findBy($this->model, $name, $this->nameColumn))
+            if($info = ModelFinder::findBy($this->model, $hookToken, $this->hookColumn))
             {
-                $bot = new Bot(
-                    $info->getAttribute($this->tokenColumn),
-                    $this->usernameColumn ? $info->getAttribute($this->usernameColumn) : null
-                );
+                $bot = new Bot(new InternalCreativeBotInfo(
+                    token: $info->getAttribute($this->tokenColumn),
+                    username: $this->usernameColumn ? $info->getAttribute($this->usernameColumn) : (
+                        $this->args[$name]['username'] ?? null
+                    ),
+                    guardName: $this->args[$name]['guard'] ?? $this->getDefaultGuard(),
+                    record: $info,
+                ));
 
-                $this->registerBot($bot, $this->databaseArgs);
+                $this->registerBot($bot, ($this->args[$name] ?? []) + $this->databaseArgs);
 
                 return $bot;
             }
         }
 
-        return parent::getBot($name);
+        return parent::getBot($name, $hookToken);
     }
+
+
 
     /**
      * Find bot by hook token from configs or database
@@ -85,6 +93,16 @@ class CreativeBotChanneling extends DefaultBotChanneling
         }
 
         return $result;
+    }
+
+    public function getWebhookUrl(InternalBotInfo $info)
+    {
+        if ($info instanceof InternalCreativeBotInfo)
+        {
+            return route('mmb.webhook', ['hookToken' => $info->record->getAttribute($this->hookColumn)]);
+        }
+
+        return parent::getWebhookUrl($info);
     }
 
 }

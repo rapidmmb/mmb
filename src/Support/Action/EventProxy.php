@@ -4,13 +4,25 @@ namespace Mmb\Support\Action;
 
 use Mmb\Action\Action;
 
-class EventInstance
+class EventProxy
 {
 
     public function __construct(
         public Action $instance,
     )
     {
+    }
+
+    /**
+     * Make proxy instance
+     *
+     * @template T
+     * @param T $instance
+     * @return static|T
+     */
+    public static function make(Action $instance)
+    {
+        return new static($instance);
     }
 
     public function __call(string $name, array $arguments)

@@ -5,7 +5,10 @@ namespace Mmb\Action\Section\Controllers;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Str;
 use Mmb\Action\Action;
+use Mmb\Action\Section\Section;
+use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\AuthorizationHandleBackException;
+use Mmb\Support\Caller\Caller;
 
 class QueryMatchPattern
 {
@@ -188,10 +191,10 @@ class QueryMatchPattern
     /**
      * Set action value
      *
-     * @param string $value
+     * @param $value
      * @return $this
      */
-    public function action(string $value)
+    public function action($value)
     {
         $this->action = [$value];
         return $this;
@@ -212,7 +215,7 @@ class QueryMatchPattern
     /**
      * Get action
      *
-     * @return string|null
+     * @return mixed
      */
     public function getAction()
     {
@@ -240,7 +243,12 @@ class QueryMatchPattern
     {
         $action = $this->getAction();
 
-        return $action === null ? null : $object->invokeDynamic($action, [], $this->matches);
+        if ($action == null) return null;
+
+        if (is_string($action))
+            return $object->invokeDynamic($action, [], $this->matches + ['pattern' => $this]);
+        else
+            return Caller::invoke($action, [], $this->matches + ['pattern' => $this]);
     }
 
 
@@ -351,6 +359,19 @@ class QueryMatchPattern
         return $this->info = ['vars' => $vars, 'required' => $required];
     }
 
+    protected bool $dontMake = false;
+
+    /**
+     * Turn off making pattern with this value.
+     *
+     * @return $this
+     */
+    public function dontMake()
+    {
+        $this->dontMake = true;
+        return $this;
+    }
+
     /**
      * Try to make a query
      *
@@ -359,6 +380,11 @@ class QueryMatchPattern
      */
     public function make(array $args)
     {
+        if ($this->dontMake)
+        {
+            return false;
+        }
+
         $info = $this->getInfo();
         $argsCount = count($args);
 
@@ -381,6 +407,7 @@ class QueryMatchPattern
                 return false;
             }
         }
+
 
         $optionals = $argsCount - $info['required'];
         $replaces = [];
@@ -508,6 +535,26 @@ class QueryMatchPattern
     public function getMatches()
     {
         return $this->matches;
+    }
+
+    /**
+     * Get visible matches variants
+     *
+     * @return array
+     */
+    public function getVisibleMatches()
+    {
+        $matches = $this->matches;
+
+        foreach ($matches as $key => $value)
+        {
+            if (str_starts_with($key, '_'))
+            {
+                unset($matches[$key]);
+            }
+        }
+
+        return $matches;
     }
 
     /**

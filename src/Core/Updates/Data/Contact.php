@@ -30,4 +30,15 @@ class Contact extends Data
         return trim($this->firstName . ' ' . $this->lastName);
     }
 
+
+    public function send(array $args = [], ...$namedArgs)
+    {
+        $this->bot()->send([
+            'type' => 'contact',
+            'phone_number' => $this->phoneNumber,
+            'first_name' => $this->firstName,
+            'last_name'  => $this->lastName,
+        ], $args, ...$namedArgs);
+    }
+
 }

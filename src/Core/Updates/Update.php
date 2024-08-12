@@ -263,7 +263,7 @@ class Update extends Data
      * @param mixed ...$namedArgs
      * @return ?bool
      */
-    public function tell($message, array $args = [], ...$namedArgs)
+    public function tell($message = null, array $args = [], ...$namedArgs)
     {
         return $this->callbackQuery?->answer($message, $args, ...$namedArgs);
     }

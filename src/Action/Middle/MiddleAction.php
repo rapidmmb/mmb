@@ -5,6 +5,7 @@ namespace Mmb\Action\Middle;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
+use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Memory\Step;
 use Mmb\Action\Section\Section;
 use Mmb\Action\Update\StopHandlingException;
@@ -14,11 +15,13 @@ use Mmb\Core\Updates\Update;
 class MiddleAction extends Section implements UpdateHandling
 {
 
-    protected function initializeInlineObject(string $name, InlineAction $inline)
+    protected function onInitializeInlineRegister(InlineRegister $register)
     {
-        parent::initializeInlineObject($name, $inline);
+        parent::onInitializeInlineRegister($register);
 
-        $inline->with('redirectTo', 'redirectWith');
+        $register->before(
+            fn() => $register->inlineAction->with('redirectTo', 'redirectWith')
+        );
     }
 
     /**

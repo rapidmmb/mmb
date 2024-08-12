@@ -243,11 +243,16 @@ trait HasAttributeLoader
             }
         }
 
+        $notArgs = $args;
+        $args = [];
         foreach($parameters as $parameter)
         {
-            $value = array_key_exists($parameter->getName(), $args) ?
-                $args[$parameter->getName()] :
+            $value = array_key_exists($parameter->getName(), $notArgs) ?
+                $notArgs[$parameter->getName()] :
                 $parameter->getDefaultValue();
+
+            $args[$parameter->getName()] = $value;
+            unset($notArgs[$parameter->getName()]);
 
             if($instead = static::getParameterAttributeOf($method, $parameter->getName(), ParameterPassingInstead::class))
             {
@@ -260,7 +265,7 @@ trait HasAttributeLoader
             }
         }
 
-        return $args;
+        return [$args, $notArgs];
     }
 
 }

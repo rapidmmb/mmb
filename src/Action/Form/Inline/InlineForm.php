@@ -64,7 +64,7 @@ class InlineForm extends InlineAction
 
         if(isset($this->form->lastSavedStep))
         {
-            Step::set($this);
+            $this->saveAction();
         }
     }
 
@@ -76,12 +76,11 @@ class InlineForm extends InlineAction
      */
     public function request(array $attributes = [])
     {
-        $this->form->merge($attributes);
-        $this->form->startForm();
+        $this->form->request($attributes);
 
         if(isset($this->form->lastSavedStep))
         {
-            Step::set($this);
+            $this->saveAction();
         }
     }
 
@@ -164,6 +163,16 @@ class InlineForm extends InlineAction
     )
     {
         return $this->scope(new Scopes\IFDeleteScope($prompt, $confirm, $cancel));
+    }
+
+    /**
+     * Request the form
+     *
+     * @return void
+     */
+    public function invoke()
+    {
+        $this->request();
     }
 
 }

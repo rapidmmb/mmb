@@ -58,7 +58,7 @@ abstract class BotChanneling
             return null;
         }
 
-        return $this->getBot($name);
+        return $this->getBot($name, $hookToken);
     }
 
     /**
@@ -88,21 +88,27 @@ abstract class BotChanneling
      */
     public function makeUpdate(Request $request)
     {
-        return Update::make($request, app(Bot::class), true);
+        return Update::make($request->all(), app(Bot::class), true);
     }
 
     /**
      * Get Bot object from name
      *
      * @param string $name
+     * @param ?string $hookToken
      * @return Bot
      */
-    public function getBot(string $name)
+    public function getBot(string $name, ?string $hookToken)
     {
-        if(array_key_exists($name, $this->args))
+        if (array_key_exists($name, $this->args))
         {
             $data = $this->args[$name];
-            $bot = new Bot($data['token'], $data['username']);
+            $bot = new Bot(new InternalBotInfo(
+                token: $data['token'],
+                username: @$data['username'],
+                guardName: $data['guard'] ?? $this->getDefaultGuard(),
+                configName: $name,
+            ));
 
             $this->registerBot($bot, $data);
 
@@ -110,6 +116,16 @@ abstract class BotChanneling
         }
 
         throw new \InvalidArgumentException("Bot [$name] is not defined");
+    }
+
+    /**
+     * Get default guard name
+     *
+     * @return ?string
+     */
+    public function getDefaultGuard()
+    {
+        return config('mmb.default_guard');
     }
 
     /**
@@ -126,12 +142,12 @@ abstract class BotChanneling
      */
     public function getDefaultBot()
     {
-        if(isset($this->defaultBot))
+        if (isset($this->defaultBot))
         {
             return $this->defaultBot;
         }
 
-        return $this->getBot('default');
+        return $this->getBot('default', null);
     }
 
     /**
@@ -145,6 +161,13 @@ abstract class BotChanneling
     {
         $bot->registerHandlers($data['handlers'] ?? []);
     }
+
+    /**
+     * Get bot webhook url
+     *
+     * @return ?string
+     */
+    public abstract function getWebhookUrl(InternalBotInfo $info);
 
     /**
      * Handle update by request

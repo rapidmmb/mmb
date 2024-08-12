@@ -10,12 +10,13 @@ class {{ class }} extends Section
 
     public function main()
     {
-        $this->menu('mainMenu')->response("Select:");
+        $this->menu('mainMenu')->response();
     }
 
     public function mainMenu(Menu $menu)
     {
         $menu
+            ->message("Select:")
             ->schema([
                 // Menu key
             ])

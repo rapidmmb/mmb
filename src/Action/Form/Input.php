@@ -7,9 +7,11 @@ use Mmb\Action\Filter\Filterable;
 use Mmb\Action\Filter\FilterableShort;
 use Mmb\Action\Filter\FilterFailException;
 use Mmb\Action\Filter\HasEventFilter;
+use Mmb\Action\Filter\Rules\FilterFailAnyway;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasSimpleEvents;
+use Mmb\Support\Encoding\Text;
 
 /**
  * @property mixed $value
@@ -52,6 +54,33 @@ class Input
         return $this;
     }
 
+    public array $prefixes = [];
+    public array $suffixes = [];
+
+    /**
+     * Add prefix message
+     *
+     * @param string|Closure $message
+     * @return $this
+     */
+    public function prefix(string|Closure $message)
+    {
+        $this->prefixes[] = $message;
+        return $this;
+    }
+
+    /**
+     * Add suffix message
+     *
+     * @param string|Closure $message
+     * @return $this
+     */
+    public function suffix(string|Closure $message)
+    {
+        $this->suffixes[] = $message;
+        return $this;
+    }
+
     /**
      * Set request message
      *
@@ -64,17 +93,99 @@ class Input
         return $this;
     }
 
-    public ?string $placeholderValue = null;
+    public ?string $hintValue = null;
 
     /**
-     * Set placeholder message
+     * Set hint message
      *
      * @param string $message
      * @return $this
      */
-    public function placeholder(string $message)
+    public function hint(string $message)
     {
-        $this->placeholderValue = $message;
+        $this->hintValue = $message;
+        return $this;
+    }
+
+    public function hintPrevious(null|string|Closure $name = null, string $mode = 'HTML')
+    {
+        // Skip if form is not used HasRecords
+        // This is cause, maybe you want to define it, but use it in inherited classes.
+        // Like EditForm extends RealForm.
+        if (!method_exists($this->form, 'getRecord'))
+        {
+            return $this->mode($mode);
+        }
+
+        $recordValue = $this->form->getRecord()->getAttribute(is_string($name) ? $name : $this->name);
+
+        if ($name instanceof Closure)
+        {
+            $value = value($name, $recordValue);
+        }
+        else
+        {
+            $value = Text::userFriendly($recordValue);
+        }
+
+        return $this->mode($mode)
+            ->hint(__('mmb.form.advanced.previous-value') . "\n<code>" . Text::html($value) . "</code>");
+    }
+
+    protected ?string $modeValue = null;
+
+    public function mode(string $mode)
+    {
+        $this->modeValue = $mode;
+        return $this;
+    }
+
+    public function modeHtml()
+    {
+        return $this->mode('HTML');
+    }
+
+    public function modeMarkdown()
+    {
+        return $this->mode('MarkDown');
+    }
+
+    public function modeMarkdown2()
+    {
+        return $this->mode('MarkDown2');
+    }
+
+    /**
+     * Add only options filter
+     *
+     * @return $this
+     */
+    public function onlyOptions($message = null)
+    {
+        $this->filter(new FilterFailAnyway($message ?? fn() => __('mmb.form.filter.only-options')));
+        return $this;
+    }
+
+    /**
+     * Run the input if condition is true, otherwise skip the input.
+     * If value not passed, input will not set.
+     *
+     * @param      $condition
+     * @param mixed $value
+     * @return $this
+     */
+    public function if($condition, mixed $value = null)
+    {
+        if ($this->isCreating() && !value($condition))
+        {
+            if (count(func_get_args()) > 1)
+            {
+                $this->value = value($value);
+            }
+
+            $this->form->next();
+        }
+
         return $this;
     }
 
@@ -87,6 +198,8 @@ class Input
      */
     public function pass(Update $update)
     {
+        $this->fire('passing', $update);
+
         if($reaction = $this->getKeyBuilder()->getPressedAction($update))
         {
             [$type, $value] = $reaction;
@@ -107,7 +220,11 @@ class Input
 
                     if(is_string($value))
                     {
-                        $this->fire($value);
+                        $this->fire(
+                            $value,
+                            update: $update,
+                            pass: fn() => $pass,
+                        );
                     }
                     else
                     {
@@ -136,9 +253,54 @@ class Input
         else
         {
             $this->value = $this->passFilter($update)[2];
+            $this->fire('filled');
         }
 
-        $this->fire('pass');
+        $this->fire('passed');
+    }
+
+    /**
+     * Add event to listen after passed value
+     *
+     * @param $callback
+     * @return $this
+     */
+    public function then($callback)
+    {
+        $this->on('passed', $callback);
+        return $this;
+    }
+
+    /**
+     * Add event to listen after passed value
+     *
+     * @param $callback
+     * @return $this
+     */
+    public function passed($callback)
+    {
+        $this->on('passed', $callback);
+        return $this;
+    }
+
+    /**
+     * @param $callback
+     * @return $this
+     */
+    public function passing($callback)
+    {
+        $this->on('passing', $callback);
+        return $this;
+    }
+
+    /**
+     * @param $callback
+     * @return $this
+     */
+    public function filled($callback)
+    {
+        $this->on('fill', $callback);
+        return $this;
     }
 
     /**
@@ -155,7 +317,25 @@ class Input
             $message = ['text' => $message];
         }
 
+        // Add key
         $message['key'] = $this->getKeyBuilder()->toArray();
+
+        $value = function ($callable) use (&$message)
+        {
+            return $callable instanceof Closure ?
+                Caller::invoke($callable, [], $this->getEventDynamicArgs() + ['text' => @$message['text']]) :
+                $callable;
+        };
+
+        // Add prefixes & suffixes
+        foreach ($this->prefixes as $prefix)
+            $message['text'] = $value($prefix) . @$message['text'];
+        foreach ($this->suffixes as $suffix)
+            $message['text'] = @$message['text'] . $value($suffix);
+        if (isset($this->hintValue))
+            $message['text'] = @$message['text'] . "\n\n" . $value($this->hintValue);
+        if (isset($this->modeValue))
+            $message['mode'] = $this->modeValue;
 
         $this->fire('request', $message);
     }
@@ -240,7 +420,7 @@ class Input
             return $this->form->get($this->name);
         }
 
-        error_log(sprintf("Undefined property [%s] on [%s]", $name, static::class));
+        error_log(sprintf("Undefined property [%s] on [%s]", $name, static::class)); // TODO
         return null;
     }
 
@@ -609,6 +789,56 @@ class Input
     public function disableSkipKey()
     {
         return $this->skipKey(false);
+    }
+
+    /**
+     * Enable without changes key
+     *
+     * @var null|bool|string
+     */
+    public $enableWithoutChangesKey = null;
+
+    /**
+     * @param bool|string $text
+     * @return $this
+     */
+    public function withoutChangesKey(bool|string $text = true)
+    {
+        $this->enableWithoutChangesKey = $text;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableWithoutChangesKey()
+    {
+        return $this->withoutChangesKey(false);
+    }
+
+    /**
+     * Enable ineffective key
+     *
+     * @var null|bool|string
+     */
+    public $enableIneffectiveKey = null;
+
+    /**
+     * @param bool|string $text
+     * @return $this
+     */
+    public function ineffectiveKey(bool|string $text = true)
+    {
+        $this->enableIneffectiveKey = $text;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableIneffectiveKey()
+    {
+        return $this->ineffectiveKey(false);
     }
 
     /**

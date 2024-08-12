@@ -5,13 +5,16 @@ namespace Mmb\Core\Updates\Messages;
 use Mmb\Core\Data;
 use Mmb\Core\Updates\Data\Contact;
 use Mmb\Core\Updates\Data\Dice;
+use Mmb\Core\Updates\Data\Game;
 use Mmb\Core\Updates\Data\Location;
+use Mmb\Core\Updates\Data\Story;
 use Mmb\Core\Updates\Data\Venue;
 use Mmb\Core\Updates\Files\Animation;
 use Mmb\Core\Updates\Files\Audio;
 use Mmb\Core\Updates\Files\DataWithFile;
 use Mmb\Core\Updates\Files\Document;
 use Mmb\Core\Updates\Files\PhotoCollection;
+use Mmb\Core\Updates\Files\Sticker;
 use Mmb\Core\Updates\Files\Video;
 use Mmb\Core\Updates\Files\VideoNote;
 use Mmb\Core\Updates\Files\Voice;
@@ -19,6 +22,7 @@ use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Infos\ChatShared;
 use Mmb\Core\Updates\Infos\UserInfo;
 use Mmb\Core\Updates\Infos\UserShared;
+use Mmb\Core\Updates\Infos\UsersShared;
 use Mmb\Core\Updates\Poll\Poll;
 use Ramsey\Collection\Collection;
 
@@ -76,6 +80,7 @@ use Ramsey\Collection\Collection;
  * @property ?Message                       $pinnedMessage
  * @property ?Invoice                       $invoice
  * @property ?UserShared                    $userShared
+ * @property ?UsersShared                   $usersShared
  * @property ?ChatShared                    $chatShared
  * @property ?string                        $connectedWebsite
  * @property ?WriteAccessAllowed            $writeAccessAllowed
@@ -84,6 +89,9 @@ use Ramsey\Collection\Collection;
  * @property string                         $type
  * @property string                         $globalType
  * @property DataWithFile                   $media
+ * @property bool                           $isForwarded
+ *
+ * @property bool $isDeleted
  */
 class Message extends Data
 {
@@ -115,17 +123,17 @@ class Message extends Data
             'audio'                   => Audio::class,
             'document'                => Document::class,
             'photo'                   => PhotoCollection::class,
-            // 'sticker'                           => Sticker::class,
-            // 'story'                             => Story::class,
+            'sticker'                 => Sticker::class,
+            'story'                   => Story::class,
             'video'                   => Video::class,
             'video_note'              => VideoNote::class,
             'voice'                   => Voice::class,
             'caption'                 => 'string',
-            // 'caption_entities'                  => EntityCollection::class,
+            // 'caption_entities'        => EntityCollection::class,
             'has_media_spoiler'       => 'bool',
             'contact'                 => Contact::class,
             'dice'                    => Dice::class,
-            // 'game'                              => Game::class,
+            'game'                    => Game::class,
             'poll'                    => Poll::class,
             'venue'                   => Venue::class,
             'location'                => Location::class,
@@ -143,6 +151,7 @@ class Message extends Data
             'pinned_message'          => Message::class,
             // 'invoice'                           => Invoice::class,
             'user_shared'             => UserShared::class,
+            'users_shared'            => UsersShared::class,
             'chat_shared'             => ChatShared::class,
             'connected_website'       => 'string',
             // 'write_access_allowed'              => WriteAccessAllowed::class,
@@ -167,7 +176,7 @@ class Message extends Data
     protected function getTypeAttribute()
     {
         return $this->makeCache(
-            'type', function()
+            'type', function ()
         {
             return match (true)
             {
@@ -195,6 +204,7 @@ class Message extends Data
                 null !== $this->channelChatCreated    => 'channelChatCreated',
                 null !== $this->invoice               => 'invoice',
                 null !== $this->userShared            => 'userShared',
+                null !== $this->usersShared           => 'usersShared',
                 null !== $this->chatShared            => 'chatShared',
 
                 null !== $this->caption               => 'media',
@@ -209,15 +219,17 @@ class Message extends Data
     protected function getGlobalTypeAttribute()
     {
         return $this->makeCache(
-            'globalType', function()
+            'globalType', function ()
         {
             return match ($this->type)
             {
-                'photo', 'video', 'voice', 'audio', 'sticker', 'animation', 'videoNote', 'document'                                                      => 'media',
-                'contact', 'location', 'dice', 'game', 'poll', 'invoice', 'userShared', 'chatShared'                                                     => 'data',
+                'text'                                                                                                                                   => 'text',
+                'photo', 'video', 'voice', 'audio', 'sticker', 'animation', 'videoNote', 'document', 'media'                                             => 'media',
+                'contact', 'location', 'dice', 'game', 'poll', 'invoice', 'userShared', 'usersShared', 'chatShared'                                      => 'data',
                 'newChatMembers', 'leftChatMember', 'newChatTitle', 'deleteChatPhoto', 'groupChatCreated', 'supergroupChatCreated', 'channelChatCreated' => 'info',
                 'story'                                                                                                                                  => '',     // TODO
                 'venue'                                                                                                                                  => 'data', // TODO
+                default                                                                                                                                  => 'unknown',
             };
         }
         );
@@ -225,12 +237,38 @@ class Message extends Data
 
     protected function getMediaAttribute()
     {
-        if($this->globalType == 'media')
+        if ($this->globalType == 'media')
         {
             return $this->{$this->type};
         }
 
         return null;
+    }
+
+    protected function getIsForwardedAttribute() : bool
+    {
+        return $this->forwardFrom || $this->forwardFromChat;
+    }
+
+    protected function getIsDeletedAttribute() : bool
+    {
+        return $this->allData['date'] === 0;
+    }
+
+
+    public function build()
+    {
+        $media = $this->media;
+
+        if ($this->type != 'text' && (!$media || !method_exists($media, 'send')))
+        {
+            return null;
+        }
+
+        return new MessageBuilder(
+            $this->text,
+            $media,
+        );
     }
 
 
@@ -243,18 +281,18 @@ class Message extends Data
      */
     public function isCommand(string|array $command, array &$prompts = null)
     {
-        if(isset($this->allData['text']))
+        if (isset($this->allData['text']))
         {
-            foreach(is_array($command) ? $command : [$command] as $command)
+            foreach (is_array($command) ? $command : [$command] as $command)
             {
                 $pattern = '#' . $command . '#i';
                 $promptNames = [];
 
                 $pattern = preg_replace_callback(
-                    '/\{([\w\d]+)(\:(.*?)|)\}/', function($matches) use (&$promptNames)
+                    '/\{([\w\d]+)(\:(.*?)|)\}/', function ($matches) use (&$promptNames)
                 {
                     $pat = $matches[3] ?: '.*';
-                    if($pat == '*')
+                    if ($pat == '*')
                     {
                         $pat = '[\s\S]*';
                     }
@@ -264,10 +302,10 @@ class Message extends Data
                 }, $pattern
                 );
 
-                if(preg_match($pattern, $this->text, $matches))
+                if (preg_match($pattern, $this->text, $matches))
                 {
                     $prompts = [];
-                    foreach($promptNames as $name)
+                    foreach ($promptNames as $name)
                     {
                         $prompts[$name] = $matches[$name];
                     }
@@ -342,16 +380,32 @@ class Message extends Data
 
     public function editText($message = null, array $args = [], ...$namedArgs)
     {
-        $args = $this->mergeMultiple(
-            [
-                'chat'      => $this->chat?->id,
-                'messageId' => $this->id,
-                'text'      => $message,
-            ],
-            $args + $namedArgs
-        );
+        if ($this->globalType == 'media')
+        {
+            $args = $this->mergeMultiple(
+                [
+                    'chat'      => $this->chat?->id,
+                    'messageId' => $this->id,
+                    'caption'   => $message,
+                ],
+                $args + $namedArgs
+            );
 
-        return $this->bot()->editMessageText($args);
+            $this->bot()->editMessageCaption($args);
+        }
+        else
+        {
+            $args = $this->mergeMultiple(
+                [
+                    'chat'      => $this->chat?->id,
+                    'messageId' => $this->id,
+                    'text'      => $message,
+                ],
+                $args + $namedArgs
+            );
+
+            return $this->bot()->editMessageText($args);
+        }
     }
 
     public function forward($chatId = null, array $args = [], ...$namedArgs)

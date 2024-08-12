@@ -2,6 +2,7 @@
 
 namespace Mmb\Core\Traits;
 
+use Mmb\Core\Updates\Infos\ChatFullInfo;
 use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Infos\ChatMember;
 
@@ -96,7 +97,7 @@ trait ApiBotChats
     public function getChat(array $args = [], ...$namedArgs)
     {
         return $this->makeData(
-            ChatInfo::class,
+            ChatFullInfo::class,
             $this->request('getChat', $args + $namedArgs)
         );
     }

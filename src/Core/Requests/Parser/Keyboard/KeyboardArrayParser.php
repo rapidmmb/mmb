@@ -14,6 +14,7 @@ class KeyboardArrayParser extends ArrayParser
                 0                 => 'text',
                 'text'            => 'text',
                 'requestUser'     => app(KeyboardRequestUserArrayParser::class),
+                'requestUsers'    => app(KeyboardRequestUsersArrayParser::class),
                 'requestChat'     => app(KeyboardRequestChatArrayParser::class),
                 'requestPoll'     => app(KeyboardRequestPollArrayParser::class),
                 'requestLocation' => 'requestLocation',

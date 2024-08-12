@@ -2,133 +2,77 @@
 
 namespace Mmb\Providers;
 
+use Carbon\Laravel\ServiceProvider;
 use Illuminate\Console\Application as Artisan;
 use Illuminate\Contracts\Foundation\CachesRoutes;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\ServiceProvider;
-use Mmb\Action\Filter\Filter;
 use Mmb\Auth\AreaRegister;
-use Mmb\Console\AutoMigrateCommand;
-use Mmb\Console\SectionMakeCommand;
+use Mmb\Console;
+use Mmb\Core\Bot;
 use Mmb\Core\BotChanneling;
-use Mmb\Http\Controllers\WebhookController;
 use Mmb\Core\Requests\Parser\ArgsParserFactory;
 use Mmb\Core\Requests\Parser\DefaultArgsParser;
-use Mmb\Core\Bot;
-use PhpParser\Node\Expr\Closure;
 
 class MmbServiceProvider extends ServiceProvider
 {
 
     /**
-     * Area classes
+     * Register app
      *
-     * @var array
-     */
-    protected $areas = [];
-
-    /**
-     * Args parser class
-     *
-     * @var string
-     */
-    protected $argsParser = DefaultArgsParser::class;
-
-    public final function register()
-    {
-        $this->app->singleton(AreaRegister::class);
-        $this->app->singleton(ArgsParserFactory::class, fn() => new ($this->argsParser)());
-
-        $this->booted(function()
-        {
-            $this->app->singleton(BotChanneling::class, function()
-            {
-                $driver = $this->getConfig('channeling');
-                return new $driver($this->getConfig('channels'));
-            });
-
-            $this->app->singleton(Bot::class, fn() => app(BotChanneling::class)->getDefaultBot());
-
-            if(!($this->app instanceof CachesRoutes && $this->app->routesAreCached()))
-            {
-                app(BotChanneling::class)->defineRoutes();
-            }
-
-            $this->registerAreas();
-            $this->registerCommands();
-        });
-    }
-
-    /**
-     * Register configs
-     *
-     * @param string $path
      * @return void
      */
-    public function registerConfigs(string $path)
+    public function register()
     {
-        $this->mergeConfigFrom($path, 'mmb');
+        $config = __DIR__ . '/../../config/mmb.php';
+        $this->publishes([$config => base_path('config/mmb.php')], ['mmb']);
+        $this->mergeConfigFrom($config, 'mmb');
+
+        $this->app->singleton(AreaRegister::class);
+        $this->app->singleton(ArgsParserFactory::class, fn() => new DefaultArgsParser());
+
+        $this->registerBot();
+        $this->registerAreas();
+        $this->registerCommands();
     }
 
     /**
-     * Get config value
+     * Register bot channeling and bot object using config
      *
-     * @param string $key
-     * @return mixed
+     * @return void
      */
-    public function getConfig(string $key)
+    public function registerBot()
     {
-        return config()->get('mmb.' . $key);
+        $this->app->singleton(BotChanneling::class, function()
+        {
+            $driver = config('mmb.channeling');
+            return new $driver(config('mmb.channels'));
+        });
+
+        $this->app->singleton(Bot::class, fn() => app(BotChanneling::class)->getDefaultBot());
+
+        if(!($this->app instanceof CachesRoutes && $this->app->routesAreCached()))
+        {
+            app(BotChanneling::class)->defineRoutes();
+        }
     }
 
     /**
-     * Register areas
+     * Register area classes using config
      *
      * @return void
      */
     public function registerAreas()
     {
-        foreach($this->areas as $area)
+        foreach (config('mmb.areas', []) as $area)
         {
-            $this->registerArea($area);
+            app($area)->boot();
         }
     }
 
-    /**
-     * Register an area
-     *
-     * @param string $class
-     * @return void
-     */
-    public function registerArea(string $class)
-    {
-        app($class)->boot();
-    }
-
-    /**
-     * Register routes
-     *
-     * @return void
-     */
-    public function registerRoutes()
-    {
-        Route::post($this->route, [WebhookController::class, 'update']);
-    }
-
-    /**
-     * Register filter fail handler
-     *
-     * @param string|Closure $handler
-     * @return void
-     */
-    public function registerFailHandler(string|Closure $handler)
-    {
-        Filter::registerFailHandler($handler);
-    }
 
     protected array $commands = [
-        SectionMakeCommand::class,
-        AutoMigrateCommand::class,
+        Console\SectionMakeCommand::class,
+        Console\AreaMakeCommand::class,
+        Console\MmbServeCommand::class,
     ];
 
     /**

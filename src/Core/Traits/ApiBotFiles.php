@@ -17,7 +17,7 @@ trait ApiBotFiles
 
     public function getFileDownloadUrl(string $filePath)
     {
-        return "https://api.telegram.org/file/bot" . $this->token . "/" . $filePath;
+        return "https://api.telegram.org/file/bot" . $this->info->token . "/" . $filePath;
     }
 
 }

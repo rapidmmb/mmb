@@ -8,7 +8,7 @@ use Traversable;
 trait DataCollection
 {
 
-    public function __construct(array $data, Bot $bot = null, bool $trustedData = false)
+    protected function initialize(array $data, bool $trustedData)
     {
         $castTo = $this->getCollectionClassType();
         foreach($data as $i => $item)

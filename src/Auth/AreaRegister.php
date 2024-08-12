@@ -3,6 +3,7 @@
 namespace Mmb\Auth;
 
 use Illuminate\Contracts\Auth\Access\Gate;
+use Mmb\Mmb;
 
 class AreaRegister
 {
@@ -16,7 +17,7 @@ class AreaRegister
      * @param string|array $ability
      * @return void
      */
-    public function forClass(string $class, string|array $ability)
+    public function authClass(string $class, string|array $ability)
     {
         @$this->classes[$class][] = $ability;
     }
@@ -31,7 +32,7 @@ class AreaRegister
      * @param string|array $ability
      * @return void
      */
-    public function forNamespace(string $namespace, string|array $ability)
+    public function authNamespace(string $namespace, string|array $ability)
     {
         if(!str_ends_with($namespace, '\\'))
         {
@@ -39,6 +40,25 @@ class AreaRegister
         }
 
         @$this->namespaces[$namespace][] = $ability;
+    }
+
+    private array $attributes = [];
+
+    private array $attribute_namespaces = [];
+
+    public function putForClass(string $class, string $attribute, $value)
+    {
+        $this->attributes[$class][$attribute] = $value;
+    }
+
+    public function putForNamespace(string $namespace, string $attribute, $value)
+    {
+        if(!str_ends_with($namespace, '\\'))
+        {
+            $namespace .= '\\';
+        }
+
+        $this->attribute_namespaces[$namespace][$attribute] = $value;
     }
 
 
@@ -66,7 +86,7 @@ class AreaRegister
 
         try
         {
-            $guard = app(Gate::class)->forUser(auth()->user());
+            $guard = app(Gate::class)->forUser(Mmb::guard()->user());
 
             if(isset($this->classes[$class]))
             {
@@ -111,7 +131,7 @@ class AreaRegister
             return $this->canCache[$class];
         }
 
-        $guard = app(Gate::class)->forUser(auth()->user());
+        $guard = app(Gate::class)->forUser(Mmb::guard()->user());
 
         if(isset($this->classes[$class]))
         {
@@ -139,6 +159,36 @@ class AreaRegister
         }
 
         return $this->canCache[$class] = true;
+    }
+
+    /**
+     * Get area attribute
+     *
+     * @param string $class
+     * @param string $attribute
+     * @param mixed  $default
+     * @return mixed
+     */
+    public function getAttribute(string $class, string $attribute, $default = null)
+    {
+        if (array_key_exists($attribute, $this->attributes))
+        {
+            return value($this->attributes[$attribute]);
+        }
+
+        $bestLength = 0;
+        $result = $default;
+
+        foreach ($this->attribute_namespaces as $namespace => $value)
+        {
+            if (str_starts_with($class, $namespace) && strlen($namespace) >= $bestLength)
+            {
+                $bestLength = strlen($namespace);
+                $result = $value;
+            }
+        }
+
+        return value($result);
     }
 
 }

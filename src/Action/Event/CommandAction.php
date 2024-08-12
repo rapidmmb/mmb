@@ -46,9 +46,19 @@ class CommandAction extends Action implements UpdateHandling
      */
     public function matcher(QueryMatcher $matcher)
     {
-        foreach(is_array($this->command) ? $this->command : [$this->command] as $command)
+        foreach(is_array($this->command) ? $this->command : [$this->command] as $key => $command)
         {
-            $pattern = $matcher->match($command, 'handle');
+            if (is_string($key))
+            {
+                $action = $command;
+                $command = $key;
+            }
+            else
+            {
+                $action = 'handle';
+            }
+
+            $pattern = $matcher->match($command, $action);
 
             if($this->ignoreCase)
                 $pattern->ignoreCase();
@@ -85,4 +95,17 @@ class CommandAction extends Action implements UpdateHandling
 
         $update->skipHandler();
     }
+
+
+    /**
+     * Make command string for arguments match
+     *
+     * @param ...$args
+     * @return string
+     */
+    public static function commandFor(...$args)
+    {
+        return (new static)->getMatcher()->makeQuery(...$args);
+    }
+
 }

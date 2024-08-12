@@ -24,7 +24,7 @@ class DefaultBotChanneling extends BotChanneling
      */
     public function defineRoutes()
     {
-        Route::post('bot/{hookToken}', [WebhookController::class, 'update']);
+        Route::post('bot/{hookToken}', [WebhookController::class, 'update'])->name('mmb.webhook');
     }
 
     /**
@@ -44,6 +44,22 @@ class DefaultBotChanneling extends BotChanneling
 
         // Handle update
         return $this->handleUpdate($request);
+    }
+
+    /**
+     * Get bot webhook url
+     *
+     * @param InternalBotInfo $info
+     * @return string|null
+     */
+    public function getWebhookUrl(InternalBotInfo $info)
+    {
+        if (isset($info->configName) && $args = @$this->args[$info->configName])
+        {
+            return route('mmb.webhook', ['hookToken' => $args['hookToken']]);
+        }
+
+        return null;
     }
 
 }

@@ -4,6 +4,7 @@ namespace Mmb\Action\Section\Controllers;
 
 use Illuminate\Support\Facades\Hash;
 use Mmb\Action\Action;
+use Mmb\Action\Section\Attributes\FixedDialog;
 
 class QueryMatcher
 {
@@ -80,6 +81,17 @@ class QueryMatcher
     }
 
     /**
+     * Get class id for a class
+     *
+     * @param string $class
+     * @return mixed
+     */
+    public static function getClassId(string $class)
+    {
+        return crc32($class);
+    }
+
+    /**
      * Auto match from class attributes
      *
      * @param Action $object
@@ -95,25 +107,34 @@ class QueryMatcher
                 "Query matcher of type [$this->type] is not supported auto matching"
             ),
         };
-        $prefix = crc32(get_class($object)) . ':';
+        $prefix = static::getClassId(get_class($object)) . ':';
 
         $methods = [];
         foreach(get_class_methods($object) as $method)
         {
             if($attr = $object::getMethodAttributeOf($method, $base))
             {
-                if(isset($attr->pattern))
+                if ($attr instanceof FixedDialog)
                 {
                     $pattern = $this->match($attr->full ? $attr->pattern : $prefix . $attr->pattern);
-                    if($pattern->has('_'))
-                    {
-                        $pattern->same('_', $attr->name ?? $method);
-                    }
-                    $pattern->action($method);
+                    $pattern->dontMake();
+                    $pattern->action(fn() => $attr->fire($pattern, get_class($object), $method));
                 }
                 else
                 {
-                    $methods[] = $method;
+                    if (isset($attr->pattern))
+                    {
+                        $pattern = $this->match($attr->full ? $attr->pattern : $prefix . $attr->pattern);
+                        if ($pattern->has('_'))
+                        {
+                            $pattern->same('_', $attr->name ?? $method);
+                        }
+                        $pattern->action($method);
+                    }
+                    else
+                    {
+                        $methods[] = $method;
+                    }
                 }
             }
         }

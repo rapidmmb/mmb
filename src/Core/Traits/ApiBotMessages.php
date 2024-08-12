@@ -2,7 +2,9 @@
 
 namespace Mmb\Core\Traits;
 
+use Illuminate\Support\Str;
 use Mmb\Core\Builder\ApiMessageBuilder;
+use Mmb\Core\Data;
 use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Messages\Message;
 
@@ -18,7 +20,7 @@ trait ApiBotMessages
     {
         $args = $args + $namedArgs;
 
-        if(isset($args['type']))
+        if (isset($args['type']))
         {
             return $this->send($args);
         }
@@ -47,6 +49,13 @@ trait ApiBotMessages
         else
         {
             $type = 'text';
+        }
+
+        // Send object data
+        if ($type instanceof Data && method_exists($type, 'send'))
+        {
+            $type->setTargetBot($this);
+            return $type->send($args);
         }
 
         // Normal text message
@@ -86,6 +95,8 @@ trait ApiBotMessages
                 $args[strtolower($type)] = $args['value'];
                 unset($args['value']);
             }
+
+            $type = ucfirst(Str::camel($type));
 
             return $this->makeData(
                 Message::class,
@@ -166,11 +177,24 @@ trait ApiBotMessages
         return $this->request('deleteMessage', $args + $namedArgs);
     }
 
+    public function deleteMessages(array $args = [], ...$namedArgs)
+    {
+        return $this->request('deleteMessages', $args + $namedArgs);
+    }
+
     public function editMessageText(array $args = [], ...$namedArgs)
     {
         return $this->makeData(
             Message::class,
             $this->request('editMessageText', $args + $namedArgs)
+        );
+    }
+
+    public function editMessageCaption(array $args = [], ...$namedArgs)
+    {
+        return $this->makeData(
+            Message::class,
+            $this->request('editMessageCaption', $args + $namedArgs)
         );
     }
 
