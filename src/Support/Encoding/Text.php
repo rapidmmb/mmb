@@ -7,27 +7,49 @@ use BackedEnum;
 class Text
 {
 
-    public static function html(string $string) : string
+    protected static array $modes = [
+        'none' => Modes\NoneEncoding::class,
+        'html' => Modes\HtmlEncoding::class,
+        'markdown' => Modes\MarkdownEncoding::class,
+        'markdown2' => Modes\Markdown2Encoding::class,
+    ];
+
+    public static function defineMode(string $mode, string|Modes\TextModeEncoding $object)
     {
-        return str_replace([
-            '&', '<', '>',
-        ], [
-            "&amp;", "&lt;", "&gt;",
-        ], $string);
+        static::$modes[strtolower($mode)] = $object;
     }
 
-    public static function markdown(string $string) : string
+    public static function mode(string $mode) : Modes\TextModeEncoding
     {
-        return str_replace([
-            "\\", '_', '*', '`', '['
-        ], [
-            "\\\\", "\\_", "\\*", "\\`", "\\[",
-        ], $string);
+        $mode = strtolower($mode);
+        $object = static::$modes[$mode] ?? null;
+
+        if (is_null($object))
+        {
+            throw new Modes\ModeNotFoundException("Mode [$mode] not found");
+        }
+
+        if (is_string($object))
+        {
+            $object = static::$modes[$mode] = new $object;
+        }
+
+        return $object;
     }
 
-    public static function markdown2(string $string) : string
+    public static function html(string $text) : string
     {
-        return preg_replace('/[\\\\_\*\[\]\(\)~`>\#\+\-=\|\{\}\.\!]/', '\\\\$0', $string);
+        return static::mode('html')->text($text)->toString();
+    }
+
+    public static function markdown(string $text) : string
+    {
+        return static::mode('markdown')->text($text)->toString();
+    }
+
+    public static function markdown2(string $text) : string
+    {
+        return static::mode('markdown2')->text($text)->toString();
     }
 
     public static function userFriendly($value) : string
