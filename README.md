@@ -2119,6 +2119,84 @@ $result = KeyFormatter::for([...])->resize(2)->rtl()->toArray();
 ```
 
 
+## Text
+
+### Modes
+```php
+$mode = Text::mode('none');
+$mode = Text::mode('html');
+$mode = Text::mode('markdown'); // Recommended to use 'markdown2'
+$mode = Text::mode('markdown2');
+```
+
+```php
+// Normal styles:
+$mode->bold('Hello world'); // <b>Hello world</b>
+$mode->italic('Text'); // <i>Text</i>
+
+// Tag user:
+$mode->user($user->name, $user->id); // <a href='tg://user?id=12345678'>Ahmad</a>
+
+// Merge many styled text (StringContent):
+$mode->build($mode->bold('A'), $mode->italic('B')); // <b>A</b><i>B</i>
+$mode->build('Hello ', $mode->bold('Ahmad'), $mode->italic(' =D')); // Hello<b>Ahmad</b><i> =D</i>
+
+// Deep:
+$mode->bold($mode->italic('Styled')); // <b><i>Styled</i></b>
+```
+
+### Text Builder
+```php
+TextBuilder::make('html', prefix: '$ ', suffix: ' $', separate: ' : ', division: "---", subtitle: "The End")
+    ->line('This is simple text')
+    ->space1()
+    ->line('Your name', $user->name)
+    ->space()
+    ->div()
+    ->space()
+    ->blank('Checkout your profile tomorrow')
+    ->toString();
+```
+Result is:
+```text
+$ This is simple text $
+
+$ Your name : Ahmad $
+
+
+---
+
+
+Checkout your profile tomorrow
+The End
+```
+
+Using `build` helper method:
+```php
+TextBuilder::make('html', prefix: '# ', separate: ' : ')
+    ->build(fn (TextBuilder $text, TextModeEncoding $mode) => $text
+         ->blank($mode->bold("Your Profile:"))
+         ->space()
+         ->line('Name', $user->name)
+         ->line('Age', $user->age)
+         ->line('Break the', 'rules', prefix: '~ ', suffix: ' ~', separate: '  ')
+    );
+```
+
+Result is:
+```text
+<b>Your Profile:</b>
+
+
+# Name : Ahmad
+# Age : 12
+~ Break the  rules ~
+```
+
+
+
+
+
 
 
 
