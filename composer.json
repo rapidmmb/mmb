@@ -1,6 +1,6 @@
 {
-    "name": "mmb/plus",
-    "description": "Make my bot with Laravel framework",
+    "name": "rapid/mmb-core",
+    "description": "Make your bot with Laravel framework",
     "type": "library",
     "require": {
         "guzzlehttp/guzzle": "^7.0",
