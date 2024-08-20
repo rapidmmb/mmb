@@ -3,10 +3,12 @@
 namespace Mmb\Action\Section\Attributes;
 
 use Attribute;
+use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Section\Controllers\Attributes\OnCallback;
 use Mmb\Action\Section\Controllers\QueryMatcher;
 use Mmb\Action\Section\Controllers\QueryMatchPattern;
 use Mmb\Action\Section\Dialog;
+use Mmb\Action\Section\Section;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
@@ -38,11 +40,16 @@ class FixedDialog extends OnCallback
     public function fire(QueryMatchPattern $pattern, string $class, string $method)
     {
         [$args, $within] = Caller::splitArguments($pattern->getVisibleMatches());
-        /** @var Dialog $dialog */
-        $dialog = $class::make()->dialog($method, ...$within);
+
+        $dialog = new Dialog;
+        $dialog->loadFromData($within);
+
+        /** @var InlineLoadRegister $dialogLoad */
+        $dialogLoad = $class::make()->loadInlineRegister($dialog, $method);
+        $dialogLoad->register();
 
         $dialog->makeReady();
-        Dialog::handleFrom();
+        // Dialog::handleFrom();
         $dialog->fireAction(
             $dialog->findActionFromString('D' . $pattern->getMatch('_action')),
             app(Update::class),

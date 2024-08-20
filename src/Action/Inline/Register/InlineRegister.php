@@ -120,6 +120,8 @@ abstract class InlineRegister
                         $attribute->registerInlineParameter($this, $parameter->name);
                     }
                 }
+
+                $this->onRegisteredParameter($parameter->name);
             }
         }
     }
@@ -131,6 +133,16 @@ abstract class InlineRegister
      * @return void
      */
     protected function onRegisterParameter(string $name)
+    {
+    }
+
+    /**
+     * Event for registered parameters
+     *
+     * @param string $name
+     * @return void
+     */
+    protected function onRegisteredParameter(string $name)
     {
     }
 
@@ -163,11 +175,6 @@ abstract class InlineRegister
      */
     protected function registerHaveItems()
     {
-        foreach ($this->haveItems as $name => $item)
-        {
-            $this->inlineAction->have($name, $item, $item);
-            unset($item);
-        }
     }
 
 

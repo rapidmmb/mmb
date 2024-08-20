@@ -27,4 +27,18 @@ class InlineCreateRegister extends InlineRegister
         $this->shouldHave($name, $this->callArgs[$name] ?? null);
     }
 
+    /**
+     * Register inline action with haveItems
+     *
+     * @return void
+     */
+    protected function registerHaveItems()
+    {
+        foreach ($this->haveItems as $name => $item)
+        {
+            $this->inlineAction->have($name, $item, $item);
+            unset($item);
+        }
+    }
+
 }

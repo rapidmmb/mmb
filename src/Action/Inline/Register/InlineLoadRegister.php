@@ -19,7 +19,7 @@ class InlineLoadRegister extends InlineRegister
         $this->fire('before');
 
         $this->registerBoot();
-        // $this->registerHaveItems();
+        $this->registerHaveItems();
         $this->registerByCall();
 
         $this->fire('after');

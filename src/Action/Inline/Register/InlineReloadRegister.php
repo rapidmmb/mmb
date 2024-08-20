@@ -4,7 +4,7 @@ namespace Mmb\Action\Inline\Register;
 
 use Mmb\Action\Inline\InlineAction;
 
-class InlineReloadRegister extends InlineCreateRegister
+class InlineReloadRegister extends InlineLoadRegister
 {
 
     public InlineAction $from;
@@ -17,7 +17,24 @@ class InlineReloadRegister extends InlineCreateRegister
 
     protected function onRegisterParameter(string $name)
     {
-        $this->shouldHave($name, $this->from->get($name));
+        $value = $this->from->get($name);
+
+        $this->callArgs[$name] = $value;
+        $this->haveItems[$name] = $value;
+    }
+
+    /**
+     * Register inline action with haveItems
+     *
+     * @return void
+     */
+    protected function registerHaveItems()
+    {
+        foreach ($this->haveItems as $name => $item)
+        {
+            $this->inlineAction->have($name, $item, $item);
+            unset($item);
+        }
     }
 
 }

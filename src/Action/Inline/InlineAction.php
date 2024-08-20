@@ -150,6 +150,11 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function getWithinData()
     {
+        if ($this->isLoading())
+        {
+            return $this->storedWithData ?? [];
+        }
+
         if (!isset($this->cachedWithinData))
         {
             $this->makeReadyWithinData();
@@ -509,6 +514,13 @@ abstract class InlineAction implements ConvertableToStep
             $instance = new ($step->initalizeClass)($update);
             $instance->loadInlineRegister($this, $step->initalizeMethod)->register();
         }
+    }
+
+    public function loadFromData(array $data = [])
+    {
+        $this->isCreating = false;
+        $this->storedWithData = $data + ($this->storedWithData ?? []);
+        return $this;
     }
 
     /**

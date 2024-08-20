@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Action;
 use Mmb\Action\Memory\StepMemory;
 use Mmb\Action\Section\Attributes\FixedDialog;
+use Mmb\Core\Requests\Exceptions\TelegramException;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\ActionCallback;
@@ -228,16 +229,28 @@ class Dialog extends Menu
         $this->makeReady();
         $message ??= value($this->message);
 
-        return tap(
-            $this->update->getMessage()->editText($message, $args + $namedArgs + ['key' => $this->cachedKey]),
-            function($message)
-            {
-                if($message)
+        try
+        {
+            return tap(
+                $this->update->getMessage()->editText($message, $args + $namedArgs + ['key' => $this->cachedKey]),
+                function($message)
                 {
-                    $this->saveMenuAction($message);
+                    if($message)
+                    {
+                        $this->saveMenuAction($message);
+                    }
                 }
+            );
+        }
+        catch(TelegramException $exception)
+        {
+            if (str_contains($exception->getMessage(), 'Bad Request: message is not modified'))
+            {
+                return $this->update->getMessage();
             }
-        );
+
+            throw $exception;
+        }
     }
 
     /**
