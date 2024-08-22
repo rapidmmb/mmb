@@ -12,7 +12,7 @@ trait HasSimpleEvents
      *
      * @var array
      */
-    private array $_events = [];
+    protected array $_events = [];
 
     /**
      * Add event listener
@@ -56,11 +56,22 @@ trait HasSimpleEvents
     }
 
     /**
+     * Check the event is already defined using `on` method
+     *
+     * @param string $event
+     * @return bool
+     */
+    public function isDefinedEvent(string $event)
+    {
+        return array_key_exists(strtolower($event), $this->_events);
+    }
+
+    /**
      * Get event dynamic arguments
      *
      * @return array
      */
-    protected function getEventDynamicArgs()
+    public function getEventDynamicArgs()
     {
         return [];
     }

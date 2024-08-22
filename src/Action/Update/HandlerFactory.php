@@ -30,7 +30,7 @@ class HandlerFactory
 
     protected array $dynamicArgs = [];
 
-    protected function getEventDynamicArgs()
+    public function getEventDynamicArgs()
     {
         return $this->dynamicArgs +
             [

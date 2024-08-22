@@ -3,11 +3,13 @@
 namespace Mmb\Action\Form\Inline;
 
 use Closure;
+use Mmb\Action\Action;
 use Mmb\Action\Form\FormStepHandler;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
 use Mmb\Action\Memory\Step;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Caller\Caller;
 
 class InlineForm extends InlineAction
 {
@@ -119,6 +121,45 @@ class InlineForm extends InlineAction
     {
         $this->form->on('cancel', $callback);
         return $this;
+    }
+
+    /**
+     * Back event
+     *
+     * @param Closure|array|string $callback
+     * @param string|null          $method
+     * @return void
+     */
+    public function back(Closure|array|string $callback, ?string $method = null)
+    {
+        if (is_string($callback) && $method === null)
+        {
+            $method = $callback;
+            $callback = null;
+        }
+        elseif (is_array($callback))
+        {
+            [$callback, $method] = $callback;
+        }
+
+        if ($callback instanceof Closure)
+        {
+            $this->form->on('back', $callback);
+        }
+        else
+        {
+            $this->form->on('back', function ($finished) use($callback, $method)
+            {
+                if (is_string($callback) && is_a($callback, Action::class, true))
+                {
+                    $callback::make()->invokeDynamic($method, [$finished], $this->form->getEventDynamicArgs());
+                }
+                else
+                {
+                    Caller::invoke([$callback, $method], [$finished], $this->form->getEventDynamicArgs());
+                }
+            });
+        }
     }
 
     /**

@@ -5,12 +5,17 @@ namespace Mmb\Action\Form\Inline;
 use Closure;
 use Mmb\Action\Form\Form;
 use Mmb\Action\Form\FormStepHandler;
+use Mmb\Action\Form\HasFormBacks;
 use Mmb\Action\Form\Input;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
 class InlineFormRunner extends Form
 {
+    use HasFormBacks
+    {
+        onBack as __onBack;
+    }
 
     protected $inputs = [];
 
@@ -40,6 +45,20 @@ class InlineFormRunner extends Form
                 'form' => $this,
             ]);
         }
+    }
+
+    public function onBack(bool $finished)
+    {
+        if ($this->isDefinedEvent('back')) return;
+
+        $this->__onBack($finished);
+    }
+
+    public function onCancel()
+    {
+        if ($this->isDefinedEvent('cancel')) return;
+
+        parent::onCancel();
     }
 
     public FormStepHandler $lastSavedStep;

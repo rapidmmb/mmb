@@ -649,7 +649,7 @@ class Form extends Action
     /**
      * @return array
      */
-    protected function getEventDynamicArgs()
+    public function getEventDynamicArgs()
     {
         return [
             'form' => $this,
