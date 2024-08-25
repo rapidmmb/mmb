@@ -18,7 +18,7 @@ class CallbackControlHandler implements UpdateHandling
     {
         if($update->callbackQuery)
         {
-            $object = $this->class::make();
+            $object = $this->class::make($update);
             /** @var ?QueryMatchPattern $pattern */
             if($pattern = $object->getCallbackMatcher()->findPattern($update->callbackQuery->data))
             {

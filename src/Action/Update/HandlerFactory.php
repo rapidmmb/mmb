@@ -8,7 +8,9 @@ use Mmb\Action\Memory\Step;
 use Mmb\Action\Memory\StepHandlerPipe;
 use Mmb\Action\Middle\MiddleAction;
 use Mmb\Action\Middle\MiddleActionHandledUpdateHandling;
+use Mmb\Action\Section\Controllers\CallbackControlGroupHandler;
 use Mmb\Action\Section\Controllers\CallbackControlHandler;
+use Mmb\Action\Section\Controllers\InlineControlGroupHandler;
 use Mmb\Action\Section\Controllers\InlineControlHandler;
 use Mmb\Core\Bot;
 use Mmb\Core\Updates\Update;
@@ -355,72 +357,80 @@ class HandlerFactory
 
         try
         {
+            $this->update->isHandled = false;
+
             if ($this->stepRecord)
             {
                 Step::setModel($this->stepRecord);
+                $this->stepRecord->getStep()?->begin($this->update);
             }
 
-            while (true)
+            if (!$this->update->isHandled)
             {
-                $this->update->isHandled = false;
-
-                try
+                while (true)
                 {
-                    foreach ($handlers as $handler)
+                    $this->update->isHandled = false;
+
+                    try
                     {
-                        if ($handler instanceof Closure)
+                        foreach ($handlers as $handler)
                         {
-                            $handler = $handler();
-                        }
-
-                        if ($handler === null)
-                        {
-                            continue;
-                        }
-
-                        if (!is_a($handler, UpdateHandling::class, true))
-                        {
-                            throw new \TypeError(
-                                "Expected [" . UpdateHandling::class . "], given [" . (is_string(
-                                    $handler
-                                ) ? $handler : get_class($handler)) . "]"
-                            );
-                        }
-
-                        if (is_string($handler))
-                        {
-                            if (is_a($handler, MiddleAction::class, true))
+                            if ($handler instanceof Closure)
                             {
-                                $handler = $handler::make();
+                                $handler = $handler();
                             }
-                            $handler = new $handler;
+
+                            if ($handler === null)
+                            {
+                                continue;
+                            }
+
+                            if (!is_a($handler, UpdateHandling::class, true))
+                            {
+                                throw new \TypeError(
+                                    "Expected [" . UpdateHandling::class . "], given [" . (is_string(
+                                        $handler
+                                    ) ? $handler : get_class($handler)) . "]"
+                                );
+                            }
+
+                            if (is_string($handler))
+                            {
+                                if (is_a($handler, MiddleAction::class, true))
+                                {
+                                    $handler = $handler::make();
+                                }
+                                $handler = new $handler;
+                            }
+
+                            $this->update->isHandled = true;
+                            $handler->handleUpdate($this->update);
+
+                            if ($this->update->isHandled)
+                            {
+                                break 2;
+                            }
                         }
 
-                        $this->update->isHandled = true;
-                        $handler->handleUpdate($this->update);
-
-                        if ($this->update->isHandled)
-                        {
-                            break 2;
-                        }
+                        break;
                     }
-
-                    break;
-                }
-                catch (RepeatHandlingException $e)
-                {
-                    // Continue loop
-                    continue;
-                }
-                catch (StopHandlingException $e)
-                {
-                    break;
-                }
-                catch (CancelHandlingException $e)
-                {
-                    return $this;
+                    catch (RepeatHandlingException $e)
+                    {
+                        // Continue loop
+                        continue;
+                    }
+                    catch (StopHandlingException $e)
+                    {
+                        break;
+                    }
+                    catch (CancelHandlingException $e)
+                    {
+                        return $this;
+                    }
                 }
             }
+
+            $this->stepRecord?->getStep()?->end($this->update);
 
             if ($final)
             {
@@ -466,10 +476,16 @@ class HandlerFactory
      * Get callback query control handler
      *
      * @param string $class
-     * @return CallbackControlHandler
+     * @param string ...$classes
+     * @return CallbackControlHandler|CallbackControlGroupHandler
      */
-    public function callback(string $class)
+    public function callback(string $class, string ...$classes)
     {
+        if ($classes)
+        {
+            return new CallbackControlGroupHandler([$class, ...$classes]);
+        }
+
         return new CallbackControlHandler($class);
     }
 
@@ -477,10 +493,16 @@ class HandlerFactory
      * Get inline query control handler
      *
      * @param string $class
-     * @return InlineControlHandler
+     * @param string ...$classes
+     * @return InlineControlHandler|InlineControlGroupHandler
      */
-    public function inline(string $class)
+    public function inline(string $class, string ...$classes)
     {
+        if ($classes)
+        {
+            return new InlineControlGroupHandler([$class, ...$classes]);
+        }
+
         return new InlineControlHandler($class);
     }
 

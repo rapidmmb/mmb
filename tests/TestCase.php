@@ -3,21 +3,27 @@
 namespace Mmb\Tests;
 
 use Mmb\Core\Bot;
+use Mmb\Core\InternalBotInfo;
 use Mmb\Core\Requests\TelegramRequest;
+use Mmb\Core\Updates\Update;
+use Mmb\Providers\MmbServiceProvider;
 
-abstract class TestCase extends \PHPUnit\Framework\TestCase
+abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
     protected function setUp() : void
     {
-        $this->createApplication();
+        parent::setUp();
+
+        app()->singleton(Bot::class, fn() => new Bot(new InternalBotInfo('12345', 'test', null, null)));
+        app()->singleton(Update::class, fn() => new Update([]));
     }
 
-    public function createApplication()
+    protected function getPackageProviders($app)
     {
-        app()->singleton(Bot::class, fn() => new Bot('1307165749:AAELc518VsivWkwMBOu2I6PHoEm1R0hF-Io'));
-        TelegramRequest::appendOptions([
-            'proxy' => '192.168.96.216:10809',
-        ]);
+        return [
+            ...parent::getPackageProviders($app),
+            MmbServiceProvider::class,
+        ];
     }
 
     public function bot() : Bot

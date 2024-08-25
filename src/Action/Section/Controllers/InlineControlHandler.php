@@ -18,7 +18,7 @@ class InlineControlHandler implements UpdateHandling
     {
         if($update->inlineQuery)
         {
-            $object = $this->class::make();
+            $object = $this->class::make($update);
             /** @var ?QueryMatchPattern $pattern */
             if($pattern = $object->getInlineMatcher()->findPattern($update->inlineQuery->query))
             {

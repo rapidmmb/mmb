@@ -245,10 +245,12 @@ class QueryMatchPattern
 
         if ($action == null) return null;
 
+        [$args, $namedArgs] = Caller::splitArguments($this->matches);
+
         if (is_string($action))
-            return $object->invokeDynamic($action, [], $this->matches + ['pattern' => $this]);
+            return $object->invokeDynamic($action, $args, $namedArgs + ['pattern' => $this]);
         else
-            return Caller::invoke($action, [], $this->matches + ['pattern' => $this]);
+            return Caller::invoke($action, $args, $namedArgs + ['pattern' => $this]);
     }
 
 
@@ -408,7 +410,6 @@ class QueryMatchPattern
             }
         }
 
-
         $optionals = $argsCount - $info['required'];
         $replaces = [];
         $i = 0;
@@ -467,7 +468,7 @@ class QueryMatchPattern
 
         if(isset($this->json) && !array_key_exists($this->json, $replaces))
         {
-            $replaces[$this->json] = json_encode($args);
+            $replaces[$this->json] = json_encode([...$args]);
         }
         elseif(count($args))
         {
@@ -513,7 +514,7 @@ class QueryMatchPattern
                             return false;
                         }
 
-                        $this->matches = array_replace($this->matches, $match);
+                        $this->matches = [...$this->matches, ...$match];
                         continue;
                     }
 

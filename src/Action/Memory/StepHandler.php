@@ -87,12 +87,34 @@ class StepHandler
     }
 
     /**
-     * Handle update
+     * Handle the update
      *
      * @param Update $update
      * @return void
      */
     public function handle(Update $update)
+    {
+    }
+
+    /**
+     * Handle the update in the beginning
+     *
+     * Set the `$update->isHandled` true, to stop handling
+     *
+     * @param Update $update
+     * @return void
+     */
+    public function begin(Update $update) : void
+    {
+    }
+
+    /**
+     * Handle the update in the end
+     *
+     * @param Update $update
+     * @return void
+     */
+    public function end(Update $update) : void
     {
     }
 
