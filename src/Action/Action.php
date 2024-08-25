@@ -416,7 +416,7 @@ abstract class Action
      * @param       $message
      * @param array $args
      * @param mixed ...$namedArgs
-     * @return void
+     * @return ?bool
      */
     public function tell($message = null, array $args = [], ...$namedArgs)
     {

@@ -391,7 +391,7 @@ class Message extends Data
                 $args + $namedArgs
             );
 
-            $this->bot()->editMessageCaption($args);
+            return $this->bot()->editMessageCaption($args);
         }
         else
         {
@@ -406,6 +406,19 @@ class Message extends Data
 
             return $this->bot()->editMessageText($args);
         }
+    }
+
+    public function editKey(array $args = [], ...$namedArgs)
+    {
+        $args = $this->mergeMultiple(
+            [
+                'chat'      => $this->chat?->id,
+                'messageId' => $this->id,
+            ],
+            $args + $namedArgs
+        );
+
+        return $this->bot()->editMessageReplyMarkup($args);
     }
 
     public function forward($chatId = null, array $args = [], ...$namedArgs)

@@ -14,6 +14,8 @@ trait HasFormBacks
     // #[AsAttribute]
     // public $back = ['CLASS', 'METHOD'];
 
+    protected string $_backUsingAreaClass;
+
     public function back(bool $finished = true)
     {
         $this->fire('back', $finished);
@@ -21,7 +23,7 @@ trait HasFormBacks
 
     public function onBack(bool $finished)
     {
-        if ($back = $this->get('back') ?? app(AreaRegister::class)->getAttribute(static::class, 'back'))
+        if ($back = $this->get('back') ?? app(AreaRegister::class)->getAttribute($this->_backUsingAreaClass ?? static::class, 'back'))
         {
             if (is_array($back) && is_string(@$back[0]) && is_a($back[0], Action::class, true))
             {
@@ -61,6 +63,18 @@ trait HasFormBacks
 
         $this->put('back', $class);
 
+        return $this;
+    }
+
+    /**
+     * Use a class for getting back from area settings
+     *
+     * @param string $baseClass
+     * @return $this
+     */
+    public function withBackOfArea(string $baseClass)
+    {
+        $this->_backUsingAreaClass = $baseClass;
         return $this;
     }
 

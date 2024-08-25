@@ -19,6 +19,8 @@ class InlineForm extends InlineAction
     public function initializer($object, string $method)
     {
         $this->form = new InlineFormRunner;
+        $this->form->withBackOfArea(get_class($object));
+
         return parent::initializer($object, $method);
     }
 
@@ -128,7 +130,7 @@ class InlineForm extends InlineAction
      *
      * @param Closure|array|string $callback
      * @param string|null          $method
-     * @return void
+     * @return $this
      */
     public function back(Closure|array|string $callback, ?string $method = null)
     {
@@ -160,6 +162,8 @@ class InlineForm extends InlineAction
                 }
             });
         }
+
+        return $this;
     }
 
     /**
