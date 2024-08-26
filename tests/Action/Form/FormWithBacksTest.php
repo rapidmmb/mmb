@@ -86,6 +86,24 @@ class FormWithBacksTest extends TestCase
         $this->assertTrue(_FormWithBacksTestAction::$isCalled);
     }
 
+    public function test_back_in_cancel()
+    {
+        $form = new class extends Form
+        {
+            use HasFormBacks;
+
+            #[AsAttribute]
+            public $back = [_FormWithBacksTestAction::class, 'main'];
+
+            protected $inputs = [];
+        };
+
+        _FormWithBacksTestAction::$isCalled = false;
+        $form->startForm();
+        $form->fire('cancel');
+        $this->assertTrue(_FormWithBacksTestAction::$isCalled);
+    }
+
 }
 
 class _FormWithBacksTestAction extends Section

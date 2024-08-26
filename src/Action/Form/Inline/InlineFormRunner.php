@@ -14,7 +14,8 @@ class InlineFormRunner extends Form
 {
     use HasFormBacks
     {
-        onBack as __onBack;
+        onBack as private __onBack;
+        onCancel as private __onCancel;
     }
 
     protected $inputs = [];
@@ -58,7 +59,7 @@ class InlineFormRunner extends Form
     {
         if ($this->isDefinedEvent('cancel')) return;
 
-        parent::onCancel();
+        $this->__onCancel();
     }
 
     public FormStepHandler $lastSavedStep;
