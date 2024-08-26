@@ -12,14 +12,17 @@ use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
+use Mmb\Support\Caller\Attributes\CallingPassParameterInsteadContract;
 use Mmb\Support\Db\ModelFinder;
+use ReflectionParameter;
 use ReflectionType;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 class FindBy implements
     InlineParameterAttributeContract,
     InlineWithPropertyAttributeContract,
-    FormDynamicPropertyAttributeContract
+    FormDynamicPropertyAttributeContract,
+    CallingPassParameterInsteadContract
 {
 
     public function __construct(
@@ -161,6 +164,15 @@ class FindBy implements
     {
         $this->setClassTypeUsing(
             (new \ReflectionProperty($form, $name))->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
+
+    public function getPassParameterInstead(ReflectionParameter $parameter, $value)
+    {
+        $this->setClassTypeUsing(
+            $parameter->getType()
         );
 
         return $this->getUsableValue($value);

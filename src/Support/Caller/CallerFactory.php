@@ -11,6 +11,7 @@ use Mmb\Action\Action;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Section\Section;
 use Mmb\Support\AttributeLoader\AttributeLoader;
+use Mmb\Support\Caller\Attributes\CallingPassParameterInsteadContract;
 use ReflectionFunction;
 use ReflectionNamedType;
 use ReflectionParameter;
@@ -30,7 +31,7 @@ class CallerFactory
         // Load class attributes
         if(is_array($callable) && count($callable) == 2 && is_a($class = $callable[0], Action::class, true))
         {
-            // Invoke inline actions
+            // Invoke inline actions // TODO
             // if (!($normalArgs && $normalArgs[0] instanceof InlineAction) &&
             //     $class instanceof Section &&
             //     $inline = $class->tryCreateInlineFor($callable[1], ...$normalArgs + $dynamicArgs))
@@ -125,6 +126,10 @@ class CallerFactory
                     $attribute->authorize($value);
                     $value = $attribute->cast($value, $type);
                 }
+                if ($attribute instanceof CallingPassParameterInsteadContract)
+                {
+                    $value = $attribute->getPassParameterInstead($parameter, $value);
+                }
             }
         }
         elseif($type instanceof \ReflectionIntersectionType)
@@ -145,6 +150,10 @@ class CallerFactory
                 {
                     $attribute->authorize($value);
                     $value = $attribute->castMultiple($value, $types);
+                }
+                if ($attribute instanceof CallingPassParameterInsteadContract)
+                {
+                    $value = $attribute->getPassParameterInstead($parameter, $value);
                 }
             }
         }

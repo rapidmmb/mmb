@@ -2,10 +2,14 @@
 
 namespace Action\Control;
 
+use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Section\Controllers\Attributes\OnCallback;
 use Mmb\Action\Section\Controllers\CallbackControl;
 use Mmb\Action\Section\Controllers\QueryMatcher;
 use Mmb\Action\Section\Section;
+use Mmb\Support\Db\Attributes\FindById;
+use Mmb\Support\Db\FinderFactory;
+use Mmb\Support\Db\ModelFinder;
 use Mmb\Tests\TestCase;
 
 class CallbackControlTest extends TestCase
@@ -191,4 +195,33 @@ class CallbackControlTest extends TestCase
         $this->assertSame('FooBar', $pattern->invoke($section));
     }
 
+    public function test_model_argument_with_find_attribute()
+    {
+        $section = new class extends Section
+        {
+            use CallbackControl;
+
+            #[OnCallback]
+            public function foo(#[FindById] _CallbackControlTestModel $record)
+            {
+                return $record->id;
+            }
+        };
+
+        app()->singleton(FinderFactory::class);
+        ModelFinder::store(new _CallbackControlTestModel([
+            'id' => 10,
+        ]));
+
+        $key = $section->keyInline('Bar', 'foo', 10);
+
+        $pattern = $section->getCallbackMatcher()->findPattern($key['data']);
+        $this->assertSame(10, $pattern->invoke($section));
+    }
+
+}
+
+class _CallbackControlTestModel extends Model
+{
+    protected $fillable = ['id'];
 }
