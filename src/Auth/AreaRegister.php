@@ -171,9 +171,9 @@ class AreaRegister
      */
     public function getAttribute(string $class, string $attribute, $default = null)
     {
-        if (array_key_exists($attribute, $this->attributes))
+        if (array_key_exists($class, $this->attributes) && array_key_exists($attribute, $this->attributes[$class]))
         {
-            return value($this->attributes[$attribute]);
+            return value($this->attributes[$class][$attribute]);
         }
 
         $bestLength = 0;
@@ -181,14 +181,14 @@ class AreaRegister
 
         foreach ($this->attribute_namespaces as $namespace => $value)
         {
-            if (str_starts_with($class, $namespace) && strlen($namespace) >= $bestLength)
+            if (str_starts_with($class, $namespace) && array_key_exists($attribute, $value) && strlen($namespace) >= $bestLength)
             {
                 $bestLength = strlen($namespace);
                 $result = $value;
             }
         }
 
-        return value($result);
+        return $result === null ? null : value($result[$attribute]);
     }
 
 }

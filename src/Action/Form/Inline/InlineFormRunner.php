@@ -38,7 +38,7 @@ class InlineFormRunner extends Form
     {
         parent::onInitializingInput($input);
 
-        if($callback = $this->inputInits[$input->name] ?? false)
+        if ($callback = $this->inputInits[$input->name] ?? false)
         {
             Caller::invoke($callback, [], [
                 'input' => $input,
