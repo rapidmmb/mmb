@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb;
+namespace Mmb\Support\Pov;
 
 use App\Models\Chat;
 use Closure;

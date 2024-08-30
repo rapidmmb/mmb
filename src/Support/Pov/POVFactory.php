@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb;
+namespace Mmb\Support\Pov;
 
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
