@@ -113,13 +113,13 @@ class CallerFactory
         // String callable -> invoke main() method
         if (is_string($callable))
         {
-            return $this->invoke([new $callable, 'main'], $normalArgs, $dynamicArgs);
+            return (new $callable)->invokeDynamic('main', $normalArgs, $dynamicArgs);
         }
 
         // Action callable -> invoke main() method
         if ($callable instanceof Action)
         {
-            return $this->invoke([$callable, 'main'], $normalArgs, $dynamicArgs);
+            return $callable->invokeDynamic('main', $normalArgs, $dynamicArgs);
         }
 
         $count = count($callable);
@@ -135,11 +135,11 @@ class CallerFactory
         {
             if (is_string($callable[0]))
             {
-                return $this->invoke([new $callable[0], 'main'], $normalArgs, $dynamicArgs);
+                return (new $callable[0])->invokeDynamic('main', $normalArgs, $dynamicArgs);
             }
             else
             {
-                return $this->invoke([$callable[0], 'main'], $normalArgs, $dynamicArgs);
+                return $callable[0]->invokeDynamic('main', $normalArgs, $dynamicArgs);
             }
         }
 
@@ -147,8 +147,8 @@ class CallerFactory
         $action = $callable[0];
         if (is_string($action)) $action = new $action;
 
-        return $this->invoke(
-            [$action, $callable[1]],
+        return $action->invokeDynamic(
+            $callable[1],
             [...array_slice($callable, 2), ...$normalArgs],
             $dynamicArgs
         );
