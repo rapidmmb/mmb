@@ -2,6 +2,9 @@
 
 namespace Mmb\Action\Resource;
 
+/**
+ * @deprecated
+ */
 class HtmlResource
 {
 

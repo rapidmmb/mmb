@@ -256,7 +256,15 @@ class ResourceModule extends Section
 
     protected function fireBack(array $args = [], array $dynamicArgs = [])
     {
-        $this->fireAction($this->getBackAction(), $args, $dynamicArgs);
+        $back = $this->getBackAction();
+
+        if (!$back && $this->maker->getDefault() === $this)
+        {
+            $this->maker->section->back();
+            return;
+        }
+
+        $this->fireAction($back, $args, $dynamicArgs);
     }
 
     public function onLeave()

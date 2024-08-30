@@ -5,6 +5,7 @@ namespace Mmb\Action\Form;
 use Mmb\Action\Action;
 use Mmb\Action\Form\Attributes\AsAttribute;
 use Mmb\Auth\AreaRegister;
+use Mmb\Support\Behavior\Behavior;
 use Mmb\Support\Caller\Caller;
 
 trait HasFormBacks
@@ -23,22 +24,10 @@ trait HasFormBacks
 
     public function onBack(bool $finished)
     {
-        if ($back = $this->get('back') ?? app(AreaRegister::class)->getAttribute($this->_backUsingAreaClass ?? static::class, 'back'))
-        {
-            if (is_array($back) && is_string(@$back[0]) && is_a($back[0], Action::class, true))
-            {
-                $back[0] = new ($back[0])($this->update);
-            }
-
-            Caller::invoke($back, [], [
-                'form' => $this,
-                'finished' => $finished,
-            ]);
-        }
-        else
-        {
-            $this->response("BACK IS NOT SET"); // TODO
-        }
+        Behavior::back(dynamicArgs: [
+            'form' => $this,
+            'finished' => $finished,
+        ]);
     }
 
     public function onCancel()

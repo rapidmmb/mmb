@@ -8,6 +8,7 @@ use Mmb\Action\Inline\Attributes\InlineAttributeContract;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Menu;
 use Mmb\Auth\AreaRegister;
+use Mmb\Support\Behavior\Behavior;
 
 #[Attribute(Attribute::TARGET_METHOD)]
 class WithBack implements InlineAttributeContract
@@ -27,11 +28,10 @@ class WithBack implements InlineAttributeContract
             {
                 if (
                     is_null($this->action) &&
-                    !method_exists($register->target, 'back') &&
-                    is_array($back = app(AreaRegister::class)->getAttribute(get_class($register->target), 'back'))
+                    !method_exists($register->target, 'back')
                 )
                 {
-                    $key = $register->inlineAction->keyFor(__('mmb.menu.key.back'), ...$back);
+                    $key = $register->inlineAction->key(__('mmb.menu.key.back'), fn () => Behavior::back(get_class($register->target)));
                 }
                 else
                 {

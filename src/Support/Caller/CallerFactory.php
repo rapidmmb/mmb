@@ -108,6 +108,52 @@ class CallerFactory
         return $func->invokeArgs($params);
     }
 
+    public function invokeAction(array|string|Action $callable, array $normalArgs, array $dynamicArgs = [])
+    {
+        // String callable -> invoke main() method
+        if (is_string($callable))
+        {
+            return $this->invoke([new $callable, 'main'], $normalArgs, $dynamicArgs);
+        }
+
+        // Action callable -> invoke main() method
+        if ($callable instanceof Action)
+        {
+            return $this->invoke([$callable, 'main'], $normalArgs, $dynamicArgs);
+        }
+
+        $count = count($callable);
+
+        // Empty value -> error
+        if ($count == 0)
+        {
+            throw new InvalidArgumentException("Callable is an empty array");
+        }
+
+        // Single value -> invoke main() method
+        if ($count == 1)
+        {
+            if (is_string($callable[0]))
+            {
+                return $this->invoke([new $callable[0], 'main'], $normalArgs, $dynamicArgs);
+            }
+            else
+            {
+                return $this->invoke([$callable[0], 'main'], $normalArgs, $dynamicArgs);
+            }
+        }
+
+        // More values -> invoke the second index method
+        $action = $callable[0];
+        if (is_string($action)) $action = new $action;
+
+        return $this->invoke(
+            [$action, $callable[1]],
+            [...array_slice($callable, 2), ...$normalArgs],
+            $dynamicArgs
+        );
+    }
+
     public function getParameterValue(
         ReflectionParameter|ReflectionProperty $parameter,
                                                $value
