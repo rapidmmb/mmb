@@ -24,7 +24,7 @@ trait HasFormBacks
 
     public function onBack(bool $finished)
     {
-        Behavior::back(dynamicArgs: [
+        Behavior::back($this->_backUsingAreaClass ?? static::class, dynamicArgs: [
             'form' => $this,
             'finished' => $finished,
         ]);
