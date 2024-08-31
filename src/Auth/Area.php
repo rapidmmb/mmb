@@ -177,4 +177,52 @@ class Area
         app(AreaRegister::class)->putForNamespace($namespace, 'back', [$backMethod, $backClass]);
     }
 
+    /**
+     * Set back system using $class or $namespace
+     *
+     * @param string $class
+     * @param string $method
+     * @return void
+     */
+    protected function backSystem(string $class, string $method)
+    {
+        $this->put('back-system', [$class, $method]);
+    }
+
+    /**
+     * Set back system for a class
+     *
+     * @param string $class
+     * @param string $backClass
+     * @param string $backMethod
+     * @return void
+     */
+    protected function backSystemForClass(string $class, string $backClass, string $backMethod)
+    {
+        if (isset($this->namespace))
+        {
+            $class = trim($this->namespace, '\\') . '\\' . trim($class, '\\');
+        }
+
+        app(AreaRegister::class)->putForClass($class, 'back-system', [$backMethod, $backClass]);
+    }
+
+    /**
+     * Set back system for a namespace
+     *
+     * @param string $namespace
+     * @param string $backClass
+     * @param string $backMethod
+     * @return void
+     */
+    protected function backSystemForNamespace(string $namespace, string $backClass, string $backMethod)
+    {
+        if (isset($this->namespace))
+        {
+            $namespace = trim($this->namespace, '\\') . '\\' . trim($namespace, '\\');
+        }
+
+        app(AreaRegister::class)->putForNamespace($namespace, 'back-system', [$backMethod, $backClass]);
+    }
+
 }
