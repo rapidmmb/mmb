@@ -139,22 +139,33 @@ class Bot
                 }
             }
         }
-        catch(\Throwable $e)
+        catch (\Throwable $e)
         {
-            if($e instanceof HttpResponseException)
+            while (true)
             {
-                ; // TODO
-            }
+                try
+                {
+                    if ($e instanceof HttpResponseException)
+                    {
+                        ; // TODO
+                    }
 
-            if($e instanceof CallableException)
-            {
-                $e->invoke($update);
-                return;
-            }
+                    if ($e instanceof CallableException)
+                    {
+                        $e->invoke($update);
+                        return;
+                    }
 
-            throw $e;
-            app(ExceptionHandler::class)->report($e);
-            app(ExceptionHandler::class)->render(request(), $e);
+                    report($e); // TODO
+                    // app(ExceptionHandler::class)->report($e);
+                    // app(ExceptionHandler::class)->render(request(), $e);
+                    break;
+                }
+                catch (\Throwable $e)
+                {
+                    continue;
+                }
+            }
         }
     }
 
