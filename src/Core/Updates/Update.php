@@ -242,6 +242,8 @@ class Update extends Data
     }
 
 
+    protected bool $isRespond = false;
+
     /**
      * Response to the update
      *
@@ -252,7 +254,16 @@ class Update extends Data
      */
     public function response($message, array $args = [], ...$namedArgs)
     {
-        return $this->getMessage()->response($message, $args, ...$namedArgs);
+        if ($this->isRespond)
+        {
+            return $this->getMessage()->sendMessage($message, $args, ...$namedArgs);
+        }
+        else
+        {
+            $result = $this->getMessage()->replyMessage($message, $args, ...$namedArgs);
+            $this->isRespond = (bool) $result;
+            return $result;
+        }
     }
 
     /**

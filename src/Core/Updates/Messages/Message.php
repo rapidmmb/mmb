@@ -325,6 +325,7 @@ class Message extends Data
      * @param array $args
      * @param       ...$namedArgs
      * @return Message|null
+     * @deprecated
      */
     public function response($message = null, array $args = [], ...$namedArgs)
     {
