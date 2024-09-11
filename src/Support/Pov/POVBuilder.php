@@ -93,17 +93,17 @@ class POVBuilder
     }
 
 
-    protected Closure $catch;
+    protected Closure|false $catch;
 
     /**
      * Run the callback when catching an error
      *
-     * @param Closure(Throwable $e): mixed $callback
+     * @param null|Closure(Throwable $e): mixed $callback
      * @return $this
      */
-    public function catch(Closure $callback)
+    public function catch(?Closure $callback = null)
     {
-        $this->catch = $callback;
+        $this->catch = $callback ?? false;
 
         return $this;
     }
@@ -154,6 +154,11 @@ class POVBuilder
             // Catch the error
             if (isset($this->catch))
             {
+                if ($this->catch === false)
+                {
+                    return null;
+                }
+                
                 return ($this->catch)();
             }
 
