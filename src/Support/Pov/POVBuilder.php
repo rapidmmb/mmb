@@ -158,7 +158,7 @@ class POVBuilder
                 {
                     return null;
                 }
-                
+
                 return ($this->catch)();
             }
 
@@ -181,6 +181,8 @@ class POVBuilder
         return $return;
     }
 
+    protected ?Update $oldUpdate;
+
     protected function applyPOV()
     {
         // Apply the POV
@@ -189,7 +191,7 @@ class POVBuilder
             $apply();
         }
 
-        $update = app(Update::class);
+        $this->oldUpdate = app(Update::class);
         app()->bind(Update::class, fn() => $this->update);
     }
 
@@ -201,7 +203,7 @@ class POVBuilder
             $revert();
         }
 
-        app()->bind(Update::class, fn() => $this->update);
+        app()->bind(Update::class, fn() => $this->oldUpdate);
     }
 
 
@@ -245,8 +247,11 @@ class POVBuilder
                 if (!($isSame = $oldStep && $user ? $oldStep->is($user) : false))
                 {
                     Step::setModel($user);
-                    app(Bot::class)->guard()->setUser($user instanceof Authenticatable ? $user : null);
                     ModelFinder::storeCurrent($user);
+                    if ($user instanceof Authenticatable)
+                    {
+                        app(Bot::class)->guard()->setUser($user);
+                    }
                 }
             },
             function() use ($user, &$oldStep, &$oldGuardUser, &$oldCurrentModel, &$isSame, $save)
@@ -259,9 +264,14 @@ class POVBuilder
                 if (!$isSame)
                 {
                     Step::setModel($oldStep);
-                    app(Bot::class)->guard()->setUser($oldGuardUser ?? null);
+                    if ($oldGuardUser)
+                    {
+                        app(Bot::class)->guard()->setUser($oldGuardUser ?? null);
+                    }
                     if (isset($oldCurrentModel))
+                    {
                         ModelFinder::storeCurrent($oldCurrentModel);
+                    }
                 }
             },
         );
