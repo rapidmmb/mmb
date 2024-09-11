@@ -1926,7 +1926,7 @@ That's easy! But what about second user? That's should be hard.
 
 Don't worry! POV is here!
 ```php
-POV::user($secondUser, function ()
+pov()->user($secondUser)->run(function ()
 {
     static::make()->menu('myMenu')->response();
 });
@@ -1947,8 +1947,8 @@ class ChatQueueSection extends Section
                 'user_b_id' => $queue->user_id,
             ]);
 
-            POV::user($queue->user, fn () =>
-                static::invokes('openedChat', $chat)
+            pov()->user($queue->user)->run(
+                fn () => static::invokes('openedChat', $chat)
             );
             static::invokes('openedChat', $chat);
         }
