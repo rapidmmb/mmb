@@ -6,8 +6,10 @@ use Mmb\Core\Bot;
 use Mmb\Core\Updates\Callbacks\Callback;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Pov\POV;
+use Mmb\Support\Pov\POVBuilder;
 
-if(!function_exists('bot'))
+if (!function_exists('bot'))
 {
     function bot() : ?Bot
     {
@@ -15,31 +17,31 @@ if(!function_exists('bot'))
     }
 }
 
-if(!function_exists('upd'))
+if (!function_exists('update'))
 {
-    function upd() : ?Update
+    function update() : ?Update
     {
         return app(Update::class);
     }
 }
 
-if(!function_exists('msg'))
+if (!function_exists('msg'))
 {
     function msg() : ?Message
     {
-        return upd()?->getMessage();
+        return update()?->getMessage();
     }
 }
 
-if(!function_exists('callback'))
+if (!function_exists('callback'))
 {
     function callback() : ?Callback
     {
-        return upd()?->callbackQuery;
+        return update()?->callbackQuery;
     }
 }
 
-if(!function_exists('smartTypeOf'))
+if (!function_exists('smartTypeOf'))
 {
     function smartTypeOf($value) : string
     {
@@ -47,20 +49,20 @@ if(!function_exists('smartTypeOf'))
     }
 }
 
-if(!function_exists('byLang'))
+if (!function_exists('byLang'))
 {
     function byLang(...$values)
     {
         return array_key_exists($key = Lang::getLocale(), $values) ?
             $values[$key] : (
-                array_key_exists($key = Lang::getFallback(), $values) ?
-                    $values[$key] :
-                    null
+            array_key_exists($key = Lang::getFallback(), $values) ?
+                $values[$key] :
+                null
             );
     }
 }
 
-if(!function_exists('___'))
+if (!function_exists('___'))
 {
     function ___(...$values)
     {
@@ -68,29 +70,21 @@ if(!function_exists('___'))
     }
 }
 
-if(!function_exists('trim2'))
+if (!function_exists('trim2'))
 {
     function trim2(string|array $value)
     {
-        if(is_string($value))
+        if (is_string($value))
             $value = explode("\n", $value);
 
         return trim(implode("\n", array_map('trim', $value)));
     }
 }
 
-if(!function_exists('blade'))
+if (!function_exists('pov'))
 {
-    function blade(string $value, array $data = [])
+    function pov()
     {
-        return Blade::render($value, $data);
-    }
-}
-
-if(!function_exists('bladeText'))
-{
-    function bladeText(string $value, array $data = [])
-    {
-        return trim2(Blade::render($value, $data));
+        return POV::make();
     }
 }

@@ -15,77 +15,40 @@ use Mmb\Support\Step\Stepping;
 class POVFactory
 {
 
+    public function make()
+    {
+        return app(POVBuilder::class);
+    }
+
+    /**
+     * @deprecated
+     */
     public function as(
         Update $update,
-        ?Stepping $stepping,
+        ?Stepping $user,
         Closure|array $callback,
         bool $save = false,
     )
     {
-        $oldUpdate = app(Update::class);
-        $oldStepping = Step::getModel();
-
-        if ($stepping)
-        {
-            $oldCurrentModel = ModelFinder::current($stepping::class);
-        }
-
-        if ($stepping instanceof Authenticatable)
-        {
-            $oldUser = app(Bot::class)->guard()->user();
-        }
-
-        app()->bind(Update::class, fn() => $update);
-        Step::setModel($stepping);
-        app(Bot::class)->guard()->setUser($stepping instanceof Authenticatable ? $stepping : null);
-        if ($stepping) ModelFinder::storeCurrent($stepping);
-
-        if (is_array($callback) && count($callback) == 2)
-        {
-            if (is_string($callback[0]) && is_a($callback[0], Action::class, true))
-            {
-                $callback[0]::invokes($callback[1]);
-            }
-            else
-            {
-                $callback();
-            }
-        }
-        else
-        {
-            $callback();
-        }
-
-        if ($save && $stepping)
-        {
-            $stepping->save();
-        }
-
-        app()->bind(Update::class, fn() => $oldUpdate);
-        Step::setModel($oldStepping);
-        app(Bot::class)->guard()->setUser($oldUser ?? null);
-        if (isset($oldCurrentModel)) ModelFinder::storeCurrent($oldCurrentModel);
+        return $this->make()
+            ->update($update)
+            ->when($user)
+            ->user($user, $save)
+            ->run($callback);
     }
 
     public function chat(
-        ChatInfo $chat,
-        ?Stepping $stepping,
+        ChatInfo|int $chat,
+        ?Stepping $user,
         Closure|array $callback,
         bool $save = false,
     )
     {
-        $update = Update::make([
-            'message' => [
-                'chat' => $chat->getFullData(),
-            ],
-        ], $chat->bot());
-
-        return $this->as(
-            $update,
-            $stepping,
-            $callback,
-            $save,
-        );
+        return $this->make()
+            ->updateChat($chat)
+            ->when($user)
+            ->user($user, $save)
+            ->run($callback);
     }
 
     public function user(
@@ -94,20 +57,9 @@ class POVFactory
         bool $save = true,
     )
     {
-        $update = Update::make([
-            'message' => [
-                'chat' => [
-                    'id' => $user->getKey(),
-                ],
-            ],
-        ]);
-
-        return $this->as(
-            $update,
-            $user,
-            $callback,
-            $save,
-        );
+        return $this->make()
+            ->user($user, $save)
+            ->run($callback);
     }
 
 }
