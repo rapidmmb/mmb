@@ -11,6 +11,7 @@ use Mmb\Core\Bot;
 use Mmb\Core\BotChanneling;
 use Mmb\Core\Requests\Parser\ArgsParserFactory;
 use Mmb\Core\Requests\Parser\DefaultArgsParser;
+use Mmb\Core\Updates\Update;
 
 class MmbServiceProvider extends ServiceProvider
 {
@@ -30,6 +31,7 @@ class MmbServiceProvider extends ServiceProvider
         $this->app->singleton(ArgsParserFactory::class, fn() => new DefaultArgsParser());
 
         $this->registerBot();
+        $this->registerDefaultUpdate();
         $this->registerAreas();
         $this->registerCommands();
     }
@@ -53,6 +55,16 @@ class MmbServiceProvider extends ServiceProvider
         {
             app(BotChanneling::class)->defineRoutes();
         }
+    }
+
+    /**
+     * Register default update
+     *
+     * @return void
+     */
+    public function registerDefaultUpdate()
+    {
+        $this->app->singleton(Update::class, fn() => new Update([]));
     }
 
     /**
