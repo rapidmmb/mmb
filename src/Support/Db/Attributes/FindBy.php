@@ -81,7 +81,14 @@ class FindBy implements
         {
             ModelFinder::store($value);
 
-            return $this->key ? $value->getAttribute($this->key) : $value->getKey();
+            $key = $this->key ? $value->getAttribute($this->key) : $value->getKey();
+
+            if ($key === null)
+            {
+                throw new \InvalidArgumentException(sprintf("Failed to store [%s] by [%s], because it's null", get_class($value), $this->key ?: $value->getKeyName()));
+            }
+
+            return $key;
         }
 
         return $value;
