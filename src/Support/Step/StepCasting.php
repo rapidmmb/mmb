@@ -42,7 +42,7 @@ class StepCasting implements Castable
                     $memory = StepMemory::make(is_array(@$data['m']) ? $data['m'] : []);
                     return $data['_']::make($memory);
                 }
-                catch(\Exception $exception)
+                catch(\Throwable $exception)
                 {
                     return null;
                 }

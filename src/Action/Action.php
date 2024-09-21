@@ -381,7 +381,7 @@ abstract class Action
                     }
                 }
             }
-            catch (\Exception $e) { }
+            catch (\Throwable $e) { }
         }
 
         return true;

@@ -109,7 +109,7 @@ class AreaRegister
 
             $this->authorizeCache[$class] = false;
         }
-        catch(\Exception $e)
+        catch(\Throwable $e)
         {
             $this->authorizeCache[$class] = $e;
             throw $e;

@@ -290,7 +290,7 @@ class ShortSerialize
         {
             return static::unserialize($value);
         }
-        catch (\Exception $e)
+        catch (\Throwable $e)
         {
             return null;
         }

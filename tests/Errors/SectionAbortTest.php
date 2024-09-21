@@ -19,7 +19,7 @@ class SectionAbortTest extends TestCase
         {
             $callback();
         }
-        catch (\Exception $e)
+        catch (\Throwable $e)
         {
             if ($e instanceof CallableException)
             {

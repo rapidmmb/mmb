@@ -174,7 +174,7 @@ abstract class BotChanneling
      *
      * @param Request $request
      * @return string
-     * @throws Exception
+     * @throws \Throwable
      */
     protected function handleUpdate(Request $request)
     {
@@ -183,7 +183,7 @@ abstract class BotChanneling
             $this->makeUpdate($request)?->handle();
             return '';
         }
-        catch(Exception $e)
+        catch(\Throwable $e)
         {
             return $this->handleException($e);
         }
@@ -192,11 +192,11 @@ abstract class BotChanneling
     /**
      * Handle thrown exception
      *
-     * @param Exception $e
+     * @param \Throwable $e
      * @return mixed
-     * @throws Exception
+     * @throws \Throwable
      */
-    protected function handleException(Exception $e)
+    protected function handleException(\Throwable $e)
     {
         throw $e;
     }
