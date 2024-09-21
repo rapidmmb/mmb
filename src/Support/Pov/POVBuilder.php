@@ -133,7 +133,7 @@ class POVBuilder
      */
     public function run($callback)
     {
-        $this->applyPOV();
+        $this->start();
 
         try
         {
@@ -149,7 +149,7 @@ class POVBuilder
         }
         catch (Throwable $e)
         {
-            $this->revertPOV();
+            $this->end();
 
             // Catch the error
             if (isset($this->catch))
@@ -175,10 +175,48 @@ class POVBuilder
         }
         finally
         {
-            $this->revertPOV();
+            $this->end();
         }
 
         return $return;
+    }
+
+    protected bool $isStarting = false;
+
+    /**
+     * Start the POV
+     *
+     * You should call end() to end the POV, otherwise it will automatically end (not recommended).
+     *
+     * @return void
+     */
+    public function start()
+    {
+        if ($this->isStarting)
+        {
+            throw new \RuntimeException("The POV already started");
+        }
+
+        $this->applyPOV();
+
+        $this->isStarting = true;
+    }
+
+    /**
+     * End the POV
+     *
+     * @return void
+     */
+    public function end()
+    {
+        if (!$this->isStarting)
+        {
+            throw new \RuntimeException("The POV is not started");
+        }
+
+        $this->revertPOV();
+
+        $this->isStarting = false;
     }
 
     protected ?Update $oldUpdate;
@@ -275,6 +313,14 @@ class POVBuilder
                 }
             },
         );
+    }
+
+    public function __destruct()
+    {
+        if ($this->isStarting)
+        {
+            $this->end();
+        }
     }
 
 }

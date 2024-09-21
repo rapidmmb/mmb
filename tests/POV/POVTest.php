@@ -44,6 +44,60 @@ class POVTest extends TestCase
         $this->assertSame(true, $fake->isSaved);
     }
 
+    public function test_pov_with_start_and_end_functions()
+    {
+        $original = new Update([]);
+        $fake = new Update([]);
+
+        app()->singleton(Update::class, fn() => $original);
+        $this->assertSame($original, app(Update::class));
+
+        $pov = pov()->update($fake);
+        $pov->start();
+
+        $this->assertSame($fake, app(Update::class));
+
+        $pov->end();
+
+        $this->assertSame($original, app(Update::class));
+    }
+
+    public function test_pov_double_start()
+    {
+        $fake = new Update([]);
+
+        $pov = pov()->update($fake);
+
+        $pov->start();
+
+        try
+        {
+            $pov->start();
+            $this->assertTrue(false, "Not exception thrown");
+        }
+        catch (\RuntimeException $e)
+        {
+            $this->assertSame("The POV already started", $e->getMessage());
+        }
+    }
+
+    public function test_pov_end_without_start()
+    {
+        $fake = new Update([]);
+
+        $pov = pov()->update($fake);
+
+        try
+        {
+            $pov->end();
+            $this->assertTrue(false, "Not exception thrown");
+        }
+        catch (\RuntimeException $e)
+        {
+            $this->assertSame("The POV is not started", $e->getMessage());
+        }
+    }
+
 }
 
 class UserTest extends Model implements Stepping
