@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\Tests\Supports;
+namespace Mmb\Tests\Support;
 
 use BadMethodCallException;
 use Mmb\Core\Updates\Files\Document;

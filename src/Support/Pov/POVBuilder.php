@@ -51,6 +51,8 @@ class POVBuilder
                 app()->bind($class, fn() => $old);
             },
         );
+
+        return $this;
     }
 
     protected Update $update;

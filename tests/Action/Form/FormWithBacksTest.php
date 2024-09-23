@@ -1,6 +1,6 @@
 <?php
 
-namespace Action\Form;
+namespace Mmb\Tests\Action\Form;
 
 use Illuminate\Support\Str;
 use Mmb\Action\Form\Attributes\AsAttribute;

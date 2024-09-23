@@ -24,11 +24,13 @@ class DefaultArgsParser extends ArgsParserFactory
             'replyMarkup'       => '@parseReplyMarkup',
             // 'menu'              => '@parseMenu',
             'msg'               => 'messageId',
+            'msgId'             => 'messageId',
             'message'           => 'messageId',
             'mode'              => 'parseMode',
             'reply'             => 'replyToMessageId',
             'replyTo'           => 'replyToMessageId',
             'replyToMessage'    => 'replyToMessageId',
+            'replyMessage'      => 'replyToMessageId',
             'limit'             => [
                 '_'                    => 'limit',
                 'createChatInviteLink' => 'memberLimit',

@@ -1,12 +1,14 @@
 <?php
 
-namespace Action;
+namespace Mmb\Tests\Action;
 
 use Mmb\Action\Action;
+use Mmb\Testing\Concerns\UpdateTesting;
 use Mmb\Tests\TestCase;
 
 class ActionTest extends TestCase
 {
+    use UpdateTesting;
 
     public function test_invoke()
     {
@@ -19,6 +21,11 @@ class ActionTest extends TestCase
         };
 
         $this->assertSame('Foo', $action->invoke('main'));
+    }
+
+    public function test_response()
+    {
+
     }
 
 }

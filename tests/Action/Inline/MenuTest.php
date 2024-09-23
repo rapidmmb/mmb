@@ -1,6 +1,6 @@
 <?php
 
-namespace Action\Inline;
+namespace Mmb\Tests\Action\Inline;
 
 use Mmb\Tests\TestCase;
 

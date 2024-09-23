@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\Tests\Supports;
+namespace Mmb\Tests\Support;
 
 use Mmb\Action\Action;
 use Mmb\Auth\AreaRegister;

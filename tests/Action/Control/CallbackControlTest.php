@@ -1,6 +1,6 @@
 <?php
 
-namespace Action\Control;
+namespace Mmb\Tests\Action\Control;
 
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Section\Controllers\Attributes\OnCallback;

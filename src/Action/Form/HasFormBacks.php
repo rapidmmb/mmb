@@ -24,6 +24,15 @@ trait HasFormBacks
 
     public function onBack(bool $finished)
     {
+        if (!is_null($back = $this->get('back')))
+        {
+            Caller::invokeAction($back, [], [
+                'form' => $this,
+                'finished' => $finished,
+            ]);
+            return;
+        }
+
         Behavior::back($this->_backUsingAreaClass ?? static::class, dynamicArgs: [
             'form' => $this,
             'finished' => $finished,

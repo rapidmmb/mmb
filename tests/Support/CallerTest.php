@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\Tests\Supports;
+namespace Mmb\Tests\Support;
 
 use Illuminate\Support\Str;
 use Mmb\Action\Action;

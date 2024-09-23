@@ -33,8 +33,8 @@ class FindDynamicBy implements
     }
 
 
-    private bool $allowNull;
-    private array $classType;
+    protected bool $allowNull;
+    protected array $classType;
 
     /**
      * Try to find class type
@@ -87,7 +87,14 @@ class FindDynamicBy implements
         {
             ModelFinder::store($value);
 
-            return class_basename($value) . ':' . ($this->key === '' ? $value->getKey() : $value->{$this->key});
+            $key = $this->key ? $value->getAttribute($this->key) : $value->getKey();
+
+            if ($key === null)
+            {
+                throw new \InvalidArgumentException(sprintf("Failed to store [%s] by [%s], because it's null", get_class($value), $this->key ?: $value->getKeyName()));
+            }
+
+            return class_basename($value) . ':' . $key;
         }
 
         return $value;

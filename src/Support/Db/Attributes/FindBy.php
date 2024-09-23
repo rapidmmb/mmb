@@ -33,8 +33,8 @@ class FindBy implements
     }
 
 
-    private bool $allowNull;
-    private string $classType;
+    protected bool $allowNull;
+    protected string $classType;
 
     /**
      * Try to find class type

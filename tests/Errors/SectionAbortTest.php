@@ -1,6 +1,6 @@
 <?php
 
-namespace Errors;
+namespace Mmb\Tests\Errors;
 
 use Mmb\Action\Section\Section;
 use Mmb\Core\Updates\Update;

@@ -11,12 +11,15 @@ use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
+use Mmb\Support\Caller\Attributes\CallingPassParameterInsteadContract;
+use ReflectionParameter;
 
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER)]
 class CastEnum implements
     InlineParameterAttributeContract,
     InlineWithPropertyAttributeContract,
-    FormDynamicPropertyAttributeContract
+    FormDynamicPropertyAttributeContract,
+    CallingPassParameterInsteadContract
 {
 
     private bool $allowNull;
@@ -41,7 +44,7 @@ class CastEnum implements
         {
             if ($type instanceof \ReflectionNamedType)
             {
-                if (!$type->isBuiltin() && is_a($type->getName(), Model::class, true))
+                if (!$type->isBuiltin() && enum_exists($type->getName()))
                 {
                     return $this->classType = $type->getName();
                 }
@@ -52,7 +55,7 @@ class CastEnum implements
             }
         }
 
-        throw new \TypeError(sprintf("Attribute [%s] required a model type", static::class));
+        throw new \TypeError(sprintf("Attribute [%s] required a enum type", static::class));
     }
 
     /**
@@ -79,7 +82,7 @@ class CastEnum implements
      * Get usable value
      *
      * @param $value
-     * @return Model|mixed
+     * @return \UnitEnum|\BackedEnum|mixed
      */
     protected function getUsableValue($value)
     {
@@ -158,6 +161,15 @@ class CastEnum implements
     {
         $this->setClassTypeUsing(
             (new \ReflectionProperty($form, $name))->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
+
+    public function getPassParameterInstead(ReflectionParameter $parameter, $value)
+    {
+        $this->setClassTypeUsing(
+            $parameter->getType()
         );
 
         return $this->getUsableValue($value);
