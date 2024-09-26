@@ -19,6 +19,12 @@ class POVBuilder
 {
     use Conditionable;
 
+    public function __construct(
+        public readonly POVFactory $factory,
+    )
+    {
+    }
+
     private array $applies = [];
 
     public function add(Closure $apply, Closure $revert)
@@ -161,7 +167,7 @@ class POVBuilder
                     return null;
                 }
 
-                return ($this->catch)();
+                return ($this->catch)($e);
             }
 
             throw $e;
@@ -261,6 +267,7 @@ class POVBuilder
         $oldGuardUser = null;
         $oldStep = null;
         $isSame = false;
+        $store = [];
 
         if ($changeUpdate ?? !isset($this->update))
         {
@@ -278,13 +285,14 @@ class POVBuilder
         }
 
         return $this->add(
-            function() use ($user, &$oldStep, &$oldGuardUser, &$oldCurrentModel, &$isSame)
+            function() use ($user, &$oldStep, &$oldGuardUser, &$oldCurrentModel, &$isSame, &$store)
             {
                 $oldStep = Step::getModel();
                 $oldCurrentModel = ModelFinder::current($user::class);
                 $oldGuardUser = $user instanceof Authenticatable ? app(Bot::class)->guard()->user() : null;
+                $isSame = $oldStep && $user && $oldStep->is($user);
 
-                if (!($isSame = $oldStep && $user ? $oldStep->is($user) : false))
+                if (!$isSame)
                 {
                     Step::setModel($user);
                     ModelFinder::storeCurrent($user);
@@ -293,8 +301,10 @@ class POVBuilder
                         app(Bot::class)->guard()->setUser($user);
                     }
                 }
+
+                $store = $this->factory->fireApplyingUser($user, $oldStep, $isSame);
             },
-            function() use ($user, &$oldStep, &$oldGuardUser, &$oldCurrentModel, &$isSame, $save)
+            function() use ($user, &$oldStep, &$oldGuardUser, &$oldCurrentModel, &$isSame, $save, &$store)
             {
                 if ($save)
                 {
@@ -306,13 +316,15 @@ class POVBuilder
                     Step::setModel($oldStep);
                     if ($oldGuardUser)
                     {
-                        app(Bot::class)->guard()->setUser($oldGuardUser ?? null);
+                        app(Bot::class)->guard()->setUser($oldGuardUser);
                     }
                     if (isset($oldCurrentModel))
                     {
                         ModelFinder::storeCurrent($oldCurrentModel);
                     }
                 }
+
+                $this->factory->fireRevertingUser($user, $oldStep, $isSame, $store);
             },
         );
     }

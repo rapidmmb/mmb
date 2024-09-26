@@ -17,7 +17,7 @@ class POVFactory
 
     public function make()
     {
-        return app(POVBuilder::class);
+        return new POVBuilder($this);
     }
 
     /**
@@ -60,6 +60,32 @@ class POVFactory
         return $this->make()
             ->user($user, $save)
             ->run($callback);
+    }
+
+    public array $bindingUserCallbacks = [];
+
+    public function bindingUser(Closure $apply, Closure $revert)
+    {
+        $this->bindingUserCallbacks[] = [$apply, $revert];
+    }
+
+    public function fireApplyingUser(Stepping $user, ?Stepping $old, bool $isSame)
+    {
+        $store = [];
+        foreach ($this->bindingUserCallbacks as $callback)
+        {
+            $store[] = $callback[0]($user, $old, $isSame);
+        }
+
+        return $store;
+    }
+
+    public function fireRevertingUser(Stepping $user, ?Stepping $old, bool $isSame, array $store)
+    {
+        foreach ($this->bindingUserCallbacks as $i => $callback)
+        {
+            $callback[1]($user, $old, $isSame, $store[$i] ?? null);
+        }
     }
 
 }

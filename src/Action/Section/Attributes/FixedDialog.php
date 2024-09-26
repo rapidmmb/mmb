@@ -28,13 +28,14 @@ class FixedDialog extends OnCallback
      */
     public function getMatcher(string $class, string $method)
     {
-        if (!isset(static::$matchers[$this->pattern]))
+        $pattern = ($this->full ? '' : QueryMatcher::getClassId($class) . ':') . $this->pattern;
+
+        if (!isset(static::$matchers[$pattern]))
         {
-            $pattern = ($this->full ? '' : QueryMatcher::getClassId($class) . ':') . $this->pattern;
-            (static::$matchers[$this->pattern] = QueryMatcher::make('callback'))->match($pattern);
+            (static::$matchers[$pattern] = QueryMatcher::make('callback'))->match($pattern);
         }
 
-        return static::$matchers[$this->pattern];
+        return static::$matchers[$pattern];
     }
 
     public function fire(QueryMatchPattern $pattern, string $class, string $method)

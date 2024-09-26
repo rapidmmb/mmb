@@ -3,11 +3,13 @@
 namespace Mmb\Tests\POV;
 
 use Illuminate\Database\Eloquent\Model;
+use Mmb\Action\Memory\Step;
 use Mmb\Action\Memory\StepHandler;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Db\HasFinder;
 use Mmb\Support\Db\ModelFinder;
 use Mmb\Support\Pov\POV;
+use Mmb\Support\Pov\POVFactory;
 use Mmb\Support\Step\Stepping;
 use Mmb\Tests\TestCase;
 
@@ -98,11 +100,47 @@ class POVTest extends TestCase
         }
     }
 
+    public function test_pov_user_with_advanced_events()
+    {
+        $povFactory = new POVFactory();
+        $original = new UserTest(['id' => 1]);
+        $fake = new UserTest(['id' => 2]);
+        $invoked = 0;
+
+        $povFactory->bindingUser(
+            function ($user, $old, $isSame) use($original, $fake, &$invoked)
+            {
+                $this->assertSame($user, $fake);
+                $this->assertSame($old, $original);
+                $this->assertSame(false, $isSame);
+                $invoked++;
+
+                return 'Foo';
+            },
+            function ($user, $old, $isSame, $store) use($original, $fake, &$invoked)
+            {
+                $invoked++;
+                $this->assertSame('Foo', $store);
+            },
+        );
+
+        Step::setModel($original);
+        ModelFinder::storeCurrent($original);
+
+        $povFactory->make()->user($fake)->run(
+            fn() => null,
+        );
+
+        $this->assertSame(2, $invoked);
+    }
+
 }
 
 class UserTest extends Model implements Stepping
 {
     use HasFinder;
+
+    protected $fillable = ['id'];
 
     public function getStep() : ?StepHandler
     {

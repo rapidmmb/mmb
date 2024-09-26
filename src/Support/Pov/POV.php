@@ -13,6 +13,7 @@ use Mmb\Support\Step\Stepping;
  * @method static void chat(ChatInfo $chat, ?Stepping $stepping, Closure|array $callback, bool $save = false)
  * @method static void user(Stepping $user, Closure|array $callback, bool $save = true)
  * @method static POVBuilder make()
+ * @method static void bindingUser(Closure $apply, Closure $revert)
  */
 class POV extends Facade
 {
