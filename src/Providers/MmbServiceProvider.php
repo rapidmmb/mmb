@@ -76,7 +76,10 @@ class MmbServiceProvider extends ServiceProvider
     {
         foreach (config('mmb.areas', []) as $area)
         {
-            app($area)->boot();
+            app()->resolving(AreaRegister::class, function () use ($area)
+            {
+                app($area)->boot();
+            });
         }
     }
 

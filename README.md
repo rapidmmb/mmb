@@ -1644,6 +1644,13 @@ class HandleServiceProvider extends ServiceProvider
             CustomCommand::class,
         ], 'commands')
     }
+    
+    /**
+     * List of areas
+     */
+    protected array $areas = [
+        CustomArea::class,
+    ];
 
 }
 ```

@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Support\ServiceProvider;
 use Mmb\Action\Update\HandleFactory;
 use Mmb\Action\Update\UpdateHandling;
+use Mmb\Auth\AreaRegister;
 
 class HandleServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,7 @@ class HandleServiceProvider extends ServiceProvider
     {
         $this->registerHandlers();
         $this->registerExtend();
+        $this->registerAreas();
     }
 
 
@@ -35,6 +37,13 @@ class HandleServiceProvider extends ServiceProvider
      * @var array<string, string>
      */
     protected array $extend = [];
+
+    /**
+     * List of areas
+     *
+     * @var string[]
+     */
+    protected array $areas = [];
 
 
     /**
@@ -58,6 +67,16 @@ class HandleServiceProvider extends ServiceProvider
         {
             $this->extend($class, $this->$callback(...));
         }
+    }
+
+    /**
+     * Register the defined areas
+     *
+     * @return void
+     */
+    public function registerAreas()
+    {
+        $this->mergeAreas($this->areas);
     }
 
 
@@ -92,6 +111,28 @@ class HandleServiceProvider extends ServiceProvider
         app()->resolving(HandleFactory::class, function (HandleFactory $factory) use ($handlers)
         {
             $factory->merge($handlers);
+        });
+    }
+
+    /**
+     * Merge areas
+     *
+     * @param array $areas
+     * @return void
+     */
+    public function mergeAreas(array $areas)
+    {
+        if (!$areas)
+        {
+            return;
+        }
+
+        app()->resolving(AreaRegister::class, function () use ($areas)
+        {
+            foreach ($areas as $area)
+            {
+                app($area)->boot();
+            }
         });
     }
 
