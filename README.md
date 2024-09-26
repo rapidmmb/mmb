@@ -1616,6 +1616,38 @@ class PrivateHandler extends UpdateHandler
 }
 ```
 
+### Handle Service Provider
+
+```php
+use Mmb\Support\Providers\HandleServiceProvider as ServiceProvider;
+
+class HandleServiceProvider extends ServiceProvider
+{
+
+    /**
+     * List of the handlers
+     */
+    protected array $handlers = [
+        CustomHandler::class,
+    ];
+
+    /**
+     * Map of extended handler and callback method name
+     */
+    protected array $extend = [
+        PrivateHandler::class => 'extendPrivate',
+    ];
+    
+    public function extendPrivate(HandlerExtends $extends)
+    {
+        $extends->handle([
+            CustomCommand::class,
+        ], 'commands')
+    }
+
+}
+```
+
 
 ## Query Matcher
 ```php
