@@ -181,6 +181,11 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
         return $data;
     }
 
+    public function getRealData()
+    {
+        return $this->realData;
+    }
+
     public function toArray()
     {
         $data = $this->getFullData();

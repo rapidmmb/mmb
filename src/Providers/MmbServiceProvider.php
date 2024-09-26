@@ -88,6 +88,7 @@ class MmbServiceProvider extends ServiceProvider
         Console\SectionMakeCommand::class,
         Console\AreaMakeCommand::class,
         Console\MmbServeCommand::class,
+        Console\MmbHandleUpdateCommand::class,
     ];
 
     /**

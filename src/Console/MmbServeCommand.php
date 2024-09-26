@@ -3,8 +3,10 @@
 namespace Mmb\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Artisan;
 use Mmb\Core\Bot;
 use Mmb\Core\BotChanneling;
+use Mmb\Core\Updates\Update;
 use Symfony\Component\Console\Input\InputOption;
 
 class MmbServeCommand extends Command
@@ -34,9 +36,10 @@ class MmbServeCommand extends Command
         \Laravel\Prompts\info("Mmb is listening to updates now...");
 
         $bot->loopUpdates(
-            received: function()
+            callback: function (Update $update)
             {
                 \Laravel\Prompts\info(sprintf("New update received at %s", date('H:i:s')));
+                Artisan::call('mmb:handle-update', [json_encode($update->getRealData())], $this->output);
             },
             delay: +$this->option('delay') ?? 100,
         );
