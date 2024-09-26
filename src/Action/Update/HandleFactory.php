@@ -131,7 +131,7 @@ class HandleFactory
         $handler->collectionEvent('first', Arr::pluck($this->extends[$class] ?? [], 'firsts'));
         $handler->collectionEvent('last', Arr::pluck($this->extends[$class] ?? [], 'lasts'));
 
-        foreach ($this->extends[$class] as $extends)
+        foreach ($this->extends[$class] ?? [] as $extends)
         {
             foreach ($extends->handles as $name => $handles)
             {
