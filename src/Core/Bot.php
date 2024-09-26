@@ -10,6 +10,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Traits\Macroable;
+use Mmb\Action\Update\Handle;
 use Mmb\Action\Update\HandlerFactory;
 use Mmb\Action\Update\HandlerNotMatchedException;
 use Mmb\Action\Update\UpdateHandler;
@@ -111,62 +112,7 @@ class Bot
 
     public function handleUpdate(Update $update)
     {
-        try
-        {
-            // $request = request();
-            // $request->merge(['update' => $update]);
-            Container::getInstance()->instance(Update::class, $update);
-
-            if(!isset($this->updateHandlers))
-            {
-                throw new Exception("Handlers is not set");
-            }
-
-            foreach($this->updateHandlers as $updateHandler)
-            {
-                /** @var UpdateHandler $updateHandler */
-                $updateHandler = new $updateHandler($update);
-
-                try
-                {
-                    $updateHandler->handle(new HandlerFactory($this, $update));
-                    break;
-                }
-                catch (HandlerNotMatchedException $e)
-                {
-                    // Continue handling
-                    continue;
-                }
-            }
-        }
-        catch (\Throwable $e)
-        {
-            while (true)
-            {
-                try
-                {
-                    if ($e instanceof HttpResponseException)
-                    {
-                        ; // TODO
-                    }
-
-                    if ($e instanceof CallableException)
-                    {
-                        $e->invoke($update);
-                        return;
-                    }
-
-                    report($e); // TODO
-                    // app(ExceptionHandler::class)->report($e);
-                    // app(ExceptionHandler::class)->render(request(), $e);
-                    break;
-                }
-                catch (\Throwable $e)
-                {
-                    continue;
-                }
-            }
-        }
+        Handle::handle($update, $this->updateHandlers);
     }
 
 

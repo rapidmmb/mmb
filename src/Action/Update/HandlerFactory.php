@@ -81,6 +81,71 @@ class HandlerFactory
         return $value instanceof Closure ? $this->call($value, ...$args) : $value;
     }
 
+    /**
+     * @param string $on
+     * @param array  $events
+     * @return void
+     */
+    public function collectionEvent(string $on, array $events)
+    {
+        $this->on($on, function () use($events)
+        {
+            foreach ($events as $event)
+            {
+                $this->call($event, $this);
+            }
+        });
+    }
+
+    /**
+     * Fire all events in anywhere.
+     *
+     * This value can extend.
+     *
+     * @param string $event
+     * @return $this
+     */
+    public function extends(string $event)
+    {
+        $this->fire($event);
+
+        return $this;
+    }
+
+
+    protected array $inherits = [];
+
+    /**
+     * Add inherited handlers
+     *
+     * @param string  $name
+     * @param Closure $handlerResolver
+     * @return $this
+     */
+    public function addInheritedHandlers(string $name, Closure $handlerResolver)
+    {
+        @$this->inherits[$name][] = $handlerResolver;
+        return $this;
+    }
+
+    /**
+     * Get inherited handlers
+     *
+     * @param string $name
+     * @return array
+     */
+    public function inherit(string $name = 'default')
+    {
+        $items = [];
+
+        foreach ($this->inherits[$name] ?? [] as $inherit)
+        {
+            array_push($items, ...$this->call($inherit, $this));
+        }
+
+        return $items;
+    }
+
 
     protected function fallback()
     {
@@ -354,6 +419,8 @@ class HandlerFactory
         }
 
         $this->isHandled = true;
+
+        $this->fire('last');
 
         try
         {
