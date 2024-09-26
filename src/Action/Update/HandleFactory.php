@@ -70,7 +70,7 @@ class HandleFactory
         {
             Container::getInstance()->instance(Update::class, $update);
 
-            if (!$this->handlers)
+            if (!$this->handlers && !$mergedHandlers)
             {
                 throw new \Exception("Handlers is not set");
             }
