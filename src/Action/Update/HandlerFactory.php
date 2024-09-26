@@ -4,6 +4,7 @@ namespace Mmb\Action\Update;
 
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Arr;
 use Mmb\Action\Memory\Step;
 use Mmb\Action\Memory\StepHandlerPipe;
 use Mmb\Action\Middle\MiddleAction;
@@ -421,6 +422,8 @@ class HandlerFactory
         $this->isHandled = true;
 
         $this->fire('last');
+
+        $handlers = Arr::flatten($handlers);
 
         try
         {

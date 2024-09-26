@@ -1640,7 +1640,7 @@ class HandleServiceProvider extends ServiceProvider
     
     public function extendPrivate(HandlerExtends $extends)
     {
-        $extends->handle([
+        $extends->handle(fn (HandlerFactory $handler) => [
             CustomCommand::class,
         ], 'commands')
     }

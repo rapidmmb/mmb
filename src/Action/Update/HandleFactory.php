@@ -128,14 +128,22 @@ class HandleFactory
 
         $handler = new HandlerFactory($update->bot(), $update);
 
-        $handler->collectionEvent('first', Arr::pluck($this->extends[$class] ?? [], 'firsts'));
-        $handler->collectionEvent('last', Arr::pluck($this->extends[$class] ?? [], 'lasts'));
+        $handler->collectionEvent('first', Arr::flatten(Arr::pluck($this->extends[$class] ?? [], 'firsts')));
+        $handler->collectionEvent('last', Arr::flatten(Arr::pluck($this->extends[$class] ?? [], 'lasts')));
 
         foreach ($this->extends[$class] ?? [] as $extends)
         {
             foreach ($extends->handles as $name => $handles)
             {
-                $handler->addInheritedHandlers($name, $handles);
+                foreach ($handles as $handle)
+                {
+                    $handler->addInheritedHandlers($name, $handle);
+                }
+            }
+
+            foreach ($extends->events as $name => $events)
+            {
+                $handler->collectionEvent($name, $events);
             }
         }
 
