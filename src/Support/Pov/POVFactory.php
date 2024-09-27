@@ -10,6 +10,7 @@ use Mmb\Core\Bot;
 use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Db\ModelFinder;
+use Mmb\Support\Step\ConvertableToStepping;
 use Mmb\Support\Step\Stepping;
 
 class POVFactory
@@ -25,7 +26,7 @@ class POVFactory
      */
     public function as(
         Update $update,
-        ?Stepping $user,
+        Stepping|ConvertableToStepping|null $user,
         Closure|array $callback,
         bool $save = false,
     )
@@ -39,7 +40,7 @@ class POVFactory
 
     public function chat(
         ChatInfo|int $chat,
-        ?Stepping $user,
+        Stepping|ConvertableToStepping|null $user,
         Closure|array $callback,
         bool $save = false,
     )
@@ -52,7 +53,7 @@ class POVFactory
     }
 
     public function user(
-        Stepping $user,
+        Stepping|ConvertableToStepping $user,
         Closure|array $callback,
         bool $save = true,
     )

@@ -18,6 +18,7 @@ use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasSimpleEvents;
 use Mmb\Support\Db\ModelFinder;
+use Mmb\Support\Step\ConvertableToStepping;
 use Mmb\Support\Step\Stepping;
 
 class HandlerFactory
@@ -383,11 +384,16 @@ class HandlerFactory
     /**
      * Set step record as
      *
-     * @param string|Stepping|Closure $value
+     * @param string|Stepping|ConvertableToStepping|Closure $value
      * @return $this
      */
-    public function stepAs(string|Stepping|Closure $value)
+    public function stepAs(string|Stepping|ConvertableToStepping|Closure $value)
     {
+        if ($value instanceof ConvertableToStepping)
+        {
+            $value = $value->toStepping();
+        }
+
         $value = $this->value($value);
 
         if (is_string($value))

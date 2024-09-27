@@ -12,6 +12,7 @@ use Mmb\Core\Updates\Infos\UserInfo;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Db\ModelFinder;
+use Mmb\Support\Step\ConvertableToStepping;
 use Mmb\Support\Step\Stepping;
 use Throwable;
 
@@ -256,18 +257,23 @@ class POVBuilder
     /**
      * Set the current user
      *
-     * @param Stepping $user
-     * @param bool     $save
-     * @param ?bool    $changeUpdate
+     * @param Stepping|ConvertableToStepping $user
+     * @param bool                           $save
+     * @param ?bool                          $changeUpdate
      * @return $this
      */
-    public function user(Stepping $user, bool $save = true, ?bool $changeUpdate = null)
+    public function user(Stepping|ConvertableToStepping $user, bool $save = true, ?bool $changeUpdate = null)
     {
         $oldCurrentModel = null;
         $oldGuardUser = null;
         $oldStep = null;
         $isSame = false;
         $store = [];
+
+        if ($user instanceof ConvertableToStepping)
+        {
+            $user = $user->toStepping();
+        }
 
         if ($changeUpdate ?? !isset($this->update))
         {

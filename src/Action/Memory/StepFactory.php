@@ -3,6 +3,7 @@
 namespace Mmb\Action\Memory;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Mmb\Support\Step\ConvertableToStepping;
 use Mmb\Support\Step\Stepping;
 
 class StepFactory
@@ -13,11 +14,16 @@ class StepFactory
     /**
      * Set related model
      *
-     * @param ?Stepping $model
+     * @param Stepping|ConvertableToStepping|null $model
      * @return void
      */
-    public function setModel(?Stepping $model)
+    public function setModel(Stepping|ConvertableToStepping|null $model)
     {
+        if ($model instanceof ConvertableToStepping)
+        {
+            $model = $model->toStepping();
+        }
+
         $this->model = $model;
     }
 

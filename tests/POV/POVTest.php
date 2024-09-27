@@ -10,6 +10,7 @@ use Mmb\Support\Db\HasFinder;
 use Mmb\Support\Db\ModelFinder;
 use Mmb\Support\Pov\POV;
 use Mmb\Support\Pov\POVFactory;
+use Mmb\Support\Step\ConvertableToStepping;
 use Mmb\Support\Step\Stepping;
 use Mmb\Tests\TestCase;
 
@@ -132,6 +133,26 @@ class POVTest extends TestCase
         );
 
         $this->assertSame(2, $invoked);
+    }
+
+    public function test_changing_the_user_by_convertable()
+    {
+        $fake = new UserTest();
+        $fakeConvertable = new class($fake) implements ConvertableToStepping
+        {
+            public function __construct(public $fake)
+            {
+            }
+
+            public function toStepping() : Stepping
+            {
+                return $this->fake;
+            }
+        };
+
+        pov()->user($fakeConvertable)->run(
+            fn() => $this->assertSame($fake, UserTest::current())
+        );
     }
 
 }
