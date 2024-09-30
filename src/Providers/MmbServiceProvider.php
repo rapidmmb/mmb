@@ -34,6 +34,7 @@ class MmbServiceProvider extends ServiceProvider
         $this->registerDefaultUpdate();
         $this->registerAreas();
         $this->registerCommands();
+        $this->registerLang();
     }
 
     /**
@@ -105,6 +106,15 @@ class MmbServiceProvider extends ServiceProvider
                 $artisan->resolveCommands(app($command));
             }
         });
+    }
+
+    public function registerLang()
+    {
+        $this->publishes([
+            __DIR__.'/../../lang' => $this->app->langPath('vendor/mmb'),
+        ]);
+
+        $this->loadTranslationsFrom(__DIR__.'/../../lang', 'mmb');
     }
 
 }

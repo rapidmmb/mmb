@@ -21,7 +21,7 @@ class FilterForwarded extends FilterRule
     {
         if (!$update->message)
         {
-            $this->fail(value($this->messageError ?? __('mmb.filter.message')));
+            $this->fail(value($this->messageError ?? __('mmb::filter.message')));
         }
 
         $message = $update->message;
@@ -31,7 +31,7 @@ class FilterForwarded extends FilterRule
             (!$this->fromChannel && $message->forwardFromChat?->type == 'channel')
         )
         {
-            $this->fail(value($this->message ?? __('mmb.filter.should-forward')));
+            $this->fail(value($this->message ?? __('mmb::filter.should-forward')));
         }
     }
 

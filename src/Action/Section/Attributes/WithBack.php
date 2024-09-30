@@ -31,11 +31,11 @@ class WithBack implements InlineAttributeContract
                     !method_exists($register->target, 'back')
                 )
                 {
-                    $key = $register->inlineAction->key(__('mmb.menu.key.back'), fn () => Behavior::back(get_class($register->target)));
+                    $key = $register->inlineAction->key(__('mmb::menu.key.back'), fn () => Behavior::back(get_class($register->target)));
                 }
                 else
                 {
-                    $key = $register->inlineAction->key(__('mmb.menu.key.back'), $this->action ?? 'back');
+                    $key = $register->inlineAction->key(__('mmb::menu.key.back'), $this->action ?? 'back');
                 }
 
                 $register->inlineAction->footer([

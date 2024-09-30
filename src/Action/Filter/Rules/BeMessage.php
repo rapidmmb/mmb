@@ -18,7 +18,7 @@ class BeMessage extends FilterRule
     {
         if(!$update->message)
         {
-            $this->fail(value($this->messageError ?? __('mmb.filter.message')));
+            $this->fail(value($this->messageError ?? __('mmb::filter.message')));
         }
 
         $value = $update->message;

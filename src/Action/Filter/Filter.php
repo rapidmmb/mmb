@@ -553,6 +553,35 @@ class Filter extends FilterRule
         return $this->add(new Rules\FilterNotForwarded($message, $messageError));
     }
 
+    /**
+     * Filter the item exists in table
+     *
+     * @param string       $table
+     * @param string|null  $column
+     * @param Closure|null $query
+     * @param              $message
+     * @return $this
+     */
+    public function exists(string $table, ?string $column = null, ?Closure $query = null, $message = null)
+    {
+        return $this->add(new Rules\FilterExists($table, $column, $query, $message));
+    }
+
+    /**
+     * Filter the item not exists in table
+     *
+     * @param string       $table
+     * @param string|null  $column
+     * @param mixed        $expect
+     * @param Closure|null $query
+     * @param null         $message
+     * @return $this
+     */
+    public function unique(string $table, ?string $column = null, $expect = null, ?Closure $query = null, $message = null)
+    {
+        return $this->add(new Rules\FilterUnique($table, $column, $expect, $query, $message));
+    }
+
 
     protected static $globalFailHandler = DefaultFilterFailHandler::class;
 

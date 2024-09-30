@@ -32,7 +32,7 @@ class BeMediaOrText extends BeMessage
             return;
         }
 
-        $this->fail(value($this->mediaError ?? __('mmb.filter.media-or-text')));
+        $this->fail(value($this->mediaError ?? __('mmb::filter.media-or-text')));
     }
 
 }

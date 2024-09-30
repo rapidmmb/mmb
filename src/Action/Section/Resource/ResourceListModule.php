@@ -25,7 +25,7 @@ class ResourceListModule extends ResourceModule
         // Page label
         $this->addHeadKey(
             fn($page, $lastPage) => $this->valueOf($this->pageLabel) ??
-                __('mmb.resource.default.page', ['current' => $page, 'last' => $lastPage]),
+                __('mmb::resource.default.page', ['current' => $page, 'last' => $lastPage]),
             name     : 'pageLabel',
             x        : 100,
             condition: fn() => $this->valueOf($this->pageShow),
@@ -252,7 +252,7 @@ class ResourceListModule extends ResourceModule
 
     public function getNotFoundLabel()
     {
-        return $this->notFoundLabel ?? __('mmb.resource.list.not_found_label');
+        return $this->notFoundLabel ?? __('mmb::resource.list.not_found_label');
     }
 
 

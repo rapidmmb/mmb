@@ -111,7 +111,7 @@ class ResourceInfoModule extends ResourceModule
 
     public function getMessage()
     {
-        return $this->valueOf($this->message ?? __('mmb.resource.info.message'));
+        return $this->valueOf($this->message ?? __('mmb::resource.info.message'));
     }
 
 

@@ -129,7 +129,7 @@ class Input
         }
 
         return $this->mode($mode)
-            ->hint(__('mmb.form.advanced.previous-value') . "\n<code>" . Text::html($value) . "</code>");
+            ->hint(__('mmb::form.advanced.previous-value') . "\n" . Text::mode($mode)->code($value));
     }
 
     protected ?string $modeValue = null;
@@ -162,7 +162,7 @@ class Input
      */
     public function onlyOptions($message = null)
     {
-        $this->filter(new FilterFailAnyway($message ?? fn() => __('mmb.form.filter.only-options')));
+        $this->filter(new FilterFailAnyway($message ?? fn() => __('mmb::form.filter.only-options')));
         return $this;
     }
 

@@ -41,7 +41,7 @@ class ResourceSimpleFilterModule extends ResourceModule
             $default = true;
         }
 
-        return $this->add($label ?? fn() => __('mmb.resource.default.none'), fn($query) => $query, $default ?? false);
+        return $this->add($label ?? fn() => __('mmb::resource.default.none'), fn($query) => $query, $default ?? false);
     }
 
     public function reset()
@@ -80,7 +80,7 @@ class ResourceSimpleFilterModule extends ResourceModule
 
     public function getDefaultMessage()
     {
-        return __('mmb.resource.filter.message');
+        return __('mmb::resource.filter.message');
     }
 
 

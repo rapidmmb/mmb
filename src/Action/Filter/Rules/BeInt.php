@@ -26,20 +26,20 @@ class BeInt extends BeText
         {
             if(!is_numeric($text))
             {
-                $this->fail(value($this->textError ?? __('mmb.filter.unsigned-int')));
+                $this->fail(value($this->textError ?? __('mmb::filter.unsigned-int')));
             }
             $value = +$text;
 
             if($value < 0)
             {
-                $this->fail(value($this->textError ?? __('mmb.filter.unsigned-int')));
+                $this->fail(value($this->textError ?? __('mmb::filter.unsigned-int')));
             }
         }
         else
         {
             if(!is_numeric($text))
             {
-                $this->fail(value($this->textError ?? __('mmb.filter.int')));
+                $this->fail(value($this->textError ?? __('mmb::filter.int')));
             }
             $value = +$text;
         }

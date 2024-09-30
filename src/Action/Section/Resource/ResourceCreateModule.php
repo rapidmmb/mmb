@@ -48,7 +48,7 @@ class ResourceCreateModule extends ResourceFormModule
 
     public function getDefaultKeyLabel()
     {
-        return __('mmb.resource.create.key_label');
+        return __('mmb::resource.create.key_label');
     }
 
     public function getThenBackAction()

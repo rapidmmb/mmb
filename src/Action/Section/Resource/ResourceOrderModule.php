@@ -17,8 +17,8 @@ class ResourceOrderModule extends ResourceSimpleFilterModule
     {
         parent::__construct($maker, $name);
 
-        $this->addAsc(fn() => __('mmb.resource.order.oldest'), 'created_at');
-        $this->addDesc(fn() => __('mmb.resource.order.newest'), 'created_at');
+        $this->addAsc(fn() => __('mmb::resource.order.oldest'), 'created_at');
+        $this->addDesc(fn() => __('mmb::resource.order.newest'), 'created_at');
     }
 
     public function addOrder($label, string $orderBy, bool $asc = true, bool $default = false, bool $visible = true)
@@ -42,7 +42,7 @@ class ResourceOrderModule extends ResourceSimpleFilterModule
 
     public function getDefaultMessage()
     {
-        return __('mmb.resource.order.message');
+        return __('mmb::resource.order.message');
     }
 
 }

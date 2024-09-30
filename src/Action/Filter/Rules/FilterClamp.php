@@ -22,7 +22,7 @@ class FilterClamp extends FilterRule
     {
         if(!is_numeric($value))
         {
-            $this->fail(__('mmb.filter.numeric'));
+            $this->fail(__('mmb::filter.numeric'));
         }
 
         $number = +$value;
@@ -38,7 +38,7 @@ class FilterClamp extends FilterRule
             }
             else
             {
-                $this->fail(sprintf(value($this->minError ?? __('mmb.filter.min', ['number' => $min])), $min));
+                $this->fail(sprintf(value($this->minError ?? __('mmb::filter.min', ['number' => $min])), $min));
             }
         }
 
@@ -51,7 +51,7 @@ class FilterClamp extends FilterRule
             }
             else
             {
-                $this->fail(sprintf(value($this->maxError ?? __('mmb.filter.max', ['number' => $max])), $max));
+                $this->fail(sprintf(value($this->maxError ?? __('mmb::filter.max', ['number' => $max])), $max));
             }
         }
     }

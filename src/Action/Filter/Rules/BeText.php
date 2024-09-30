@@ -21,7 +21,7 @@ class BeText extends BeMessage
 
         if($update->message->type != 'text')
         {
-            $this->fail(value($this->textError ?? __('mmb.filter.text')));
+            $this->fail(value($this->textError ?? __('mmb::filter.text')));
         }
 
         $value = $update->message->text;

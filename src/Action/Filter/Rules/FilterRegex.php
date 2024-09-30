@@ -24,12 +24,12 @@ class FilterRegex extends BeText
 
         if(!is_string($value) && !is_int($value) && !is_float($value))
         {
-            $this->fail(__('mmb.filter.text'));
+            $this->fail(__('mmb::filter.text'));
         }
 
         if(!preg_match($this->pattern, $value, $matches))
         {
-            $this->fail(value($this->error ?? __('mmb.filter.pattern')));
+            $this->fail(value($this->error ?? __('mmb::filter.pattern')));
         }
 
         if($this->result >= 0)

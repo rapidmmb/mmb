@@ -22,9 +22,9 @@ class IFDeleteScope extends InlineFormScope
         $form
             ->input('confirm',
                 fn(Input $input) => $input
-                    ->prompt($this->prompt ?? __('mmb.form.scopes.delete.prompt'))
+                    ->prompt($this->prompt ?? __('mmb::form.scopes.delete.prompt'))
                     ->onlyOptions()
-                    ->add($this->confirm ?? __('mmb.form.scopes.delete.confirm'), true)
+                    ->add($this->confirm ?? __('mmb::form.scopes.delete.confirm'), true)
                     ->when(isset($this->cancel), fn() => $input->cancelKey($this->cancel))
             )
         ;

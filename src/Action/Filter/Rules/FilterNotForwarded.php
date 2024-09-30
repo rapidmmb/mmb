@@ -19,7 +19,7 @@ class FilterNotForwarded extends FilterRule
     {
         if ($update->message?->isForwarded)
         {
-            $this->fail(value($this->message ?? __('mmb.filter.not-forward')));
+            $this->fail(value($this->message ?? __('mmb::filter.not-forward')));
         }
     }
 

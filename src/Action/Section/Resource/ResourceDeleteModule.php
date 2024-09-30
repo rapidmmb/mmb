@@ -13,7 +13,7 @@ class ResourceDeleteModule extends ResourceFormModule
 
     protected function getDefaultKeyLabel()
     {
-        return __('mmb.resource.delete.key_label');
+        return __('mmb::resource.delete.key_label');
     }
 
 
@@ -27,7 +27,7 @@ class ResourceDeleteModule extends ResourceFormModule
 
     public function getMessage()
     {
-        return $this->valueOf($this->message) ?? __('mmb.resource.delete.message');
+        return $this->valueOf($this->message) ?? __('mmb::resource.delete.message');
     }
 
 
@@ -41,7 +41,7 @@ class ResourceDeleteModule extends ResourceFormModule
 
     public function getConfirm()
     {
-        return $this->valueOf($this->confirm) ?? __('mmb.resource.delete.confirm');
+        return $this->valueOf($this->confirm) ?? __('mmb::resource.delete.confirm');
     }
 
 

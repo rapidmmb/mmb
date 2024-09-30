@@ -22,7 +22,7 @@ class BeTextSingleLine extends BeText
 
         if(str_contains($value, "\n"))
         {
-            $this->fail(value($this->singleLineError ?? __('mmb.filter.text-single-line')));
+            $this->fail(value($this->singleLineError ?? __('mmb::filter.text-single-line')));
         }
     }
 

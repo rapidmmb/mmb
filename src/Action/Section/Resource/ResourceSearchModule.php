@@ -42,7 +42,7 @@ class ResourceSearchModule extends ResourceModule
 
     public function getMessage()
     {
-        return $this->valueOf($this->message) ?? __('mmb.resource.search.message');
+        return $this->valueOf($this->message) ?? __('mmb::resource.search.message');
     }
 
 
@@ -115,7 +115,7 @@ class ResourceSearchModule extends ResourceModule
 
     public function getAllKeyLabel()
     {
-        return $this->valueOf($this->allKeyLabel) ?? __('mmb.resource.search.all_key_label');
+        return $this->valueOf($this->allKeyLabel) ?? __('mmb::resource.search.all_key_label');
     }
 
 
@@ -141,7 +141,7 @@ class ResourceSearchModule extends ResourceModule
             return $this->valueOf($this->keyLabelSearching, query: $this->getMy('q'));
         }
 
-        return $this->valueOf($this->keyLabel ?? __('mmb.resource.search.label'));
+        return $this->valueOf($this->keyLabel ?? __('mmb::resource.search.label'));
     }
 
 

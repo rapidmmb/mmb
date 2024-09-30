@@ -251,7 +251,7 @@ class ResourceModule extends Section
 
     protected function getBackLabel()
     {
-        return $this->backLabel ?? __('mmb.resource.default.back');
+        return $this->backLabel ?? __('mmb::resource.default.back');
     }
 
     protected function fireBack(array $args = [], array $dynamicArgs = [])

@@ -56,8 +56,8 @@ class Text
     {
         return match (true)
         {
-            is_bool($value) => $value ? __('mmb.user-friendly.bool-true') : __('mmb.user-friendly.bool-false'),
-            is_null($value) => __('mmb.user-friendly.null'),
+            is_bool($value) => $value ? __('mmb::user-friendly.bool-true') : __('mmb::user-friendly.bool-false'),
+            is_null($value) => __('mmb::user-friendly.null'),
 
             $value instanceof BackedEnum => method_exists($value, 'getLabel') ? $value->getLabel() : $value->value,
 

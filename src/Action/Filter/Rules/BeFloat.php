@@ -26,20 +26,20 @@ class BeFloat extends BeText
         {
             if(!is_numeric($text))
             {
-                $this->fail(value($this->textError ?? __('mmb.filter.unsigned-float')));
+                $this->fail(value($this->textError ?? __('mmb::filter.unsigned-float')));
             }
             $value = +$text;
 
             if($value < 0)
             {
-                $this->fail(value($this->textError ?? __('mmb.filter.unsigned-float')));
+                $this->fail(value($this->textError ?? __('mmb::filter.unsigned-float')));
             }
         }
         else
         {
             if(!is_numeric($text))
             {
-                $this->fail(value($this->textError ?? __('mmb.filter.float')));
+                $this->fail(value($this->textError ?? __('mmb::filter.float')));
             }
             $value = +$text;
         }

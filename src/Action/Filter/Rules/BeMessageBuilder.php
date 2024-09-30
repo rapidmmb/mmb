@@ -24,7 +24,7 @@ class BeMessageBuilder extends BeMessage
 
         if (!$value)
         {
-            $this->fail(value($this->mediaError ?? __('mmb.filter.media-or-text')));
+            $this->fail(value($this->mediaError ?? __('mmb::filter.media-or-text')));
         }
     }
 

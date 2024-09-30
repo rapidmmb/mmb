@@ -578,7 +578,7 @@ class Form extends Action
             if($cancelKey !== false)
             {
                 $cancel = $input->keyAction(
-                    $cancelKey === true ? __('mmb.form.key.cancel') : $cancelKey,
+                    $cancelKey === true ? __('mmb::form.key.cancel') : $cancelKey,
                     fn() => $this->cancel(),
                 );
             }
@@ -586,7 +586,7 @@ class Form extends Action
             if($skipKey !== false)
             {
                 $skip = $input->keyAction(
-                    $cancelKey === true ? __('mmb.form.key.skip') : $cancelKey,
+                    $cancelKey === true ? __('mmb::form.key.skip') : $cancelKey,
                     fn($pass) => $pass(null),
                 );
             }
@@ -594,7 +594,7 @@ class Form extends Action
             if($previousKey !== false && $this->hasBefore())
             {
                 $prev = $input->keyAction(
-                    $previousKey === true ? __('mmb.form.key.previous') : $previousKey,
+                    $previousKey === true ? __('mmb::form.key.previous') : $previousKey,
                     fn() => $this->before(),
                 );
             }
@@ -602,7 +602,7 @@ class Form extends Action
             if($ineffectiveKey !== false)
             {
                 $ineffective = $input->keyAction(
-                    $ineffectiveKey === true ? __('mmb.form.key.ineffective') : $ineffectiveKey,
+                    $ineffectiveKey === true ? __('mmb::form.key.ineffective') : $ineffectiveKey,
                     function () use ($input)
                     {
                         unset($this->attributes[$input->name]);
@@ -614,7 +614,7 @@ class Form extends Action
             if($withoutChangesKey !== false)
             {
                 $withoutChanges = $input->keyAction(
-                    $withoutChangesKey === true ? __('mmb.form.key.without-changes') : $withoutChangesKey,
+                    $withoutChangesKey === true ? __('mmb::form.key.without-changes') : $withoutChangesKey,
                     function () use ($input)
                     {
                         unset($this->attributes[$input->name]);

@@ -22,7 +22,7 @@ class BeMedia extends BeMessage
 
         if(!$update->message->media)
         {
-            $this->fail(value($this->mediaError ?? __('mmb.filter.media')));
+            $this->fail(value($this->mediaError ?? __('mmb::filter.media')));
         }
 
         $value = $update->message->media;

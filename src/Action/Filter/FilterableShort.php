@@ -2,6 +2,8 @@
 
 namespace Mmb\Action\Filter;
 
+use Closure;
+
 trait FilterableShort
 {
 
@@ -324,6 +326,37 @@ trait FilterableShort
     public function notForwarded($message = null, $messageError = null)
     {
         $this->getFilter()->notForwarded(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Filter the item exists in table
+     *
+     * @param string       $table
+     * @param string|null  $column
+     * @param Closure|null $query
+     * @param              $message
+     * @return $this
+     */
+    public function exists(string $table, ?string $column = null, ?Closure $query = null, $message = null)
+    {
+        $this->getFilter()->exists(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Filter the item not exists in table
+     *
+     * @param string       $table
+     * @param string|null  $column
+     * @param mixed        $expect
+     * @param Closure|null $query
+     * @param null         $message
+     * @return $this
+     */
+    public function unique(string $table, ?string $column = null, $expect = null, ?Closure $query = null, $message = null)
+    {
+        $this->getFilter()->unique(...func_get_args());
         return $this;
     }
 

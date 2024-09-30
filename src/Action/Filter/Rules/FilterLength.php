@@ -23,7 +23,7 @@ class FilterLength extends FilterRule
     {
         if(!is_string($value) && !is_int($value) && !is_float($value))
         {
-            $this->fail(__('mmb.filter.string-able'));
+            $this->fail(__('mmb::filter.string-able'));
         }
 
         $length = $this->ascii ? mb_strlen($value) : strlen($value);
@@ -39,7 +39,7 @@ class FilterLength extends FilterRule
             }
             else
             {
-                $this->fail(sprintf(value($this->minError ?? __('mmb.filter.min-length', ['length' => $min])), $min));
+                $this->fail(sprintf(value($this->minError ?? __('mmb::filter.min-length', ['length' => $min])), $min));
             }
         }
 
@@ -52,7 +52,7 @@ class FilterLength extends FilterRule
             }
             else
             {
-                $this->fail(sprintf(value($this->maxError ?? __('mmb.filter.max-length', ['length' => $max])), $max));
+                $this->fail(sprintf(value($this->maxError ?? __('mmb::filter.max-length', ['length' => $max])), $max));
             }
         }
     }

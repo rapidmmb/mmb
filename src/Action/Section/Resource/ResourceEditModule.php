@@ -34,7 +34,7 @@ class ResourceEditModule extends ResourceFormModule
 
     protected function getDefaultKeyLabel()
     {
-        return __('mmb.resource.edit.key_label');
+        return __('mmb::resource.edit.key_label');
     }
 
     public function getThenBackAction()
