@@ -75,13 +75,13 @@ class MmbServiceProvider extends ServiceProvider
      */
     public function registerAreas()
     {
-        foreach (config('mmb.areas', []) as $area)
+        $this->callAfterResolving(AreaRegister::class, function ()
         {
-            app()->resolving(AreaRegister::class, function () use ($area)
+            foreach (config('mmb.areas', []) as $area)
             {
-                app($area)->boot();
-            });
-        }
+                $this->app->make($area)->boot();
+            }
+        });
     }
 
 
@@ -112,7 +112,7 @@ class MmbServiceProvider extends ServiceProvider
     {
         $this->publishes([
             __DIR__.'/../../lang' => $this->app->langPath('vendor/mmb'),
-        ]);
+        ], ['mmb:lang', 'lang']);
 
         $this->loadTranslationsFrom(__DIR__.'/../../lang', 'mmb');
     }

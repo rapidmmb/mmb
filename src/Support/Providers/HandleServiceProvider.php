@@ -89,7 +89,7 @@ class HandleServiceProvider extends ServiceProvider
      */
     public function extend(string $class, Closure $callback)
     {
-        app()->resolving(HandleFactory::class, function (HandleFactory $factory) use ($class, $callback)
+        $this->callAfterResolving(HandleFactory::class, function (HandleFactory $factory) use ($class, $callback)
         {
             $factory->extend($class, $callback);
         });
@@ -108,7 +108,7 @@ class HandleServiceProvider extends ServiceProvider
             return;
         }
 
-        app()->resolving(HandleFactory::class, function (HandleFactory $factory) use ($handlers)
+        $this->callAfterResolving(HandleFactory::class, function (HandleFactory $factory) use ($handlers)
         {
             $factory->merge($handlers);
         });
@@ -127,7 +127,7 @@ class HandleServiceProvider extends ServiceProvider
             return;
         }
 
-        app()->resolving(AreaRegister::class, function () use ($areas)
+        $this->callAfterResolving(AreaRegister::class, function () use ($areas)
         {
             foreach ($areas as $area)
             {
