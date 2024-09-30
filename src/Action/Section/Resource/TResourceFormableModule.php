@@ -67,7 +67,7 @@ trait TResourceFormableModule
             $input->text()->prompt(fn() => $this->inputMessageOf($name, $message));
             if(isset($min)) $input->minLength($min);
             if(isset($max)) $input->maxLength($max);
-            if(isset($init)) $init($input);
+            if(isset($init)) $this->valueOf($init, $input);
         }, $include);
     }
 
@@ -83,7 +83,7 @@ trait TResourceFormableModule
             $input->textSingleLine()->prompt(fn() => $this->inputMessageOf($name, $message));
             if(isset($min)) $input->minLength($min);
             if(isset($max)) $input->maxLength($max);
-            if(isset($init)) $init($input);
+            if(isset($init)) $this->valueOf($init, $input);
         }, $include);
     }
 
@@ -99,7 +99,7 @@ trait TResourceFormableModule
             $input->int()->prompt(fn() => $this->inputMessageOf($name, $message));
             if(isset($min)) $input->min($min);
             if(isset($max)) $input->max($max);
-            if(isset($init)) $init($input);
+            if(isset($init)) $this->valueOf($init, $input);
         }, $include);
     }
 
@@ -115,7 +115,7 @@ trait TResourceFormableModule
             $input->unsignedInt()->prompt(fn() => $this->inputMessageOf($name, $message));
             if(isset($min)) $input->min($min);
             if(isset($max)) $input->max($max);
-            if(isset($init)) $init($input);
+            if(isset($init)) $this->valueOf($init, $input);
         }, $include);
     }
 
@@ -131,7 +131,7 @@ trait TResourceFormableModule
             $input->float()->prompt(fn() => $this->inputMessageOf($name, $message));
             if(isset($min)) $input->min($min);
             if(isset($max)) $input->max($max);
-            if(isset($init)) $init($input);
+            if(isset($init)) $this->valueOf($init, $input);
         }, $include);
     }
 
@@ -147,7 +147,7 @@ trait TResourceFormableModule
             $input->unsignedFloat()->prompt(fn() => $this->inputMessageOf($name, $message));
             if(isset($min)) $input->min($min);
             if(isset($max)) $input->max($max);
-            if(isset($init)) $init($input);
+            if(isset($init)) $this->valueOf($init, $input);
         }, $include);
     }
 
