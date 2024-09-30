@@ -13,7 +13,7 @@ trait TResourceHasModel
         return $this->model;
     }
 
-    public function getModelFrom($model)
+    public function getRecordFrom($model)
     {
         $modelClass = $this->getModelClass();
 
@@ -30,15 +30,15 @@ trait TResourceHasModel
         return ModelFinder::findOrFail($modelClass, $model);
     }
 
-    public function getIdFrom($model)
+    public function getIdFrom($record)
     {
-        if($model instanceof Model)
+        if ($record instanceof Model)
         {
-            ModelFinder::store($model);
-            return $model->getKey();
+            ModelFinder::store($record);
+            return $record->getKey();
         }
 
-        return $model;
+        return $record;
     }
 
     protected string $as;

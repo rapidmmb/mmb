@@ -53,14 +53,33 @@ class ResourceInfoModule extends ResourceModule
     {
         $this->maker->module($delete = new ResourceDeleteModule($this->maker, $name, $this->model));
 
-        $delete->back(fn($model) => $this->fireAction($this->name, [$model]));
+        $delete->back(fn($record) => $this->fireAction($this->name, [$record]));
         $delete->thenBack(fn() => $this->fireBack());
 
         if($init) $init($delete);
 
         $this->addHeadKey(
             fn() => $delete->getKeyLabel(),
-            fn($model) => $delete->request($model),
+            fn($record) => $delete->request($record),
+            x: $x,
+            y: $y,
+        );
+
+        return $this;
+    }
+
+    public function softDeletable(Closure $init = null, string $name = 'soft-delete', ?int $x = 50, ?int $y = 0)
+    {
+        $this->maker->module($softDelete = new ResourceSoftDeleteModule($this->maker, $name, $this->model));
+
+        $softDelete->back(fn($record) => $this->fireAction($this->name, [$record]));
+        $softDelete->thenBack(fn() => $this->fireBack());
+
+        if($init) $init($softDelete);
+
+        $this->addHeadKey(
+            fn() => $softDelete->getKeyLabel(),
+            fn($record) => $softDelete->request($record),
             x: $x,
             y: $y,
         );
@@ -92,11 +111,11 @@ class ResourceInfoModule extends ResourceModule
 
     public function editableSingle($label, string $input, null|Closure|bool $right = null, null|Closure|bool $left = null)
     {
-        return $this->schema(fn(Menu $menu, $model) => [
+        return $this->schema(fn(Menu $menu, $record) => [
             [
-                $left ? $menu->key($left === true ? Str::limit($model->$input, 50) : $this->valueOf($left, @$model->$input)) : null,
-                $menu->key($this->valueOf($label), fn() => $this->maker->getModule($this->editableName)->requestChunk($model, $input)),
-                $right ? $menu->key($right === true ? Str::limit($model->$input, 50) : $this->valueOf($right, @$model->$input)) : null,
+                $left ? $menu->key($left === true ? Str::limit($record->$input, 50) : $this->valueOf($left, @$record->$input)) : null,
+                $menu->key($this->valueOf($label), fn() => $this->maker->getModule($this->editableName)->requestChunk($record, $input)),
+                $right ? $menu->key($right === true ? Str::limit($record->$input, 50) : $this->valueOf($right, @$record->$input)) : null,
             ],
         ]);
     }
@@ -128,17 +147,17 @@ class ResourceInfoModule extends ResourceModule
 
     public function infoMenu(Menu $menu, $id)
     {
-        $model = $this->getModelFrom($id);
-        $this->setDynArgs(record: $model);
+        $record = $this->getRecordFrom($id);
+        $this->setDynArgs(record: $record);
 
         $menu
-            ->schema($this->keyToSchema($menu, 'head', $model))
-            ->schema($this->keyToSchema($menu, 'main', $model))
+            ->schema($this->keyToSchema($menu, 'head', $record))
+            ->schema($this->keyToSchema($menu, 'main', $record))
         ;
 
         foreach($this->schemas as $schema)
         {
-            $menu->schema(fn() => $this->valueOf($schema, $menu, $model));
+            $menu->schema(fn() => $this->valueOf($schema, $menu, $record));
         }
 
         $menu

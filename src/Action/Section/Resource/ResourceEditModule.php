@@ -21,7 +21,7 @@ class ResourceEditModule extends ResourceFormModule
 
     public function editedOpenInfo(string $name)
     {
-        return $this->edited(fn($model) => $this->fireAction($name, [$model]));
+        return $this->edited(fn($record) => $this->fireAction($name, [$record]));
     }
 
     protected $editing;
@@ -53,10 +53,10 @@ class ResourceEditModule extends ResourceFormModule
         $this->fireAction($this->name, [$record]);
     }
 
-    public function requestChunk($model, $chunk)
+    public function requestChunk($record, $chunk)
     {
         $this->setCurrentChunk($chunk);
-        $this->request($model);
+        $this->request($record);
     }
 
     public function inputMessageOf(string $name, $message, ...$args)

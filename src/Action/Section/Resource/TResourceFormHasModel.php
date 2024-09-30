@@ -35,8 +35,8 @@ trait TResourceFormHasModel
 
     public function modelForm(InlineForm $form, $id)
     {
-        $this->theModel = $this->getModelFrom($id);
-        $this->setDynArgs(model: $this->theModel);
+        $this->theModel = $this->getRecordFrom($id);
+        $this->setDynArgs(record: $this->theModel);
         $this->form($form);
     }
 

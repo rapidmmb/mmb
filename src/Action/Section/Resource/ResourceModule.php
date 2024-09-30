@@ -5,6 +5,7 @@ namespace Mmb\Action\Section\Resource;
 use BadMethodCallException;
 use Closure;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Traits\Conditionable;
 use Mmb\Action\Form\Input;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Menu;
@@ -14,6 +15,7 @@ use Mmb\Support\Caller\Caller;
 
 class ResourceModule extends Section
 {
+    use Conditionable;
 
     public function __construct(
         public ResourceMaker $maker,

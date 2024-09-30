@@ -31,6 +31,20 @@ return [
         'confirm'   => 'Yes, Delete!',
     ],
 
+    'soft_delete' => [
+        'key_label'     => 'Delete',
+        'trash_message' => 'Are you sure to moving to trash?',
+        'trash_confirm' => 'Yes, Move To Trash',
+
+        'delete_key'     => 'Delete It',
+        'delete_message' => 'Are you sure to delete this item forever? You can trash it to restore later!',
+        'delete_confirm' => 'Yes, Delete It Forever',
+
+        'trashed_key_label' => 'Trashed',
+        'view_message'      => 'Do you want delete or restore the item?',
+        'restore_key'       => 'Restore',
+    ],
+
     'search' => [
         'message' => 'Search:',
 
@@ -50,6 +64,12 @@ return [
 
     'filter' => [
         'message' => 'Select:',
+    ],
+
+    'trash' => [
+        'key_label' => 'Trash: :label',
+        'disabled'  => 'Hidden',
+        'enabled'   => 'Show',
     ],
 
 ];

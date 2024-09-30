@@ -3,6 +3,7 @@
 namespace Mmb\Action\Form;
 
 use Closure;
+use Illuminate\Support\Traits\Conditionable;
 use Mmb\Action\Filter\Filterable;
 use Mmb\Action\Filter\FilterableShort;
 use Mmb\Action\Filter\FilterFailException;
@@ -19,6 +20,7 @@ use Mmb\Support\Encoding\Text;
 class Input
 {
     use Filterable, FilterableShort, HasEventFilter, HasSimpleEvents;
+    use Conditionable;
 
     public bool $isCreatingMode = false;
 
@@ -361,50 +363,6 @@ class Input
     public function onRequest($message)
     {
         $this->form->fire('request', $this, $message);
-    }
-
-    /**
-     * Call method if condition is true
-     *
-     * @param              $condition
-     * @param Closure      $then
-     * @param Closure|null $default
-     * @return $this
-     */
-    public function when($condition, Closure $then, Closure $default = null)
-    {
-        if(value($condition))
-        {
-            $then($this);
-        }
-        elseif($default)
-        {
-            $default($this);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Call method if condition is false
-     *
-     * @param              $condition
-     * @param Closure      $then
-     * @param Closure|null $default
-     * @return $this
-     */
-    public function until($condition, Closure $then, Closure $default = null)
-    {
-        if(!value($condition))
-        {
-            $then($this);
-        }
-        elseif($default)
-        {
-            $default($this);
-        }
-
-        return $this;
     }
 
     /**

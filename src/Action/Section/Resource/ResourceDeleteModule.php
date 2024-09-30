@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Section\Resource;
 
+use Closure;
 use Mmb\Action\Form\Form;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Form\Input;
@@ -14,6 +15,14 @@ class ResourceDeleteModule extends ResourceFormModule
     protected function getDefaultKeyLabel()
     {
         return __('mmb::resource.delete.key_label');
+    }
+
+    protected $deleting;
+
+    public function deleting(Closure $callback)
+    {
+        $this->deleting = $callback;
+        return $this;
     }
 
 
@@ -45,15 +54,15 @@ class ResourceDeleteModule extends ResourceFormModule
     }
 
 
-    public function request($model)
+    public function request($record)
     {
-        $this->fireAction($this->name, [$model]);
+        $this->fireAction($this->name, [$record]);
     }
 
-    public function requestChunk($model, $chunk)
+    public function requestChunk($record, $chunk)
     {
         $this->setCurrentChunk($chunk);
-        $this->request($model);
+        $this->request($record);
     }
 
     protected function initForm(InlineForm $form)
@@ -70,7 +79,14 @@ class ResourceDeleteModule extends ResourceFormModule
 
     protected function formFinished(Form $form, array $attributes)
     {
-        $this->theModel->delete();
+        if (isset($this->deleting))
+        {
+            $this->valueOf($this->deleting, $this->theModel);
+        }
+        else
+        {
+            $this->theModel->delete();
+        }
 
         parent::formFinished($form, $attributes);
     }

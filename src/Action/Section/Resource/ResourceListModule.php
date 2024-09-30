@@ -5,10 +5,8 @@ namespace Mmb\Action\Section\Resource;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\ResourceMaker;
-use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
 class ResourceListModule extends ResourceModule
@@ -133,9 +131,9 @@ class ResourceListModule extends ResourceModule
         return $this;
     }
 
-    public function fireSelect($model)
+    public function fireSelect($record)
     {
-        $this->fireAction($this->select ?? 'info', [$model]);
+        $this->fireAction($this->select ?? 'info', [$record]);
     }
 
 
@@ -335,6 +333,32 @@ class ResourceListModule extends ResourceModule
         return $this;
     }
 
+    /**
+     * Add trash filter for `SoftDeletes`
+     *
+     * @param string       $name
+     * @param Closure|null $init
+     * @param int|null     $x
+     * @return $this
+     */
+    public function trashFilter(string $name = 'trash', Closure $init = null, ?int $x = null)
+    {
+        return $this->simpleFilter($name,
+            fn (ResourceSimpleFilterModule $filter) => $filter
+                ->keyLabel(
+                    fn ($keyLabel) => __('mmb::resource.trash.key_label', ['label' => $keyLabel])
+                )
+                ->add(
+                    fn () => __('mmb::resource.trash.disabled'), fn ($query) => $query->withoutTrashed()
+                )
+                ->add(
+                    fn () => __('mmb::resource.trash.enabled'), fn ($query) => $query->onlyTrashed()
+                )
+                ->when($init, fn () => $this->valueOf($init, $filter)),
+            $x
+        );
+    }
+
     public function creatable(Closure $init, bool $onlyFirstPage = true, ?int $x = 100, ?int $y = null)
     {
         $this->module($create = new ResourceCreateModule($this->maker, 'create', $this->model));
@@ -427,14 +451,14 @@ class ResourceListModule extends ResourceModule
 
     public function listMenu(Menu $menu)
     {
-        $models = $this->getQuery()->paginate($this->getPerPage(), page: $page = $this->getMy('page', 1));
+        $recordsPaginate = $this->getQuery()->paginate($this->getPerPage(), page: $page = $this->getMy('page', 1));
 
         $this->setDynArgs(
             page: $page,
             current: $page,
-            lastPage: $models->lastPage(),
-            paginate: $models,
-            all: $models,
+            lastPage: $recordsPaginate->lastPage(),
+            paginate: $recordsPaginate,
+            all: $recordsPaginate,
         );
 
         foreach($this->top as $event)
@@ -443,8 +467,8 @@ class ResourceListModule extends ResourceModule
                 $event, [], [
                     'menu'      => $menu,
                     'page'      => $page,
-                    'paginate' => $models,
-                    'all'       => $models,
+                    'paginate' => $recordsPaginate,
+                    'all'       => $recordsPaginate,
                 ]
             );
         }
@@ -452,20 +476,20 @@ class ResourceListModule extends ResourceModule
 
         if($this->valueOf($this->paginateShow))
         {
-            $paginateRow = $this->valueOf($this->paginateRow, $models, page: $page) ?? $menu->paginateRow($models);
+            $paginateRow = $this->valueOf($this->paginateRow, $recordsPaginate, page: $page) ?? $menu->paginateRow($recordsPaginate);
         }
         else
         {
             $paginateRow = null;
         }
 
-        if($menu->isCreating() && $models->isEmpty() && $this->notFound)
+        if($menu->isCreating() && $recordsPaginate->isEmpty() && $this->notFound)
         {
             $this->valueOf($this->notFound);
         }
 
         $menu
-            ->schema($this->keyToSchema($menu, 'head', page: $page, paginate: $models))
+            ->schema($this->keyToSchema($menu, 'head', page: $page, paginate: $recordsPaginate))
             ->schema(
                 function() use ($paginateRow)
                 {
@@ -479,23 +503,23 @@ class ResourceListModule extends ResourceModule
                     }
                 }
             )
-            ->schema($this->keyToSchema($menu, 'top', page: $page, paginate: $models))
+            ->schema($this->keyToSchema($menu, 'top', page: $page, paginate: $recordsPaginate))
             ->schema(
-                function() use ($menu, $models, $page)
+                function() use ($menu, $recordsPaginate, $page)
                 {
                     // List
-                    foreach($models as $model)
+                    foreach($recordsPaginate as $record)
                     {
-                        yield [$menu->key($this->getLabelOf($model), 'select', $model)];
+                        yield [$menu->key($this->getLabelOf($record), 'select', $record)];
                     }
 
-                    if($models->isEmpty())
+                    if($recordsPaginate->isEmpty())
                     {
                         yield [$menu->key($this->getNotFoundLabel())];
                     }
                 }
             )
-            ->schema($this->keyToSchema($menu, 'bottom', page: $page, paginate: $models))
+            ->schema($this->keyToSchema($menu, 'bottom', page: $page, paginate: $recordsPaginate))
             ->schema(
                 function() use ($paginateRow)
                 {
@@ -527,8 +551,8 @@ class ResourceListModule extends ResourceModule
                 $event, [], [
                     'menu'      => $menu,
                     'page'      => $page,
-                    'paginate' => $models,
-                    'all'       => $models,
+                    'paginate' => $recordsPaginate,
+                    'all'       => $recordsPaginate,
                 ]
             );
         }
