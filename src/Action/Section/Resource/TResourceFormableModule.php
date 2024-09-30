@@ -13,6 +13,11 @@ trait TResourceFormableModule
     protected $inputs = [];
     protected $inputAttributes = [];
 
+    /**
+     * Add new input
+     *
+     * @return $this
+     */
     public function input(string $name, Closure $callback, bool $include = true, string $as = null)
     {
         $this->inputs[$name] = $callback;
@@ -27,12 +32,22 @@ trait TResourceFormableModule
 
     protected $attributes = [];
 
+    /**
+     * Define new custom attribute
+     *
+     * @return $this
+     */
     public function attribute(string $name, $value)
     {
         $this->attributes[$name] = $value;
         return $this;
     }
 
+    /**
+     * Define custom attributes
+     *
+     * @return $this
+     */
     public function attributes(array $values)
     {
         $this->attributes = array_replace($this->attributes, $values);
@@ -40,6 +55,11 @@ trait TResourceFormableModule
     }
 
 
+    /**
+     * Add text input
+     *
+     * @return $this
+     */
     public function text(string $name, $message, $min = null, $max = null, Closure $init = null, bool $include = true)
     {
         return $this->input($name, function(Input $input) use($name, $message, $min, $max, $init)
@@ -51,6 +71,11 @@ trait TResourceFormableModule
         }, $include);
     }
 
+    /**
+     * Add single line text input
+     *
+     * @return $this
+     */
     public function textSingleLine(string $name, $message, $min = null, $max = null, Closure $init = null, bool $include = true)
     {
         return $this->input($name, function(Input $input) use($name, $message, $min, $max, $init)
@@ -62,6 +87,11 @@ trait TResourceFormableModule
         }, $include);
     }
 
+    /**
+     * Add integer input
+     *
+     * @return $this
+     */
     public function int(string $name, $message, $min = null, $max = null, Closure $init = null, bool $include = true)
     {
         return $this->input($name, function(Input $input) use($name, $message, $min, $max, $init)
@@ -73,6 +103,11 @@ trait TResourceFormableModule
         }, $include);
     }
 
+    /**
+     * Add unsigned integer input
+     *
+     * @return $this
+     */
     public function unsignedInt(string $name, $message, $min = null, $max = null, Closure $init = null, bool $include = true)
     {
         return $this->input($name, function(Input $input) use($name, $message, $min, $max, $init)
@@ -84,6 +119,11 @@ trait TResourceFormableModule
         }, $include);
     }
 
+    /**
+     * Add float input
+     *
+     * @return $this
+     */
     public function float(string $name, $message, $min = null, $max = null, Closure $init = null, bool $include = true)
     {
         return $this->input($name, function(Input $input) use($name, $message, $min, $max, $init)
@@ -95,6 +135,11 @@ trait TResourceFormableModule
         }, $include);
     }
 
+    /**
+     * Add unsigned float input
+     *
+     * @return $this
+     */
     public function unsignedFloat(string $name, $message, $min = null, $max = null, Closure $init = null, bool $include = true)
     {
         return $this->input($name, function(Input $input) use($name, $message, $min, $max, $init)
@@ -119,6 +164,12 @@ trait TResourceFormableModule
 
     protected $messagesCallback = [];
 
+    /**
+     * Add event to change the messages
+     *
+     * @param Closure $callback
+     * @return $this
+     */
     public function messages(Closure $callback)
     {
         $this->messagesCallback[] = $callback;
@@ -127,6 +178,12 @@ trait TResourceFormableModule
 
     protected $chunks;
 
+    /**
+     * Define chunks
+     *
+     * @param array $chunks
+     * @return $this
+     */
     public function chunks(array $chunks)
     {
         $this->chunks = $chunks;
