@@ -8,16 +8,11 @@ use Mmb\Action\Form\FormStepHandler;
 use Mmb\Action\Form\HasFormBacks;
 use Mmb\Action\Form\Input;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Behavior\Behavior;
 use Mmb\Support\Caller\Caller;
 
 class InlineFormRunner extends Form
 {
-    use HasFormBacks
-    {
-        onBack as private __onBack;
-        onCancel as private __onCancel;
-    }
-
     protected $inputs = [];
 
     protected $inputInits = [];
@@ -35,7 +30,14 @@ class InlineFormRunner extends Form
         $this->inputs[] = $name;
     }
 
-    public function onInitializingInput(Input $input)
+    public function getInputType(string $name) : string
+    {
+        return array_key_exists($name, $this->inputInits) ?
+            static::detectInputTypeFromCallback($this->inputInits[$name]) :
+            Input::class;
+    }
+
+    protected function onInitializingInput(Input $input)
     {
         parent::onInitializingInput($input);
 
@@ -48,18 +50,23 @@ class InlineFormRunner extends Form
         }
     }
 
-    public function onBack(bool $finished)
-    {
-        if ($this->isDefinedEvent('back')) return;
+    public string $inlineDefinedClass;
 
-        $this->__onBack($finished);
+    protected function onBackDefault(bool $finished = true)
+    {
+        if ($this->isDefinedEvent('backDefault')) return;
+
+        Behavior::back($this->inlineDefinedClass, dynamicArgs: [
+            'form' => $this,
+            'finished' => $finished,
+        ]);
     }
 
     public function onCancel()
     {
         if ($this->isDefinedEvent('cancel')) return;
 
-        $this->__onCancel();
+        parent::onCancel();
     }
 
     public FormStepHandler $lastSavedStep;

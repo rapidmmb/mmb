@@ -19,7 +19,7 @@ class InlineForm extends InlineAction
     public function initializer($object, string $method)
     {
         $this->form = new InlineFormRunner;
-        $this->form->withBackOfArea(get_class($object));
+        $this->form->inlineDefinedClass = get_class($object);
 
         return parent::initializer($object, $method);
     }
@@ -126,7 +126,7 @@ class InlineForm extends InlineAction
     }
 
     /**
-     * Back event
+     * Default back event
      *
      * @param Closure|array|string $callback
      * @param string|null          $method
@@ -146,11 +146,11 @@ class InlineForm extends InlineAction
 
         if ($callback instanceof Closure)
         {
-            $this->form->on('back', $callback);
+            $this->form->on('backDefault', $callback);
         }
         else
         {
-            $this->form->on('back', function ($finished) use($callback, $method)
+            $this->form->on('backDefault', function ($finished) use($callback, $method)
             {
                 if (is_string($callback) && is_a($callback, Action::class, true))
                 {

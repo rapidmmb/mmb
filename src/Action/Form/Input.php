@@ -378,8 +378,7 @@ class Input
             return $this->form->get($this->name);
         }
 
-        error_log(sprintf("Undefined property [%s] on [%s]", $name, static::class)); // TODO
-        return null;
+        throw new \Exception(sprintf("Undefined property [%s] on [%s]", $name, static::class));
     }
 
     /**
@@ -859,6 +858,66 @@ class Input
             'form' => $this->form,
             'value' => fn() => $this->value,
         ];
+    }
+
+    /**
+     * Listen to entering
+     *
+     * @param Closure $callback
+     * @return $this
+     */
+    public function entering(Closure $callback)
+    {
+        $this->on('enter', $callback);
+        return $this;
+    }
+
+    /**
+     * Listen to leaving
+     *
+     * @param Closure $callback
+     * @return $this
+     */
+    public function leaving(Closure $callback)
+    {
+        $this->on('leave', $callback);
+        return $this;
+    }
+
+    /**
+     * Event before the initializer calling
+     *
+     * @return void
+     */
+    protected function onInitializing()
+    {
+    }
+
+    /**
+     * Event after the initializer called
+     *
+     * @return void
+     */
+    protected function onInitialized()
+    {
+    }
+
+    /**
+     * Event when request the input
+     *
+     * @return void
+     */
+    protected function onEnter()
+    {
+    }
+
+    /**
+     * Event on leaving the input
+     *
+     * @return void
+     */
+    protected function onLeave()
+    {
     }
 
 }

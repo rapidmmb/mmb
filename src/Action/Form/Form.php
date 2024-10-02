@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Form;
 
+use Closure;
 use Illuminate\Support\Collection;
 use Mmb\Action\Action;
 use Mmb\Action\Filter\FilterFailException;
@@ -11,6 +12,8 @@ use Mmb\Action\Form\Attributes\FormMethodModifierAttributeContract;
 use Mmb\Action\Form\Attributes\FormPropertyModifierAttributeContract;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\AttributeLoader;
+use Mmb\Support\Behavior\Behavior;
+use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasSimpleEvents;
 
 class Form extends Action
@@ -138,11 +141,36 @@ class Form extends Action
 
     protected function attrModel(string $name)
     {
-
+        // TODO
     }
 
 
+    /**
+     * Automatically detect input type from callback
+     *
+     * @template T
+     *
+     * @param Closure $callback
+     * @param T       $default
+     * @return string|T
+     */
+    public static function detectInputTypeFromCallback(Closure $callback, $default = Input::class)
+    {
+        if ($parameter = @(new \ReflectionFunction($callback))->getParameters()[0])
+        {
+            $type = $parameter->getType();
+            if ($type instanceof \ReflectionNamedType)
+            {
+                $class = $type->getName();
+                if (is_a($class, Input::class, true))
+                {
+                    return $class;
+                }
+            }
+        }
 
+        return $default;
+    }
 
     /**
      * Make empty input
@@ -150,25 +178,22 @@ class Form extends Action
      * @param string $name
      * @return Input
      */
-    public function emptyInput(string $name)
+    public function emptyInput(string $name): Input
     {
-        if(method_exists($this, $name))
-        {
-            if($parameter = @(new \ReflectionMethod($this, $name))->getParameters()[0])
-            {
-                $type = $parameter->getType();
-                if($type instanceof \ReflectionNamedType)
-                {
-                    $class = $type->getName();
-                    if(is_a($class, Input::class, true))
-                    {
-                        return new $class($this, $name);
-                    }
-                }
-            }
-        }
+        return new ($this->getInputType($name))($this, $name);
+    }
 
-        return new Input($this, $name);
+    /**
+     * Get input type
+     *
+     * @param string $name
+     * @return string
+     */
+    public function getInputType(string $name): string
+    {
+        return method_exists($this, $name) ?
+            static::detectInputTypeFromCallback($this->$name(...)) :
+            Input::class;
     }
 
     /**
@@ -178,22 +203,23 @@ class Form extends Action
      * @param bool   $isCurrent
      * @return Input
      */
-    public function createInput(string $name, bool $isCurrent = false)
+    public function createInput(string $name, bool $isCurrent = false): Input
     {
         $input = $this->emptyInput($name);
         $input->isCreatingMode = true;
         if($isCurrent) $this->currentInput = $input;
+        $input->fire('initializing');
         $this->fire('initializingInput', $input);
         if(method_exists($this, $name))
         {
             $this->invokeDynamic(
-                $name, [], [
-                    'input' => $input,
+                $name, [$input], [
                     'form'  => $this,
                 ]
             );
         }
         $this->fire('initializedInput', $input);
+        $input->fire('initialized');
 
         $this->addDefaultKey($input);
 
@@ -207,22 +233,23 @@ class Form extends Action
      * @param bool   $isCurrent
      * @return Input
      */
-    public function loadInput(string $name, bool $isCurrent = true)
+    public function loadInput(string $name, bool $isCurrent = true): Input
     {
         $input = $this->emptyInput($name);
         $input->isCreatingMode = false;
         if($isCurrent) $this->currentInput = $input;
+        $input->fire('initializing');
         $this->fire('initializingInput', $input);
-        if(method_exists($this, $name))
+        if (method_exists($this, $name))
         {
             $this->invokeDynamic(
-                $name, [], [
-                    'input' => $input,
-                    'form'  => $this,
+                $name, [$input], [
+                    'form' => $this,
                 ]
             );
         }
         $this->fire('initializedInput', $input);
+        $input->fire('initialized');
 
         $this->addDefaultKey($input);
 
@@ -292,6 +319,7 @@ class Form extends Action
     {
         $input = $this->createInput($name, true);
 
+        $input->fire('enter');
         $this->fire('enter', $input);
         $input->request();
 
@@ -439,6 +467,7 @@ class Form extends Action
 
         $input->pass($update ?? $this->update);
         $this->fire('leave', $input);
+        $input->fire('leave');
     }
 
     public function findInputIndex(string $name)
@@ -662,7 +691,7 @@ class Form extends Action
      * @param Input $input
      * @return void
      */
-    public function onInitializingInput(Input $input)
+    protected function onInitializingInput(Input $input)
     {
     }
 
@@ -672,7 +701,7 @@ class Form extends Action
      * @param Input $input
      * @return void
      */
-    public function onInitializedInput(Input $input)
+    protected function onInitializedInput(Input $input)
     {
     }
 
@@ -682,7 +711,7 @@ class Form extends Action
      * @param string $message
      * @return void
      */
-    public function onError(string $message)
+    protected function onError(string $message)
     {
         $this->update->response($message);
     }
@@ -692,7 +721,7 @@ class Form extends Action
      *
      * @return void
      */
-    public function onStart()
+    protected function onStart()
     {
     }
 
@@ -701,7 +730,7 @@ class Form extends Action
      *
      * @return void
      */
-    public function onStep()
+    protected function onStep()
     {
     }
 
@@ -711,7 +740,7 @@ class Form extends Action
      * @param Input $input
      * @return void
      */
-    public function onEnter(Input $input)
+    protected function onEnter(Input $input)
     {
     }
 
@@ -721,7 +750,7 @@ class Form extends Action
      * @param Input $input
      * @return void
      */
-    public function onLeave(Input $input)
+    protected function onLeave(Input $input)
     {
     }
 
@@ -730,8 +759,9 @@ class Form extends Action
      *
      * @return void
      */
-    public function onCancel()
+    protected function onCancel()
     {
+        $this->back(false);
     }
 
     /**
@@ -739,8 +769,43 @@ class Form extends Action
      *
      * @return void
      */
-    public function onFinish()
+    protected function onFinish()
     {
+        $this->back();
+    }
+
+    /**
+     * Event to handle backing
+     *
+     * @param bool $finished
+     * @return void
+     */
+    protected function onBack(bool $finished = true)
+    {
+        if (!is_null($back = $this->get('#back')))
+        {
+            Caller::invokeAction($back, [], [
+                'form' => $this,
+                'finished' => $finished,
+            ]);
+            return;
+        }
+
+        $this->fire('backDefault', $finished);
+    }
+
+    /**
+     * Event to handle backing by default
+     *
+     * @param bool $finished
+     * @return void
+     */
+    protected function onBackDefault(bool $finished = true)
+    {
+        Behavior::back($this->get('#backA') ?? static::class, dynamicArgs: [
+            'form' => $this,
+            'finished' => $finished,
+        ]);
     }
 
     /**
@@ -758,6 +823,49 @@ class Form extends Action
             ]*/
         );
         // TODO : Remove comments
+    }
+
+    /**
+     * Back to previous section
+     *
+     * @param bool $finished
+     * @return void
+     */
+    public function back(bool $finished = true)
+    {
+        $this->fire('back', $finished);
+    }
+
+    /**
+     * Add back callback
+     *
+     * @param string|object|array $class
+     * @param string|null         $method
+     * @return $this
+     */
+    public function withBack(string|object|array $class, string $method = null)
+    {
+        if (!is_array($class))
+        {
+            $class = [is_object($class) ? get_class($class) : $class, $method];
+        }
+
+        $this->put('#back', $class);
+
+        return $this;
+    }
+
+    /**
+     * Use a class for getting back from area settings
+     *
+     * @param string $baseClass
+     * @return $this
+     */
+    public function withBackOfArea(string $baseClass)
+    {
+        $this->put('#backA', $baseClass);
+
+        return $this;
     }
 
 }

@@ -39,15 +39,15 @@ trait HasSimpleEvents
         $dynamicArgs += $this->getEventDynamicArgs();
 
         $event = strtolower($event);
-        foreach($this->_events[$event] ?? [] as $listener)
+        foreach ($this->_events[$event] ?? [] as $listener)
         {
-            if(Caller::invoke($listener, $normalArgs, $dynamicArgs))
+            if (Caller::invoke($listener, $normalArgs, $dynamicArgs))
             {
                 return true;
             }
         }
 
-        if(method_exists($this, 'on' . $event))
+        if (method_exists($this, 'on' . $event))
         {
             return (bool) $this->{'on' . $event}(...$args);
         }
