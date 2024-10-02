@@ -260,6 +260,7 @@ class Update extends Data
         }
         else
         {
+            $args['ignoreReply'] = true;
             $result = $this->getMessage()->replyMessage($message, $args, ...$namedArgs);
             $this->isRespond = (bool) $result;
             return $result;

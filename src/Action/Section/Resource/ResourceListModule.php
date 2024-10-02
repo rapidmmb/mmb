@@ -117,7 +117,7 @@ class ResourceListModule extends ResourceModule
     public function getMessage()
     {
         return $this->valueOf($this->message) ?? __(
-            'mmb.resource.list.message',
+            'mmb::resource.list.message',
             $this->getDynArgsOf('page', 'lastPage')
         );
     }

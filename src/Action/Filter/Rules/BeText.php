@@ -9,7 +9,7 @@ class BeText extends BeMessage
 
     public function __construct(
         public $textError = null,
-        $messageError = null
+               $messageError = null
     )
     {
         parent::__construct($messageError);
@@ -19,7 +19,7 @@ class BeText extends BeMessage
     {
         parent::pass($update, $value);
 
-        if($update->message->type != 'text')
+        if ($update->message->type != 'text')
         {
             $this->fail(value($this->textError ?? __('mmb::filter.text')));
         }

@@ -324,51 +324,82 @@ class Filter extends FilterRule
     /**
      * Add float number message filter
      *
-     * @param $numberError
-     * @param $messageError
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
      * @param bool $unsigned
      * @return $this
      */
-    public function float($numberError = null, $messageError = null, bool $unsigned = false)
+    public function float($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
     {
-        return $this->add(new Rules\BeFloat($numberError, $messageError, $unsigned));
+        return $this->add(new Rules\BeFloat($numberError, $textError, $messageError, $unsigned));
     }
 
     /**
      * Add float number message filter
      *
-     * @param $numberError
-     * @param $messageError
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
      * @return $this
      */
-    public function unsignedFloat($numberError = null, $messageError = null)
+    public function unsignedFloat($numberError = null, $textError = null, $messageError = null)
     {
-        return $this->add(new Rules\BeFloat($numberError, $messageError, true));
+        return $this->add(new Rules\BeFloat($numberError, $textError, $messageError, true));
     }
 
     /**
      * Add integer number message filter
      *
-     * @param $numberError
-     * @param $messageError
-     * @param bool $unsigned
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
+     * @param bool  $unsigned
      * @return $this
      */
-    public function int($numberError = null, $messageError = null, bool $unsigned = false)
+    public function int($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
     {
-        return $this->add(new Rules\BeInt($numberError, $messageError, $unsigned));
+        return $this->add(new Rules\BeInt($numberError, $textError, $messageError, $unsigned));
     }
 
     /**
      * Add integer number message filter
      *
-     * @param $numberError
-     * @param $messageError
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
      * @return $this
      */
-    public function unsignedInt($numberError = null, $messageError = null)
+    public function unsignedInt($numberError = null, $textError = null, $messageError = null)
     {
-        return $this->add(new Rules\BeInt($numberError, $messageError, true));
+        return $this->add(new Rules\BeInt($numberError, $textError, $messageError, true));
+    }
+
+    /**
+     * Add number message filter
+     *
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
+     * @param bool  $unsigned
+     * @return $this
+     */
+    public function number($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
+    {
+        return $this->add(new Rules\BeNumber($numberError, $textError, $messageError, $unsigned));
+    }
+
+    /**
+     * Add number message filter
+     *
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
+     * @return $this
+     */
+    public function unsignedNumber($numberError = null, $textError = null, $messageError = null)
+    {
+        return $this->add(new Rules\BeNumber($numberError, $textError, $messageError, true));
     }
 
     /**
@@ -471,12 +502,12 @@ class Filter extends FilterRule
     /**
      * Filter regex pattern
      *
-     * @param string $pattern
-     * @param int    $result
-     * @param        $error
+     * @param string     $pattern
+     * @param int|string $result
+     * @param mixed      $error
      * @return $this
      */
-    public function regex(string $pattern, int $result = -1, $error = null)
+    public function regex(string $pattern, int|string $result = '', $error = null)
     {
         return $this->add(new Rules\FilterRegex($pattern, $result, $error));
     }
@@ -606,7 +637,7 @@ class Filter extends FilterRule
     public static function handleGlobally(FilterFailException $exception, Update $update)
     {
         $handler = static::$globalFailHandler;
-        if(is_string($handler))
+        if (is_string($handler))
         {
             Container::getInstance()->make($handler)->handle($exception, $update);
         }

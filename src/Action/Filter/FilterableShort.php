@@ -88,12 +88,13 @@ trait FilterableShort
     /**
      * Add float number message filter
      *
-     * @param $numberError
-     * @param $messageError
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
      * @param bool $unsigned
      * @return $this
      */
-    public function float($numberError = null, $messageError = null, bool $unsigned = false)
+    public function float($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
     {
         $this->getFilter()->float(...func_get_args());
         return $this;
@@ -102,11 +103,12 @@ trait FilterableShort
     /**
      * Add float number message filter
      *
-     * @param $numberError
-     * @param $messageError
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
      * @return $this
      */
-    public function unsignedFloat($numberError = null, $messageError = null)
+    public function unsignedFloat($numberError = null, $textError = null, $messageError = null)
     {
         $this->getFilter()->unsignedFloat(...func_get_args());
         return $this;
@@ -115,12 +117,13 @@ trait FilterableShort
     /**
      * Add integer number message filter
      *
-     * @param $numberError
-     * @param $messageError
-     * @param bool $unsigned
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
+     * @param bool  $unsigned
      * @return $this
      */
-    public function int($numberError = null, $messageError = null, bool $unsigned = false)
+    public function int($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
     {
         $this->getFilter()->int(...func_get_args());
         return $this;
@@ -129,11 +132,41 @@ trait FilterableShort
     /**
      * Add integer number message filter
      *
-     * @param $numberError
-     * @param $messageError
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
      * @return $this
      */
-    public function unsignedInt($numberError = null, $messageError = null)
+    public function unsignedInt($numberError = null, $textError = null, $messageError = null)
+    {
+        $this->getFilter()->unsignedInt(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Add number message filter
+     *
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
+     * @param bool  $unsigned
+     * @return $this
+     */
+    public function number($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
+    {
+        $this->getFilter()->int(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Add number message filter
+     *
+     * @param mixed $numberError
+     * @param mixed $textError
+     * @param mixed $messageError
+     * @return $this
+     */
+    public function unsignedNumber($numberError = null, $textError = null, $messageError = null)
     {
         $this->getFilter()->unsignedInt(...func_get_args());
         return $this;
@@ -246,12 +279,12 @@ trait FilterableShort
     /**
      * Filter regex pattern
      *
-     * @param string $pattern
-     * @param int    $result
-     * @param        $error
+     * @param string     $pattern
+     * @param int|string $result
+     * @param mixed      $error
      * @return $this
      */
-    public function regex(string $pattern, int $result = -1, $error = null)
+    public function regex(string $pattern, int|string $result = '', $error = null)
     {
         $this->getFilter()->regex(...func_get_args());
         return $this;

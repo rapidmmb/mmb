@@ -22,26 +22,26 @@ class BeFloat extends BeText
         parent::pass($update, $value);
 
         $text = $update->message->text;
-        if($this->unsigned)
+        if ($this->unsigned)
         {
-            if(!is_numeric($text))
+            if (!is_numeric($text) || !str_contains($text, '.'))
             {
-                $this->fail(value($this->textError ?? __('mmb::filter.unsigned-float')));
+                $this->fail(value($this->numberError ?? __('mmb::filter.unsigned-float')));
             }
-            $value = +$text;
+            $value = (float) $text;
 
-            if($value < 0)
+            if ($value < 0)
             {
-                $this->fail(value($this->textError ?? __('mmb::filter.unsigned-float')));
+                $this->fail(value($this->numberError ?? __('mmb::filter.unsigned-float')));
             }
         }
         else
         {
-            if(!is_numeric($text))
+            if (!is_numeric($text) || !str_contains($text, '.'))
             {
-                $this->fail(value($this->textError ?? __('mmb::filter.float')));
+                $this->fail(value($this->numberError ?? __('mmb::filter.float')));
             }
-            $value = +$text;
+            $value = (float) +$text;
         }
     }
 

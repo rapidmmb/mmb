@@ -4,7 +4,7 @@ namespace Mmb\Action\Filter\Rules;
 
 use Mmb\Core\Updates\Update;
 
-class BeInt extends BeText
+class BeNumber extends BeText
 {
 
     public function __construct(
@@ -24,24 +24,24 @@ class BeInt extends BeText
         $text = $update->message->text;
         if ($this->unsigned)
         {
-            if (!is_numeric($text) || str_contains($text, '.'))
+            if (!is_numeric($text))
             {
-                $this->fail(value($this->numberError ?? __('mmb::filter.unsigned-int')));
+                $this->fail(value($this->numberError ?? __('mmb::filter.unsigned-number')));
             }
-            $value = (int) +$text;
+            $value = +$text;
 
             if ($value < 0)
             {
-                $this->fail(value($this->numberError ?? __('mmb::filter.unsigned-int')));
+                $this->fail(value($this->numberError ?? __('mmb::filter.unsigned-number')));
             }
         }
         else
         {
-            if (!is_numeric($text) || str_contains($text, '.'))
+            if (!is_numeric($text))
             {
-                $this->fail(value($this->numberError ?? __('mmb::filter.int')));
+                $this->fail(value($this->numberError ?? __('mmb::filter.number')));
             }
-            $value = (int) +$text;
+            $value = +$text;
         }
     }
 
