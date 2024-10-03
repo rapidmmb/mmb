@@ -60,6 +60,13 @@ class InlineFormRunner extends Form
         ]);
     }
 
+    public function onFinish()
+    {
+        if ($this->isDefinedEvent('finish')) return;
+
+        parent::onFinish();
+    }
+
     public function onCancel()
     {
         if ($this->isDefinedEvent('cancel')) return;
