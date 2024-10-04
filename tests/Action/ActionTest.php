@@ -23,9 +23,9 @@ class ActionTest extends TestCase
         $this->assertSame('Foo', $action->invoke('main'));
     }
 
-    public function test_response()
-    {
-
-    }
+    // public function test_response()
+    // {
+    //
+    // }
 
 }

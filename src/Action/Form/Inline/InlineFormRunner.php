@@ -8,6 +8,7 @@ use Mmb\Action\Form\FormStepHandler;
 use Mmb\Action\Form\Input;
 use Mmb\Support\Behavior\Behavior;
 use Mmb\Support\Caller\Caller;
+use Mmb\Support\Caller\EventCaller;
 
 class InlineFormRunner extends Form
 {
@@ -48,30 +49,22 @@ class InlineFormRunner extends Form
         }
     }
 
+    protected function getEventOptions(string $event) : array
+    {
+        return [
+            'default' => EventCaller::DEFAULT_WHEN_NOT_LISTENING,
+            ...parent::getEventOptions($event),
+        ];
+    }
+
     public string $inlineDefinedClass;
 
     protected function onBackDefault(bool $finished = true)
     {
-        if ($this->isDefinedEvent('backDefault')) return;
-
         Behavior::back($this->inlineDefinedClass, dynamicArgs: [
             'form' => $this,
             'finished' => $finished,
         ]);
-    }
-
-    public function onFinish()
-    {
-        if ($this->isDefinedEvent('finish')) return;
-
-        parent::onFinish();
-    }
-
-    public function onCancel()
-    {
-        if ($this->isDefinedEvent('cancel')) return;
-
-        parent::onCancel();
     }
 
     public FormStepHandler $lastSavedStep;

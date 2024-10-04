@@ -11,7 +11,7 @@ use Mmb\Action\Filter\HasEventFilter;
 use Mmb\Action\Filter\Rules\FilterFailAnyway;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
-use Mmb\Support\Caller\HasSimpleEvents;
+use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Encoding\Text;
 
 /**
@@ -19,7 +19,7 @@ use Mmb\Support\Encoding\Text;
  */
 class Input
 {
-    use Filterable, FilterableShort, HasEventFilter, HasSimpleEvents;
+    use Filterable, FilterableShort, HasEventFilter, HasEvents;
     use Conditionable;
 
     public bool $isCreatingMode = false;
@@ -269,7 +269,7 @@ class Input
      */
     public function then($callback)
     {
-        $this->on('passed', $callback);
+        $this->listen('passed', $callback);
         return $this;
     }
 
@@ -281,7 +281,7 @@ class Input
      */
     public function passed($callback)
     {
-        $this->on('passed', $callback);
+        $this->listen('passed', $callback);
         return $this;
     }
 
@@ -291,7 +291,7 @@ class Input
      */
     public function passing($callback)
     {
-        $this->on('passing', $callback);
+        $this->listen('passing', $callback);
         return $this;
     }
 
@@ -301,7 +301,7 @@ class Input
      */
     public function filled($callback)
     {
-        $this->on('fill', $callback);
+        $this->listen('fill', $callback);
         return $this;
     }
 
@@ -325,7 +325,7 @@ class Input
         $value = function ($callable) use (&$message)
         {
             return $callable instanceof Closure ?
-                Caller::invoke($callable, [], $this->getEventDynamicArgs() + ['text' => @$message['text']]) :
+                Caller::invoke($callable, [], $this->getEventDynamicArgs('*') + ['text' => @$message['text']]) :
                 $callable;
         };
 
@@ -849,14 +849,16 @@ class Input
     }
 
     /**
+     * @param string $event
      * @return array
      */
-    public function getEventDynamicArgs()
+    public function getEventDynamicArgs(string $event): array
     {
         return [
             'input' => $this,
             'form' => $this->form,
             'value' => fn() => $this->value,
+            ...$this->getEventDefaultDynamicArgs($event),
         ];
     }
 
@@ -868,7 +870,7 @@ class Input
      */
     public function entering(Closure $callback)
     {
-        $this->on('enter', $callback);
+        $this->listen('enter', $callback);
         return $this;
     }
 
@@ -880,7 +882,7 @@ class Input
      */
     public function leaving(Closure $callback)
     {
-        $this->on('leave', $callback);
+        $this->listen('leave', $callback);
         return $this;
     }
 

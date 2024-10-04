@@ -4,6 +4,9 @@ namespace Mmb\Support\Caller;
 
 use Closure;
 
+/**
+ * @deprecated 
+ */
 trait HasSimpleEvents
 {
 
@@ -19,11 +22,12 @@ trait HasSimpleEvents
      *
      * @param string  $event
      * @param Closure $callback
-     * @return void
+     * @return $this
      */
     public function on(string $event, Closure $callback)
     {
         @$this->_events[strtolower($event)][] = $callback;
+        return $this;
     }
 
     /**

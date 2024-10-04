@@ -7,7 +7,7 @@ trait UpdateTesting
 
     public function setUpUpdateTesting()
     {
-        app()->bind();
+        // app()->bind(); // todo
     }
 
 }

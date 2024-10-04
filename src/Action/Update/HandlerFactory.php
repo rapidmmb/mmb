@@ -16,14 +16,14 @@ use Mmb\Action\Section\Controllers\InlineControlHandler;
 use Mmb\Core\Bot;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
-use Mmb\Support\Caller\HasSimpleEvents;
+use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Db\ModelFinder;
 use Mmb\Support\Step\ConvertableToStepping;
 use Mmb\Support\Step\Stepping;
 
 class HandlerFactory
 {
-    use HasSimpleEvents;
+    use HasEvents;
 
     public function __construct(
         public readonly Bot $bot,
@@ -34,13 +34,14 @@ class HandlerFactory
 
     protected array $dynamicArgs = [];
 
-    public function getEventDynamicArgs()
+    public function getEventDynamicArgs(string $event): array
     {
-        return $this->dynamicArgs +
-            [
-                'update' => $this->update,
-                'bot' => $this->bot,
-            ];
+        return [
+            'update' => $this->update,
+            'bot' => $this->bot,
+            ...$this->dynamicArgs,
+            ...$this->getEventDefaultDynamicArgs($event)
+        ];
     }
 
     /**
@@ -53,7 +54,7 @@ class HandlerFactory
     public function call(Closure $callback, ...$args)
     {
         [$args, $dynamicArgs] = Caller::splitArguments($args);
-        $dynamicArgs += $this->getEventDynamicArgs();
+        $dynamicArgs += $this->getEventDynamicArgs('*');
 
         return Caller::invoke($callback, $args, $dynamicArgs);
     }
@@ -90,7 +91,7 @@ class HandlerFactory
      */
     public function collectionEvent(string $on, array $events)
     {
-        $this->on($on, function () use($events)
+        $this->listen($on, function () use($events)
         {
             foreach ($events as $event)
             {

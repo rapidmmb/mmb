@@ -3,23 +3,21 @@
 namespace Mmb\Action\Form;
 
 use Closure;
-use Illuminate\Support\Collection;
 use Mmb\Action\Action;
 use Mmb\Action\Filter\FilterFailException;
 use Mmb\Action\Form\Attributes\FormClassModifierAttributeContract;
-use Mmb\Action\Form\Attributes\FormDynamicPropertyAttributeContract;
 use Mmb\Action\Form\Attributes\FormMethodModifierAttributeContract;
 use Mmb\Action\Form\Attributes\FormPropertyModifierAttributeContract;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Behavior\Behavior;
 use Mmb\Support\Caller\Caller;
-use Mmb\Support\Caller\HasSimpleEvents;
+use Mmb\Support\Caller\HasEvents;
 
 class Form extends Action
 {
-    use HasSimpleEvents;
     use Concerns\InteractWithAttributes;
+    use HasEvents;
 
     protected $inputs = null;
 
@@ -678,10 +676,11 @@ class Form extends Action
     /**
      * @return array
      */
-    public function getEventDynamicArgs()
+    public function getEventDynamicArgs(string $event): array
     {
         return [
             'form' => $this,
+            ...$this->getEventDefaultDynamicArgs($event),
         ];
     }
 

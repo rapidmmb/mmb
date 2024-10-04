@@ -149,11 +149,11 @@ class Menu extends InlineAction
     {
         $row = [];
 
-        if($paginator instanceof LengthAwarePaginator)
+        if ($paginator instanceof LengthAwarePaginator)
         {
             $row[] = $this->key("<<", $action, 1);
 
-            for(
+            for (
                 $i = max($paginator->currentPage() - 3, 1);
                 $i <= $paginator->currentPage() + 3 && $i <= $paginator->lastPage();
                 $i++
@@ -168,21 +168,25 @@ class Menu extends InlineAction
 
             $row[] = $this->key(">>", $action, $paginator->lastPage());
         }
-        elseif($paginator instanceof Paginator)
+        elseif ($paginator instanceof Paginator)
         {
             $row[] = $this->key("<<", $action, max($paginator->currentPage() - 1, 1));
-            $row[] = $this->key(">>", $action, $paginator->hasMorePages() ? $paginator->currentPage() + 1 : $paginator->currentPage());
+            $row[] = $this->key(
+                ">>", $action, $paginator->hasMorePages() ? $paginator->currentPage() + 1 : $paginator->currentPage()
+            );
         }
-        elseif($paginator instanceof CursorPaginator)
+        elseif ($paginator instanceof CursorPaginator)
         {
-            if($paginator->hasMorePages())
+            if ($paginator->hasMorePages())
             {
                 $row[] = $this->key("...", $action, $paginator->nextCursor()->encode());
             }
         }
         else
         {
-            throw new \InvalidArgumentException(sprintf("Paginate row don't support paginator of type [%s]", typeOf($paginator)));
+            throw new \InvalidArgumentException(
+                sprintf("Paginate row don't support paginator of type [%s]", typeOf($paginator))
+            );
         }
 
         return $row;
@@ -215,7 +219,7 @@ class Menu extends InlineAction
      */
     public function foreach(iterable $items, Closure $callback)
     {
-        foreach($items as $item)
+        foreach ($items as $item)
         {
             $callback($item);
         }
@@ -235,7 +239,6 @@ class Menu extends InlineAction
     {
         return $this->loading(fn() => $this->foreach(value($items), $callback));
     }
-
 
 
     protected bool $store = false;
@@ -263,15 +266,15 @@ class Menu extends InlineAction
      */
     public function on(string|array|FilterRule $actionName, $action = null)
     {
-        if($actionName instanceof FilterRule)
+        if ($actionName instanceof FilterRule)
         {
             $this->addFilterEvent($actionName, new ActionCallback($action));
             return $this;
         }
 
-        if(is_array($actionName))
+        if (is_array($actionName))
         {
-            foreach($actionName as $name => $value)
+            foreach ($actionName as $name => $value)
             {
                 $this->on($name, $value);
             }
@@ -323,17 +326,17 @@ class Menu extends InlineAction
     public function fireElse(Update $update)
     {
         // Find filter events
-        if($this->getMatchedFilter($update, $action, $value))
+        if ($this->getMatchedFilter($update, $action, $value))
         {
             $this->fireAction($action, $update, [$value]);
             return true;
         }
 
         // Else action
-        if(isset($this->else))
+        if (isset($this->else))
         {
             [$ok, $passed, $value] = $this->passFilter($update);
-            if(!$ok)
+            if (!$ok)
             {
                 return $passed;
             }
@@ -401,7 +404,7 @@ class Menu extends InlineAction
             $this->update->getChat()->sendMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
             function($message)
             {
-                if($message)
+                if ($message)
                 {
                     $this->saveMenuAction($message);
                 }
@@ -426,7 +429,7 @@ class Menu extends InlineAction
             $this->update->getMessage()->replyMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
             function($message)
             {
-                if($message)
+                if ($message)
                 {
                     $this->saveMenuAction($message);
                 }
@@ -456,7 +459,7 @@ class Menu extends InlineAction
             ($this->responseUsing ?? $this->update->response(...))($args + $namedArgs + ['key' => $this->cachedKey]),
             function($message)
             {
-                if($message)
+                if ($message)
                 {
                     $this->saveMenuAction($message);
                 }
@@ -465,9 +468,9 @@ class Menu extends InlineAction
     }
 
 
-    public ?array  $cachedKey             = null;
-    public ?array  $cachedActions         = null;
-    public ?array  $cachedStorableActions = null;
+    public ?array $cachedKey             = null;
+    public ?array $cachedActions         = null;
+    public ?array $cachedStorableActions = null;
 
     protected function makeReadyThis()
     {
@@ -481,7 +484,7 @@ class Menu extends InlineAction
         $this->cachedActions = [];
         $this->cachedStorableActions = [];
 
-        if($storeActions !== null)
+        if ($storeActions !== null)
         {
             $this->cachedActions = array_replace($this->cachedActions, $storeActions);
         }
@@ -494,18 +497,18 @@ class Menu extends InlineAction
     private function makeReadyKeyGroup(array $group, bool $store = true, bool $skipStorable = false)
     {
         /** @var MenuKeyGroup $keyGroup */
-        foreach($group as $keyGroup)
+        foreach ($group as $keyGroup)
         {
             $storable = $store && !$keyGroup->fixed && !$keyGroup->exclude;
 
             // If storable, skip
-            if($storable && $skipStorable)
+            if ($storable && $skipStorable)
             {
                 continue;
             }
 
             // Loading mode & Excluded groups
-            if($this->isLoading() && $keyGroup->exclude)
+            if ($this->isLoading() && $keyGroup->exclude)
             {
                 continue;
             }
@@ -518,7 +521,7 @@ class Menu extends InlineAction
             $this->cachedActions = array_replace($this->cachedActions, $actions);
 
             // Save storable actions
-            if($storable)
+            if ($storable)
             {
                 $storableActions = array_map(fn(ActionCallback $action) => $action->toArray(), $actions);
                 $this->cachedStorableActions = array_replace($this->cachedStorableActions, $storableActions);
@@ -528,7 +531,7 @@ class Menu extends InlineAction
 
     public function makeReadyFromStore(array $actions)
     {
-        if($this->isReady)
+        if ($this->isReady)
         {
             return;
         }
@@ -560,12 +563,12 @@ class Menu extends InlineAction
     {
         $action = null;
 
-        if($actionKey !== null)
+        if ($actionKey !== null)
         {
             $action = $this->cachedActions[$actionKey] ?? null;
         }
 
-        if($action instanceof ActionCallback && $action->isNamed() && array_key_exists(
+        if ($action instanceof ActionCallback && $action->isNamed() && array_key_exists(
                 $action->action, $this->onActions
             ))
         {
@@ -588,13 +591,13 @@ class Menu extends InlineAction
         $args ??= [];
 
         // Closure action: fn() => Something
-        if($callable instanceof Closure)
+        if ($callable instanceof Closure)
         {
             return [$callable, $args];
         }
 
         // Array action: [SomeSection::class, 'someMethod']
-        elseif(is_array($callable))
+        elseif (is_array($callable))
         {
             [$class, $method] = $callable;
             $class = $class::make($update);
@@ -603,7 +606,7 @@ class Menu extends InlineAction
         }
 
 
-        if($this->initializerClass)
+        if ($this->initializerClass)
         {
             return [$this->initializerClass, $callable, $args];
         }
@@ -621,7 +624,7 @@ class Menu extends InlineAction
      */
     public function fireAction(ActionCallback|string $name, Update $update, array $args = [])
     {
-        if(is_string($name))
+        if (is_string($name))
         {
             $name = new ActionCallback($name);
         }
@@ -646,7 +649,7 @@ class Menu extends InlineAction
     {
         $action = $this->findActionFrom($update);
 
-        if($action !== null)
+        if ($action !== null)
         {
             $this->fireAction($action, $update);
             return true;
@@ -684,7 +687,7 @@ class Menu extends InlineAction
 
     /**
      * @param MenuStepHandler $step
-     * @param Update            $update
+     * @param Update          $update
      * @return void
      */
     protected function loadFromStep(InlineStepHandler $step, Update $update)

@@ -109,7 +109,7 @@ class InlineForm extends InlineAction
      */
     public function finish(Closure $callback)
     {
-        $this->form->on('finish', $callback);
+        $this->form->listen('finish', $callback);
         return $this;
     }
 
@@ -121,7 +121,7 @@ class InlineForm extends InlineAction
      */
     public function cancel(Closure $callback)
     {
-        $this->form->on('cancel', $callback);
+        $this->form->listen('cancel', $callback);
         return $this;
     }
 
@@ -146,19 +146,19 @@ class InlineForm extends InlineAction
 
         if ($callback instanceof Closure)
         {
-            $this->form->on('backDefault', $callback);
+            $this->form->listen('backDefault', $callback);
         }
         else
         {
-            $this->form->on('backDefault', function ($finished) use($callback, $method)
+            $this->form->listen('backDefault', function ($finished) use($callback, $method)
             {
                 if (is_string($callback) && is_a($callback, Action::class, true))
                 {
-                    $callback::make()->invokeDynamic($method, [$finished], $this->form->getEventDynamicArgs());
+                    $callback::make()->invokeDynamic($method, [$finished], $this->form->getEventDynamicArgs('backDefault'));
                 }
                 else
                 {
-                    Caller::invoke([$callback, $method], [$finished], $this->form->getEventDynamicArgs());
+                    Caller::invoke([$callback, $method], [$finished], $this->form->getEventDynamicArgs('backDefault'));
                 }
             });
         }

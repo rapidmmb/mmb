@@ -141,6 +141,7 @@ abstract class InlineAction implements ConvertableToStep
 
     protected array $storedWithData;
     protected array $withs            = [];
+    protected array $withsOn          = [];
     public ?array   $cachedWithinData = null;
 
     /**
@@ -215,6 +216,42 @@ abstract class InlineAction implements ConvertableToStep
         return $this;
     }
 
+    /**
+     * Have the properties like "with"
+     *
+     * If menu is loading, load properties from stored data
+     *
+     * @param string $namespace
+     * @param object $object
+     * @param string ...$names
+     * @return $this
+     */
+    public function withOn(string $namespace, object $object, string ...$names)
+    {
+        $this->withsOn[] = [$object, $namespace, $names];
+
+        if ($this->isLoading() && isset($this->storedWithData))
+        {
+            foreach ($names as $name)
+            {
+                $storedName = $namespace . ':' . $name;
+                if (array_key_exists($storedName, $this->storedWithData))
+                {
+                    $value = $this->storedWithData[$storedName];
+
+                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
+                    {
+                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                    }
+
+                    $this->initializerClass->$name = $value;
+                }
+            }
+        }
+
+        return $this;
+    }
+
     protected array $haveData = [];
 
     /**
@@ -227,14 +264,14 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function have(string $name, &$value, $default = null)
     {
-        if($this->isCreating())
+        if ($this->isCreating())
         {
             if(count(func_get_args()) > 2)
             {
                 $value = value($default);
             }
         }
-        elseif($this->isLoading())
+        elseif ($this->isLoading())
         {
             $value = $this->storedWithData[$name];
         }
@@ -401,6 +438,24 @@ abstract class InlineAction implements ConvertableToStep
 
                 $this->cachedWithinData[$with] = $value;
             }
+
+            foreach($this->withsOn as $withOn)
+            {
+                foreach ($withOn as [$object, $namespace, $withs])
+                {
+                    foreach ($withs as $with)
+                    {
+                        $value = $object->$with;
+
+                        foreach (AttributeLoader::getPropertyAttributesOf($object, $with, InlineWithPropertyAttributeContract::class) as $attr)
+                        {
+                            $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
+                        }
+
+                        $this->cachedWithinData[$namespace . ':' . $with] = $value;
+                    }
+                }
+            }
         }
     }
 
@@ -415,11 +470,11 @@ abstract class InlineAction implements ConvertableToStep
     {
         if($this->isCreating())
         {
-            if(in_array($name, $this->withs) && $this->initializerClass)
+            if (in_array($name, $this->withs) && $this->initializerClass)
             {
                 return $this->initializerClass->$name;
             }
-            elseif(array_key_exists($name, $this->haveData))
+            elseif (array_key_exists($name, $this->haveData))
             {
                 return $this->haveData[$name];
             }
