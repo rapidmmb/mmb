@@ -53,7 +53,8 @@ class ListSign extends Sign
         Concerns\SignWithQuery,
         Concerns\SignWithItems,
         Concerns\SignWithResponse,
-        Concerns\SignWithMessage;
+        Concerns\SignWithMessage,
+        Concerns\SignWithBacks;
 
     /**
      * Boot the default values
@@ -228,7 +229,7 @@ class ListSign extends Sign
         );
     }
 
-    protected function onEventOptionsOnFormatListUsing()
+    protected function getEventOptionsOnFormatListUsing()
     {
         return [
             'call' => EventCaller::CALL_BUILDER,

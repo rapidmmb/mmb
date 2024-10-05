@@ -4,8 +4,6 @@ namespace Mmb\Action\Road;
 
 use Closure;
 use Mmb\Action\Form\Inline\InlineForm;
-use Mmb\Action\Inline\InlineAction;
-use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Dialog;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\Section;
@@ -36,21 +34,21 @@ abstract class Station extends Section
 
     public function menu(string $name, ...$args)
     {
-        $register = $this->createInlineRegister(Menu::class, $name, ...$args);
+        $register = $this->createInlineRegister(Menu::class, $name, $args);
         $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
         return $register->register();
     }
 
     public function inlineForm(string $name, ...$args)
     {
-        $register = $this->createInlineRegister(InlineForm::class, $name, ...$args);
+        $register = $this->createInlineRegister(InlineForm::class, $name, $args);
         $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
         return $register->register();
     }
 
     public function dialog(string $name, ...$args)
     {
-        $register = $this->createInlineRegister(Dialog::class, $name, ...$args);
+        $register = $this->createInlineRegister(Dialog::class, $name, $args);
         $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
         return $register->register();
     }

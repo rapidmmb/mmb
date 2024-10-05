@@ -37,7 +37,7 @@ trait SignWithQuery
         return $this->listen('createQuery', $callback);
     }
 
-    protected function getEventOptionsOnQueryUsing()
+    protected function getEventOptionsOnCreateQuery()
     {
         return [
             'call' => EventCaller::CALL_UNTIL_TRUE,
@@ -45,8 +45,13 @@ trait SignWithQuery
         ];
     }
 
-    protected function onQueryFrom()
+    protected function onCreateQuery(Station $station)
     {
+        if ($globalQuery = $station->road->getQuery())
+        {
+            return $globalQuery;
+        }
+
         throw new \InvalidArgumentException("No query or model passed");
     }
 
@@ -62,7 +67,7 @@ trait SignWithQuery
         return $this->listen('queryUsing', $callback);
     }
 
-    protected function getEventOptionsOnQuery()
+    protected function getEventOptionsOnQueryUsing()
     {
         return [
             'call' => EventCaller::CALL_BUILDER,

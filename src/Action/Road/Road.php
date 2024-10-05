@@ -3,12 +3,26 @@
 namespace Mmb\Action\Road;
 
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineRegister;
+use Mmb\Core\Updates\Update;
+use Mmb\Support\Caller\Caller;
 
 class Road extends Action
 {
+
+    /**
+     * Make new instance
+     *
+     * @param Update $update
+     * @return static
+     */
+    public static function make(Update $update)
+    {
+        return new static($update);
+    }
 
     /**
      * Defined station names
@@ -187,7 +201,9 @@ class Road extends Action
             throw new \BadMethodCallException(sprintf("Station [%s] has not a valid sign as first parameter", $name));
         }
 
-        return $this->loadedSigns[$name] = new $type();
+        $sign = $this->loadedSigns[$name] = new $type($this);
+        Caller::invoke($callback, [$sign]);
+        return $sign;
     }
 
     /**
@@ -219,7 +235,7 @@ class Road extends Action
         {
             if ($type instanceof \ReflectionNamedType && $classType = $type->getName())
             {
-                if (is_a($classType, Sign::class))
+                if (is_a($classType, Sign::class, true))
                 {
                     return $classType;
                 }
@@ -270,6 +286,28 @@ class Road extends Action
     public function setCurrentStation(string $station)
     {
         $this->curStation = $station;
+    }
+
+    /**
+     * Global model
+     *
+     * @var string|null
+     */
+    protected ?string $model = null;
+
+    /**
+     * Get the global query
+     *
+     * @return Builder|null
+     */
+    public function getQuery() : ?Builder
+    {
+        if (isset($this->model))
+        {
+            return $this->model::query();
+        }
+
+        return null;
     }
 
 }

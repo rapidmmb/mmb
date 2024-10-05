@@ -58,10 +58,7 @@ class ListPaginateViewer extends ListViewer
                 foreach ($this->paginator as $item)
                 {
                     yield [
-                        $menu->key(
-                            $this->station->sign->getItemLabel($this->station, $item),
-                            fn () => $this->station->fireSign('itemLabelAction')
-                        ),
+                        $this->station->sign->getItemKey($this->station, $menu, $item),
                     ];
                 }
             }
@@ -76,7 +73,8 @@ class ListPaginateViewer extends ListViewer
                     $this->paginator,
                     function (int $page)
                     {
-                        // Change the page
+                        $this->station->page = $page;
+                        $this->station->fireAction('main');
                     }
                 ),
             ]

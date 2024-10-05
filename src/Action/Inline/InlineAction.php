@@ -439,21 +439,18 @@ abstract class InlineAction implements ConvertableToStep
                 $this->cachedWithinData[$with] = $value;
             }
 
-            foreach($this->withsOn as $withOn)
+            foreach($this->withsOn as [$object, $namespace, $withs])
             {
-                foreach ($withOn as [$object, $namespace, $withs])
+                foreach ($withs as $with)
                 {
-                    foreach ($withs as $with)
+                    $value = $object->$with;
+
+                    foreach (AttributeLoader::getPropertyAttributesOf($object, $with, InlineWithPropertyAttributeContract::class) as $attr)
                     {
-                        $value = $object->$with;
-
-                        foreach (AttributeLoader::getPropertyAttributesOf($object, $with, InlineWithPropertyAttributeContract::class) as $attr)
-                        {
-                            $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
-                        }
-
-                        $this->cachedWithinData[$namespace . ':' . $with] = $value;
+                        $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
                     }
+
+                    $this->cachedWithinData[$namespace . ':' . $with] = $value;
                 }
             }
         }
