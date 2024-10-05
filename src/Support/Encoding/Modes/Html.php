@@ -2,7 +2,7 @@
 
 namespace Mmb\Support\Encoding\Modes;
 
-class HtmlEncoding extends TextModeEncoding
+class Html extends Mode
 {
 
     public function text(string|StringContent $text) : StringContent

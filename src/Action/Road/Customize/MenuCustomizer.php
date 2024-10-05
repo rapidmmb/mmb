@@ -81,6 +81,11 @@ class MenuCustomizer
         return $this;
     }
 
+    public function isRtl()
+    {
+        return $this->rtl;
+    }
+
 
     protected array $menuActions = [];
 

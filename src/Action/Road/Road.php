@@ -105,6 +105,12 @@ class Road extends Action
         $this->with[] = $name;
     }
 
+    /**
+     * Get event callback for an inline action
+     *
+     * @param InlineRegister $register
+     * @return Closure|null
+     */
     protected function getInlineCallbackFor(InlineRegister $register)
     {
         if (str_contains($register->method, '.'))
@@ -118,6 +124,24 @@ class Road extends Action
         }
 
         return parent::getInlineCallbackFor($register);
+    }
+
+    /**
+     * Event on registering an inline action
+     *
+     * @param InlineRegister $register
+     * @return void
+     */
+    protected function onInitializeInlineRegister(InlineRegister $register)
+    {
+        $register->before(
+            function(InlineAction $inline)
+            {
+                $inline->with('curStation', ...$this->getWith());
+            }
+        );
+
+        parent::onInitializeInlineRegister($register);
     }
 
 
@@ -177,7 +201,7 @@ class Road extends Action
         $sign = $this->getSignOf($name);
 
         $sign->fire('creatingStation');
-        $station = $sign->createStation($this->update);
+        $station = $sign->createStation($name, $this->update);
         $sign->fire('createdStation', station: $station);
 
         return $station;
@@ -206,26 +230,46 @@ class Road extends Action
     }
 
     /**
-     * Event on registering an inline action
+     * Current station name
      *
-     * @param InlineRegister $register
-     * @return void
+     * @var string
      */
-    protected function onInitializeInlineRegister(InlineRegister $register)
-    {
-        $register->before(
-            function(InlineAction $inline)
-            {
-                if ($with = $this->getWith())
-                {
-                    $inline->with(...$with);
-                }
-            }
-        );
+    public string $curStation = '';
 
-        parent::onInitializeInlineRegister($register);
+    /**
+     * Fire a station action
+     *
+     * @param string $station
+     * @param string $name
+     * @param        ...$args
+     * @return mixed
+     */
+    public function fire(string $station, string $name, ...$args)
+    {
+        return $this->createStation($station)->fireAction($name, ...$args);
     }
 
-    public string $curStation = '';
+    /**
+     * Fire default station action
+     *
+     * @param string $station
+     * @param        ...$args
+     * @return mixed
+     */
+    public function fireStation(string $station, ...$args)
+    {
+        return $this->fire($station, 'main', ...$args);
+    }
+
+    /**
+     * Set the current station name
+     *
+     * @param string $station
+     * @return void
+     */
+    public function setCurrentStation(string $station)
+    {
+        $this->curStation = $station;
+    }
 
 }

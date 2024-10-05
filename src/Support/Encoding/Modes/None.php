@@ -2,7 +2,7 @@
 
 namespace Mmb\Support\Encoding\Modes;
 
-class NoneEncoding extends TextModeEncoding
+class None extends Mode
 {
 
     public function text(StringContent|string $text) : StringContent

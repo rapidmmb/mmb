@@ -3,10 +3,14 @@
 namespace Mmb\Action\Road;
 
 use Closure;
+use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineRegister;
+use Mmb\Action\Section\Dialog;
+use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\Section;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Caller\Caller;
 
 /**
  * @template T of Sign
@@ -22,28 +26,33 @@ abstract class Station extends Section
          */
         public readonly Sign $sign,
 
+        public string        $name,
+
         Update               $update = null,
     )
     {
         parent::__construct($update);
     }
 
-    /**
-     * Event on registering an inline action
-     *
-     * @param InlineRegister $register
-     * @return void
-     */
-    protected function onInitializeInlineRegister(InlineRegister $register)
+    public function menu(string $name, ...$args)
     {
-        $register->before(
-            function(InlineAction $inline)
-            {
-                $inline->withOn('@', $this->road, 'curStation', ...$this->road->getWith());
-            }
-        );
+        $register = $this->createInlineRegister(Menu::class, $name, ...$args);
+        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
+        return $register->register();
+    }
 
-        parent::onInitializeInlineRegister($register);
+    public function inlineForm(string $name, ...$args)
+    {
+        $register = $this->createInlineRegister(InlineForm::class, $name, ...$args);
+        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
+        return $register->register();
+    }
+
+    public function dialog(string $name, ...$args)
+    {
+        $register = $this->createInlineRegister(Dialog::class, $name, ...$args);
+        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
+        return $register->register();
     }
 
     /**
@@ -78,12 +87,34 @@ abstract class Station extends Section
      *
      * @return array
      */
-    protected function getDynamicArgs(): array
+    protected function getDynamicArgs() : array
     {
         return [
             'station' => $this,
             ...$this->dynamicArgs,
         ];
+    }
+
+
+    protected string $defaultAction = 'main';
+
+    /**
+     * Fire an action
+     *
+     * @param string $name
+     * @param        ...$args
+     * @return mixed
+     */
+    public function fireAction(string $name, ...$args)
+    {
+        [$normalArgs, $dynamicArgs] = Caller::splitArguments($args);
+
+        if ($name == 'main')
+        {
+            $name = $this->defaultAction;
+        }
+
+        return $this->invokeDynamic($name, $normalArgs, $dynamicArgs);
     }
 
 }

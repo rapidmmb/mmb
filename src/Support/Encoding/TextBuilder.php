@@ -6,19 +6,19 @@ use Closure;
 use Illuminate\Support\Traits\Conditionable;
 use Illuminate\Support\Traits\Macroable;
 use Mmb\Support\Encoding\Modes\StringContent;
-use Mmb\Support\Encoding\Modes\TextModeEncoding;
+use Mmb\Support\Encoding\Modes\Mode;
 use Stringable;
 
 class TextBuilder implements Stringable
 {
     use Conditionable, Macroable;
 
-    public readonly TextModeEncoding $mode;
+    public readonly Mode $mode;
 
     protected array $lines = [];
 
     public function __construct(
-        string|TextModeEncoding $mode = 'none',
+        string|Mode                         $mode = 'none',
         protected string|StringContent|null $prefix = null,
         protected string|StringContent|null $suffix = null,
         protected string|StringContent|null $separate = null,
@@ -35,7 +35,7 @@ class TextBuilder implements Stringable
     }
 
     public static function make(
-        string|TextModeEncoding $mode = 'none',
+        string|Mode               $mode = 'none',
         string|StringContent|null $prefix = null,
         string|StringContent|null $suffix = null,
         string|StringContent|null $separate = null,
@@ -148,7 +148,7 @@ class TextBuilder implements Stringable
     /**
      * Build the text using callback
      *
-     * @param Closure(TextBuilder $text, TextModeEncoding $mode) : mixed $callback
+     * @param Closure(TextBuilder $text, Mode $mode) : mixed $callback
      * @return string
      */
     public function build(Closure $callback) : string

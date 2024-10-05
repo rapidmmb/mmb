@@ -22,10 +22,11 @@ abstract class Sign
     /**
      * Create the station
      *
+     * @param string $name
      * @param Update $update
      * @return Station
      */
-    public abstract function createStation(Update $update) : Station;
+    public abstract function createStation(string $name, Update $update) : Station;
 
     protected function boot()
     {

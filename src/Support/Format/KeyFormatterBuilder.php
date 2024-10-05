@@ -4,11 +4,13 @@ namespace Mmb\Support\Format;
 
 use Countable;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Traits\Conditionable;
 use IteratorAggregate;
 use Traversable;
 
 class KeyFormatterBuilder implements IteratorAggregate, Countable, Arrayable
 {
+    use Conditionable;
 
     public function __construct(
         protected array $key,

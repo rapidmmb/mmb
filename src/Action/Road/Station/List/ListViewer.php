@@ -56,45 +56,11 @@ abstract class ListViewer
      */
     public abstract function renderPaginator(Menu $menu) : KeyFormatterBuilder;
 
-    /**
-     * Render when the list is empty
-     *
-     * @param Menu $menu
-     * @return KeyFormatterBuilder
-     */
-    public function renderEmpty(Menu $menu) : KeyFormatterBuilder
-    {
-        return KeyFormatter::for(
-            [
-                [$menu->key($this->station->)]
-            ]
-        );
-    }
-
-    /**
-     * Render page label key
-     *
-     * @param Menu $menu
-     * @return MenuKey|null
-     */
-    public function renderTitleKey(Menu $menu) : ?MenuKey
-    {
-        $text = $this->renderTitleKeyLabel();
-
-        if (empty($text))
-        {
-            return null;
-        }
-
-        $action = $this->renderTitleKeyAction();
-
-        return $menu->key($text, $action);
-    }
 
     /**
      * Render page label key text
      *
-     * @return string|null
+     * @return ?string
      */
     public function renderTitleKeyLabel() : ?string
     {
@@ -104,11 +70,30 @@ abstract class ListViewer
     /**
      * Render page label action
      *
-     * @return Closure
+     * @return void
      */
-    public function renderTitleKeyAction() : Closure
+    public function onTitleKeyAction()
     {
-        return fn () => $this->station->fireSign('pageLabelAction');
+    }
+
+
+    /**
+     * Render empty key text
+     *
+     * @return ?string
+     */
+    public function renderEmptyKeyLabel() : ?string
+    {
+        return null;
+    }
+
+    /**
+     * Render empty key action
+     *
+     * @return void
+     */
+    public function onEmptyKeyAction()
+    {
     }
 
 }

@@ -2,7 +2,7 @@
 
 namespace Mmb\Support\Encoding\Modes;
 
-class MarkdownEncoding extends TextModeEncoding
+class Markdown extends Mode
 {
 
     public function text(string|StringContent $text) : StringContent

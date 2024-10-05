@@ -8,18 +8,18 @@ class Text
 {
 
     protected static array $modes = [
-        'none' => Modes\NoneEncoding::class,
-        'html' => Modes\HtmlEncoding::class,
-        'markdown' => Modes\MarkdownEncoding::class,
-        'markdown2' => Modes\Markdown2Encoding::class,
+        'none' => Modes\None::class,
+        'html' => Modes\Html::class,
+        'markdown' => Modes\Markdown::class,
+        'markdown2' => Modes\Markdown2::class,
     ];
 
-    public static function defineMode(string $mode, string|Modes\TextModeEncoding $object)
+    public static function defineMode(string $mode, string|Modes\Mode $object)
     {
         static::$modes[strtolower($mode)] = $object;
     }
 
-    public static function mode(string $mode) : Modes\TextModeEncoding
+    public static function mode(string $mode) : Modes\Mode
     {
         $mode = strtolower($mode);
         $object = static::$modes[$mode] ?? null;

@@ -4,7 +4,7 @@ namespace Mmb\Support\Encoding\Modes;
 
 use Closure;
 
-abstract class TextModeEncoding
+abstract class Mode
 {
 
     public abstract function text(string|StringContent $text) : StringContent;
@@ -28,7 +28,6 @@ abstract class TextModeEncoding
     public abstract function pre(string|StringContent $text, ?string $language = null) : StringContent;
 
     public abstract function quotation(string|StringContent $text, bool $expandable = false) : StringContent;
-
 
 
     public function string(string|StringContent $text) : StringContent
@@ -57,6 +56,11 @@ abstract class TextModeEncoding
         return new StringContent(
             collect($text2)->map(fn ($txt) => $this->string($txt)->toString())->implode(''),
         );
+    }
+
+    public function trust(string|StringContent $text) : StringContent
+    {
+        return is_string($text) ? new StringContent($text) : $text;
     }
 
 }
