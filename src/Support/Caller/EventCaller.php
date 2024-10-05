@@ -63,6 +63,11 @@ class EventCaller
      */
     public const CALL_PIPELINE = 1 << 7;
 
+    /**
+     * Call only the last listener
+     */
+    public const CALL_ONLY_LAST = 1 << 8;
+
 
     /**
      * Call the events linear from end to first
@@ -80,14 +85,24 @@ class EventCaller
 
 
     /**
-     * Call the default listener always (expect event cancelled)
+     * Call the default listener at last (expect event cancelled)
      */
     public const DEFAULT_ALWAYS = 1 << 0;
 
     /**
+     * Call the default listener at first
+     */
+    public const DEFAULT_ALWAYS_FIRST = 1 << 1;
+
+    /**
      * Call the default listener if not listener passed
      */
-    public const DEFAULT_WHEN_NOT_LISTENING = 1 << 1;
+    public const DEFAULT_WHEN_NOT_LISTENING = 1 << 2;
+
+    /**
+     * Call the default listener if not listener passed
+     */
+    public const DEFAULT_PROXY = 1 << 3;
 
 
     /**
@@ -144,50 +159,100 @@ class EventCaller
             $listeners = array_reverse($listeners);
         }
 
-        if (isset($defaultEvent) && $defaultType == self::DEFAULT_ALWAYS)
+        if (isset($defaultEvent))
         {
-            $listeners[] = $defaultEvent;
+            switch ($defaultType)
+            {
+                case self::DEFAULT_ALWAYS:
+                    if ($callType != self::CALL_ONLY_LAST || !$listeners)
+                    {
+                        $listeners[] = $defaultEvent;
+                    }
+                    break;
+
+                case self::DEFAULT_ALWAYS_FIRST:
+                    array_unshift($listeners, $defaultEvent);
+                    break;
+
+                case self::DEFAULT_WHEN_NOT_LISTENING:
+                    if (!$listeners)
+                    {
+                        $listeners = [$defaultEvent];
+                    }
+                    break;
+
+                case self::DEFAULT_PROXY:
+                    $next = $listeners ?
+                        function (...$args) use($options, $listeners, $dynamicArgs)
+                        {
+                            [$normalArgs, $dynamicArgs2] = Caller::splitArguments($args);
+
+                            return self::fire($options, $listeners, $normalArgs, [...$dynamicArgs, ...$dynamicArgs2]);
+                        } :
+                        function ()
+                        {
+                            return null;
+                        };
+
+                    $listeners = [$defaultEvent];
+                    array_unshift($normalArgs, $next);
+                    break;
+            }
         }
+
 
         if ($returnType == self::RETURN_ALL)
         {
             $return = [];
         }
 
-        switch ($callType)
+        try
         {
-            case self::CALL_UNTIL_TRUE:
-                static::fireUntilTrue($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+            static::$eventDynamicStack[] = $dynamicArgs;
 
-            case self::CALL_UNTIL_NOT_NULL:
-                static::fireUntilNotNull($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+            switch ($callType)
+            {
+                case self::CALL_UNTIL_TRUE:
+                    static::fireUntilTrue($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
 
-            case self::CALL_UNTIL_FALSE:
-                static::fireUntilFalse($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+                case self::CALL_UNTIL_NOT_NULL:
+                    static::fireUntilNotNull($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
 
-            case self::CALL_UNTIL_ACTUAL_FALSE:
-                static::fireUntilActualFalse($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+                case self::CALL_UNTIL_FALSE:
+                    static::fireUntilFalse($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
 
-            case self::CALL_BUILDER:
-                static::fireBuilder($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+                case self::CALL_UNTIL_ACTUAL_FALSE:
+                    static::fireUntilActualFalse($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
 
-            case self::CALL_MULTIPLE_BUILDERS:
-                static::fireMultipleBuilders($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+                case self::CALL_BUILDER:
+                    static::fireBuilder($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
 
-            case self::CALL_PIPELINE:
-                static::firePipleline($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+                case self::CALL_MULTIPLE_BUILDERS:
+                    static::fireMultipleBuilders($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
 
-            case self::CALL_LINEAR:
-            default:
-                static::fireLinear($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
-                return $return;
+                case self::CALL_PIPELINE:
+                    static::firePipleline($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
+
+                case self::CALL_ONLY_LAST:
+                    static::fireOnlyLast($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
+
+                case self::CALL_LINEAR:
+                default:
+                    static::fireLinear($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    return $return;
+            }
+        }
+        finally
+        {
+            array_pop(static::$eventDynamicStack);
         }
     }
 
@@ -206,6 +271,22 @@ class EventCaller
         }
 
         return false;
+    }
+
+    protected static function fireOnlyLast(
+        array $listeners,
+        array $normalArgs,
+        array $dynamicArgs,
+              &$return,
+              $returnType,
+    )
+    {
+        if ($listeners)
+        {
+            $return = Caller::invoke(last($listeners), $normalArgs, $dynamicArgs);
+        }
+
+        return true;
     }
 
     protected static function fireUntilTrue(
@@ -403,6 +484,22 @@ class EventCaller
                 @$return[] = $value;
                 break;
         }
+    }
+
+    protected static array $eventDynamicStack = [];
+
+    /**
+     * Get a dynamic argument from last calling
+     *
+     * @param string $name
+     * @param        $default
+     * @return mixed
+     */
+    public static function get(string $name, $default = null)
+    {
+        $stack = end(static::$eventDynamicStack);
+
+        return array_key_exists($name, $stack) ? $stack[$name] : value($default);
     }
 
 }

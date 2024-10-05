@@ -46,33 +46,60 @@ trait HasEvents
     /**
      * Fire an event
      *
-     * @param string $event
-     * @param        ...$args
+     * @param string|Closure|array $event
+     * @param                      ...$args
      * @return mixed
      */
-    public function fire(string $event, ...$args)
+    public function fire(string|Closure|array $event, ...$args)
     {
-        return $this->fireWithOptions($this->getEventOptions($event), $event, ...$args);
+        return $this->fireWithOptions(
+            is_string($event) ? $this->getEventOptions($event) : [],
+            $event,
+            ...$args
+        );
     }
 
     /**
      * Fire an event with options
      *
-     * @param array  $options
-     * @param string $event
-     * @param        ...$args
+     * @param array                $options
+     * @param string|Closure|array $event
+     * @param                      ...$args
      * @return mixed
      */
-    public function fireWithOptions(array $options, string $event, ...$args)
+    public function fireWithOptions(array $options, string|Closure|array $event, ...$args)
     {
+        if (is_array($event))
+        {
+            // Empty array -> Nothing
+            if (!$event) return null;
+
+            // Array<String> -> Call multiple events
+            if (is_string(head($event)))
+            {
+                $result = [];
+                foreach ($event as $ev)
+                {
+                    $result[] = $this->fireWithOptions($options, $ev, ...$args);
+                }
+
+                return $result;
+            }
+        }
+
+        if ($event instanceof Closure)
+        {
+            $event = [$event];
+        }
+
         [$normalArgs, $dynamicArgs] = Caller::splitArguments($args);
 
         return EventCaller::fire(
             $options,
-            $this->_listened_events[$event] ?? [],
+            is_array($event) ? $event : $this->_listened_events[$event] ?? [],
             $normalArgs,
             $dynamicArgs,
-            method_exists($this, $fn = 'on' . $event) ? $this->$fn(...) : null,
+            is_string($event) && method_exists($this, $fn = 'on' . $event) ? $this->$fn(...) : null,
         );
     }
 

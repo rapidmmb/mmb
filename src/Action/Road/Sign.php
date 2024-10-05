@@ -4,16 +4,19 @@ namespace Mmb\Action\Road;
 
 use Closure;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Caller\HasEvents;
 
 abstract class Sign
 {
-    use HasEvents;
+    use HasEvents,
+        Station\Concerns\DefineStubs;
 
     public function __construct(
         public readonly Road $road,
     )
     {
+        $this->boot();
     }
 
     /**
@@ -22,7 +25,32 @@ abstract class Sign
      * @param Update $update
      * @return Station
      */
-    public abstract function createStation(Update $update): Station;
+    public abstract function createStation(Update $update) : Station;
+
+    protected function boot()
+    {
+        foreach (class_uses_recursive($this) as $trait)
+        {
+            if (method_exists($this, $method = 'boot' . class_basename($trait)))
+            {
+                $this->$method();
+            }
+        }
+    }
+
+    private array $definedMethods = [];
+
+    private array $definedEventOptions = [];
+
+    protected final function defineMethod(string $name, Closure $callback)
+    {
+        $this->definedMethods[$name] = $callback;
+    }
+
+    protected final function defineEvent(string $name, array $options)
+    {
+        $this->definedEventOptions[$name] = $options;
+    }
 
     /**
      * Get event dynamic arguments for the sign
@@ -30,7 +58,7 @@ abstract class Sign
      * @param string $event
      * @return array
      */
-    public function getEventDynamicArgs(string $event): array
+    protected function getEventDynamicArgs(string $event) : array
     {
         return [
             'road' => $this->road,
@@ -39,27 +67,21 @@ abstract class Sign
         ];
     }
 
-
-    /**
-     * Listen event before creating station
-     *
-     * @param Closure $callback
-     * @return $this
-     */
-    public function creatingStation(Closure $callback)
+    protected function getEventOptions(string $event) : array
     {
-        return $this->listen('creatingStation', $callback);
+        return array_key_exists($event, $this->definedEventOptions) ?
+            $this->definedEventOptions[$event] :
+            $this->getEventDefaultOptions($event);
     }
 
-    /**
-     * Listen event after creating station
-     *
-     * @param Closure $callback
-     * @return $this
-     */
-    public function createdStation(Closure $callback)
+    public function __call(string $name, array $arguments)
     {
-        return $this->listen('createdStation', $callback);
+        if (array_key_exists($name, $this->definedMethods))
+        {
+            return ($this->definedMethods[$name])(...$arguments);
+        }
+
+        throw new \BadMethodCallException(sprintf("Call to undefined method [%s] on [%s]", $name, static::class));
     }
 
 }

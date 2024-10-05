@@ -105,6 +105,21 @@ class Road extends Action
         $this->with[] = $name;
     }
 
+    protected function getInlineCallbackFor(InlineRegister $register)
+    {
+        if (str_contains($register->method, '.'))
+        {
+            [$stationName, $subName] = explode('.', $register->method, 2);
+
+            $alias = $register->method;
+            $register->method = $subName;
+            $this->createStation($stationName)->getInlineCallbackFor($register);
+            $register->method = $alias;
+        }
+
+        return parent::getInlineCallbackFor($register);
+    }
+
 
     private array $loadedSigns = [];
 

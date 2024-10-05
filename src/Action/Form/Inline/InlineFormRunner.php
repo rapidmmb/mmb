@@ -49,14 +49,6 @@ class InlineFormRunner extends Form
         }
     }
 
-    protected function getEventOptions(string $event) : array
-    {
-        return [
-            'default' => EventCaller::DEFAULT_WHEN_NOT_LISTENING,
-            ...parent::getEventOptions($event),
-        ];
-    }
-
     public string $inlineDefinedClass;
 
     protected function onBackDefault(bool $finished = true)
@@ -65,6 +57,34 @@ class InlineFormRunner extends Form
             'form' => $this,
             'finished' => $finished,
         ]);
+    }
+
+    protected function getEventOptionsOnBackDefault() : array
+    {
+        return [
+            'default' => EventCaller::DEFAULT_WHEN_NOT_LISTENING,
+        ];
+    }
+
+    protected function getEventOptionsOnFinish() : array
+    {
+        return [
+            'default' => EventCaller::DEFAULT_WHEN_NOT_LISTENING,
+        ];
+    }
+
+    protected function getEventOptionsOnCancel() : array
+    {
+        return [
+            'default' => EventCaller::DEFAULT_WHEN_NOT_LISTENING,
+        ];
+    }
+
+    protected function getEventOptionsOnBack() : array
+    {
+        return [
+            'default' => EventCaller::DEFAULT_WHEN_NOT_LISTENING,
+        ];
     }
 
     public FormStepHandler $lastSavedStep;
