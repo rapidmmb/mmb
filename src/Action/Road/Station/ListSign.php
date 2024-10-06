@@ -40,7 +40,8 @@ use Mmb\Support\Format\KeyFormatterBuilder;
  * @method $this titleKeyLabelPrefix(string|Closure $string)
  * @method $this titleKeyLabelSuffix(string|Closure $string)
  *
- * @method $this emptyKey(Closure|false $callback)
+ * @method $this emptyKey(Closure|false $callback, int $x = 50, int $y = 50)
+ * @method $this emptyKeyDefault(int $x = 50, int $y = 50)
  * @method $this emptyKeyAction(Closure $action)
  * @method $this emptyKeyLabel(Closure $callback)
  * @method $this emptyKeyLabelUsing(Closure $callback)

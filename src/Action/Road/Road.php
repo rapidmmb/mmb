@@ -8,6 +8,7 @@ use Mmb\Action\Action;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Behavior\Behavior;
 use Mmb\Support\Caller\Caller;
 
 class Road extends Action
@@ -103,9 +104,9 @@ class Road extends Action
      * @param Station $station
      * @return array
      */
-    public function getStationWith(Station $station): array
+    public function getStationWith(Station $station) : array
     {
-        return ['curStation', ...$this->getWith()];
+        return ['wayStack', ...$this->getWith()];
     }
 
     /**
@@ -133,7 +134,7 @@ class Road extends Action
 
             $alias = $register->method;
             $register->method = $subName;
-            $this->createStation($stationName)->getInlineCallbackFor($register);
+            $this->createHeadStation($stationName)->getInlineCallbackFor($register);
             $register->method = $alias;
         }
 
@@ -149,9 +150,9 @@ class Road extends Action
     protected function onInitializeInlineRegister(InlineRegister $register)
     {
         $register->before(
-            function(InlineAction $inline)
+            function (InlineAction $inline)
             {
-                $inline->with('curStation', ...$this->getWith());
+                $inline->with(...$this->getStationWith($this->head));
             }
         );
 
@@ -224,6 +225,17 @@ class Road extends Action
     }
 
     /**
+     * Create a station as head
+     *
+     * @param string $name
+     * @return Station
+     */
+    public function createHeadStation(string $name) : Station
+    {
+        return $this->head = $this->createStation($name);
+    }
+
+    /**
      * Detect the sign type from a callback, using the first argument
      *
      * @param Closure $callback
@@ -246,46 +258,95 @@ class Road extends Action
     }
 
     /**
-     * Current station name
+     * The head station
      *
-     * @var string
+     * @var Station
      */
-    public string $curStation = '';
+    public Station $head;
 
     /**
      * Fire a station action
      *
-     * @param string $station
-     * @param string $name
-     * @param        ...$args
+     * @param string|Station $station
+     * @param string         $name
+     * @param                ...$args
      * @return mixed
      */
-    public function fire(string $station, string $name, ...$args)
+    public function fire(string|Station $station, string $name, ...$args)
     {
-        return $this->createStation($station)->fireAction($name, ...$args);
+        if (is_string($station))
+        {
+            $station = $this->createStation($station);
+        }
+
+        if ($name != 'revert' && isset($this->head) && $station != $this->head)
+        {
+            $this->wayStack[] = array_filter([$this->head->name, $this->head->keepData()]);
+        }
+
+        if (!isset($this->head) || $this->head != $station)
+        {
+            $this->head = $station;
+        }
+
+        return $station->fireAction($name, ...$args);
     }
 
     /**
      * Fire default station action
      *
-     * @param string $station
-     * @param        ...$args
+     * @param string|Station $station
+     * @param                ...$args
      * @return mixed
      */
-    public function fireStation(string $station, ...$args)
+    public function fireStation(string|Station $station, ...$args)
     {
         return $this->fire($station, 'main', ...$args);
     }
 
     /**
-     * Set the current station name
+     * Stack of stations that executed
      *
-     * @param string $station
+     * @var string[]
+     */
+    public array $wayStack = [];
+
+    /**
+     * Back to previous station/section
+     *
      * @return void
      */
-    public function setCurrentStation(string $station)
+    public function fireBack(...$args)
     {
-        $this->curStation = $station;
+        if ($this->wayStack)
+        {
+            try
+            {
+                @[$station, $with] = array_pop($this->wayStack);
+
+                $station = $this->createStation($station);
+                $station->revertData($with ?? []);
+            }
+            catch (\Throwable)
+            {
+                goto defaultBack;
+            }
+
+            return $this->fire($station, 'revert');
+        }
+
+        defaultBack:
+        return $this->invokeDynamic('back', ...Caller::splitArguments($args));
+    }
+
+    /**
+     * Back
+     *
+     * @return void
+     */
+    protected function back()
+    {
+        Behavior::back(static::class);
     }
 
     /**

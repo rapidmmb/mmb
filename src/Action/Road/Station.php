@@ -94,7 +94,26 @@ abstract class Station extends Section
     }
 
 
+    /**
+     * Default method to run when open station
+     *
+     * @var string
+     */
     protected string $defaultAction = 'main';
+
+    /**
+     * Revert method to run when backing from other station
+     *
+     * @var string|null
+     */
+    protected ?string $revertAction = null;
+
+    /**
+     * The variables that should save after changing the station
+     *
+     * @var array
+     */
+    protected array $keeps = [];
 
     /**
      * Fire an action
@@ -112,7 +131,52 @@ abstract class Station extends Section
             $name = $this->defaultAction;
         }
 
+        if ($name == 'revert')
+        {
+            $name = $this->revertAction ?? $this->defaultAction;
+        }
+
         return $this->invokeDynamic($name, $normalArgs, $dynamicArgs);
+    }
+
+    /**
+     * Get keeps variables
+     *
+     * @return array
+     */
+    public function getKeeps() : array
+    {
+        return $this->keeps;
+    }
+
+    /**
+     * Get keeps data
+     *
+     * @return array
+     */
+    public function keepData() : array
+    {
+        $data = [];
+        foreach ($this->getKeeps() as $keep)
+        {
+            $data[$keep] = $this->$keep;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Revert the data
+     *
+     * @param array $data
+     * @return void
+     */
+    public function revertData(array $data)
+    {
+        foreach ($data as $name => $value)
+        {
+            $this->$name = $value;
+        }
     }
 
 }
