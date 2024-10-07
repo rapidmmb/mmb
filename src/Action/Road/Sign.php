@@ -3,7 +3,10 @@
 namespace Mmb\Action\Road;
 
 use Closure;
+use Illuminate\Support\Arr;
+use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Caller\HasEvents;
 
@@ -91,13 +94,58 @@ abstract class Sign
     /**
      * Add parameters when opening the station
      *
-     * @param string|array $params
-     * @param Closure|null $callback
+     * @param string|array|Closure|null $params
+     * @param string|array|null         $names
      * @return $this
      */
-    public function params(string|array $params, ?Closure $callback = null)
+    public function params(null|string|array|Closure $params, null|string|array $names = null)
     {
-        $this->params[] = [(array) $params, $callback];
+        if (is_string($params) || is_array($params))
+        {
+            $names = $params;
+            $params = null;
+        }
+
+        if (is_null($params) && is_null($names))
+        {
+            return $this;
+        }
+
+        $resolvers = [];
+
+        if ($params)
+        {
+            $autoNames = is_null($names);
+            $names ??= [];
+
+            $ref = new \ReflectionFunction($params);
+            foreach ($ref->getParameters() as $parameter)
+            {
+                if ($autoNames || in_array($parameter->getName(), $names))
+                {
+                    if ($attribute = Arr::first(
+                        $parameter->getAttributes(),
+                        fn (\ReflectionAttribute $attribute) => is_a(
+                            $attribute->getName(), StationParameterResolverAttributeContract::class, true
+                        )
+                    ))
+                    {
+                        $resolvers[$parameter->getName()] = [$attribute, $parameter];
+
+                        if ($autoNames)
+                        {
+                            $names[] = $parameter->getName();
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            $names = (array) $params;
+        }
+
+        $this->params[] = [$names, $params, $resolvers];
         return $this;
     }
 

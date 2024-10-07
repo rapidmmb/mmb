@@ -151,13 +151,7 @@ class Road extends Action
      */
     protected function onInitializeInlineRegister(InlineRegister $register)
     {
-        $register->before(
-            function () use ($register)
-            {
-                $register->inlineAction->with(...$this->getStationWith($this->head));
-                $register->inlineAction->withOn('$', $this->head, 'ps');
-            }
-        );
+        $this->head->initializeInlineRegister($register);
 
         parent::onInitializeInlineRegister($register);
     }

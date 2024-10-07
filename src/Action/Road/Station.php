@@ -4,7 +4,9 @@ namespace Mmb\Action\Road;
 
 use Closure;
 use Mmb\Action\Form\Inline\InlineForm;
+use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
+use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
 use Mmb\Action\Section\Dialog;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\Section;
@@ -56,15 +58,25 @@ abstract class Station extends Section
 
     protected function onInitializeInlineRegister(InlineRegister $register)
     {
+        $this->initializeInlineRegister($register);
+
+        parent::onInitializeInlineRegister($register);
+    }
+
+    public function initializeInlineRegister(InlineRegister $register)
+    {
         $register->before(
             function () use ($register)
             {
                 $register->inlineAction->with(...$this->road->getStationWith($this));
                 $register->inlineAction->withOn('$', $this, 'ps');
+                
+                if ($register instanceof InlineLoadRegister)
+                {
+                    $this->loadPsCallData();
+                }
             }
         );
-
-        parent::onInitializeInlineRegister($register);
     }
 
     /**
@@ -103,7 +115,7 @@ abstract class Station extends Section
     {
         return [
             'station' => $this,
-            ...$this->ps,
+            ...$this->psCall,
             ...$this->dynamicArgs,
         ];
     }
@@ -161,7 +173,14 @@ abstract class Station extends Section
      *
      * @var array
      */
-    protected array $ps = [];
+    public array $ps = [];
+
+    /**
+     * Parameters to pass in functions
+     *
+     * @var array
+     */
+    public array $psCall = [];
 
     /**
      * Prepare the default action
@@ -172,42 +191,32 @@ abstract class Station extends Section
      */
     protected function prepareDefaultAction(array $normalArgs, array $dynamicArgs)
     {
-        foreach ($this->sign->getParams() as [$params, $callback])
+        foreach ($this->sign->getParams() as [$names, $callback, $resolvers])
         {
-            if ($callback)
+            $pass = [];
+            foreach ($names as $name)
             {
-                $pass = [];
-                foreach ($params as $param)
+                if (array_key_exists($name, $dynamicArgs))
                 {
-                    if (array_key_exists($param, $dynamicArgs))
-                    {
-                        $pass[$param] = $dynamicArgs[$param];
-                        unset($dynamicArgs[$param]);
-                    }
-                }
+                    $value = $dynamicArgs[$name];
+                    unset($dynamicArgs[$name]);
 
-                if (is_array($keeps = Caller::invoke($callback, [], $pass)))
+                    /** @var ?StationParameterResolverAttributeContract $resolver */
+                    [$resolver, $ref] = $resolvers[$name] ?? [null, null];
+
+                    $this->psCall[$name]
+                        = $pass[$name] = $resolver ? $resolver->getStationParameterForLoad($ref, $value) : $value;
+                    $this->ps[$name] = $resolver ? $resolver->getStationParameterForStore($ref, $value) : $value;
+                }
+                elseif (!$callback)
                 {
-                    foreach ($keeps as $keep => $value)
-                    {
-                        $this->ps[$keep] = $value;
-                    }
+                    throw new \InvalidArgumentException("Parameter [$name] is required");
                 }
             }
-            else
+
+            if ($callback)
             {
-                foreach ($params as $param)
-                {
-                    if (array_key_exists($param, $dynamicArgs))
-                    {
-                        $this->ps[$param] = $dynamicArgs[$param];
-                        unset($dynamicArgs[$param]);
-                    }
-                    else
-                    {
-                        throw new \InvalidArgumentException("Parameter [$param] is required");
-                    }
-                }
+                $this->fireSign($callback, ...$pass);
             }
         }
 
@@ -261,7 +270,35 @@ abstract class Station extends Section
         foreach ($data as $name => $value)
         {
             $this->$name = $value;
+
+            if ($name == 'ps')
+            {
+                $this->loadPsCallData();
+            }
         }
+    }
+
+    /**
+     * @return void
+     */
+    public function loadPsCallData()
+    {
+        foreach ($this->sign->getParams() as [$names, $callback, $resolvers])
+        {
+            foreach ($names as $name)
+            {
+                if (array_key_exists($name, $this->ps))
+                {
+                    $value = $this->ps[$name];
+
+                    /** @var ?StationParameterResolverAttributeContract $resolver */
+                    [$resolver, $ref] = $resolvers[$name] ?? [null, null];
+
+                    $this->psCall[$name] = $resolver ? $resolver->getStationParameterForLoad($ref, $value) : $value;
+                }
+            }
+        }
+
     }
 
 }
