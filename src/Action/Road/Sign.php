@@ -85,4 +85,30 @@ abstract class Sign
         throw new \BadMethodCallException(sprintf("Call to undefined method [%s] on [%s]", $name, static::class));
     }
 
+
+    protected array $params = [];
+
+    /**
+     * Add parameters when opening the station
+     *
+     * @param string|array $params
+     * @param Closure|null $callback
+     * @return $this
+     */
+    public function params(string|array $params, ?Closure $callback = null)
+    {
+        $this->params[] = [(array) $params, $callback];
+        return $this;
+    }
+
+    /**
+     * Get the params
+     *
+     * @return array
+     */
+    public function getParams()
+    {
+        return $this->params;
+    }
+
 }

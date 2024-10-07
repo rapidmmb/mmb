@@ -134,8 +134,10 @@ class Road extends Action
 
             $alias = $register->method;
             $register->method = $subName;
-            $this->createHeadStation($stationName)->getInlineCallbackFor($register);
+            $callback = $this->createHeadStation($stationName)->getInlineCallbackFor($register);
             $register->method = $alias;
+
+            return $callback;
         }
 
         return parent::getInlineCallbackFor($register);
@@ -150,9 +152,10 @@ class Road extends Action
     protected function onInitializeInlineRegister(InlineRegister $register)
     {
         $register->before(
-            function (InlineAction $inline)
+            function () use ($register)
             {
-                $inline->with(...$this->getStationWith($this->head));
+                $register->inlineAction->with(...$this->getStationWith($this->head));
+                $register->inlineAction->withOn('$', $this->head, 'ps');
             }
         );
 
@@ -344,7 +347,7 @@ class Road extends Action
      *
      * @return void
      */
-    protected function back()
+    public function back()
     {
         Behavior::back(static::class);
     }

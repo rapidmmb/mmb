@@ -239,12 +239,12 @@ abstract class InlineAction implements ConvertableToStep
                 {
                     $value = $this->storedWithData[$storedName];
 
-                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
+                    foreach (AttributeLoader::getPropertyAttributesOf($object, $name, InlineWithPropertyAttributeContract::class) as $attr)
                     {
                         $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
                     }
 
-                    $this->initializerClass->$name = $value;
+                    $object->$name = $value;
                 }
             }
         }

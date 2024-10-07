@@ -4,6 +4,7 @@ namespace Mmb\Action\Road;
 
 use Closure;
 use Mmb\Action\Form\Inline\InlineForm;
+use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Dialog;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\Section;
@@ -53,6 +54,19 @@ abstract class Station extends Section
         return $register->register();
     }
 
+    protected function onInitializeInlineRegister(InlineRegister $register)
+    {
+        $register->before(
+            function () use ($register)
+            {
+                $register->inlineAction->with(...$this->road->getStationWith($this));
+                $register->inlineAction->withOn('$', $this, 'ps');
+            }
+        );
+
+        parent::onInitializeInlineRegister($register);
+    }
+
     /**
      * Fire a sign event
      *
@@ -89,6 +103,7 @@ abstract class Station extends Section
     {
         return [
             'station' => $this,
+            ...$this->ps,
             ...$this->dynamicArgs,
         ];
     }
@@ -129,14 +144,79 @@ abstract class Station extends Section
         if ($name == 'main')
         {
             $name = $this->defaultAction;
+
+            $this->prepareDefaultAction($normalArgs, $dynamicArgs);
         }
 
-        if ($name == 'revert')
+        elseif ($name == 'revert')
         {
             $name = $this->revertAction ?? $this->defaultAction;
         }
 
         return $this->invokeDynamic($name, $normalArgs, $dynamicArgs);
+    }
+
+    /**
+     * Caught parameters
+     *
+     * @var array
+     */
+    protected array $ps = [];
+
+    /**
+     * Prepare the default action
+     *
+     * @param array $normalArgs
+     * @param array $dynamicArgs
+     * @return void
+     */
+    protected function prepareDefaultAction(array $normalArgs, array $dynamicArgs)
+    {
+        foreach ($this->sign->getParams() as [$params, $callback])
+        {
+            if ($callback)
+            {
+                $pass = [];
+                foreach ($params as $param)
+                {
+                    if (array_key_exists($param, $dynamicArgs))
+                    {
+                        $pass[$param] = $dynamicArgs[$param];
+                        unset($dynamicArgs[$param]);
+                    }
+                }
+
+                if (is_array($keeps = Caller::invoke($callback, [], $pass)))
+                {
+                    foreach ($keeps as $keep => $value)
+                    {
+                        $this->ps[$keep] = $value;
+                    }
+                }
+            }
+            else
+            {
+                foreach ($params as $param)
+                {
+                    if (array_key_exists($param, $dynamicArgs))
+                    {
+                        $this->ps[$param] = $dynamicArgs[$param];
+                        unset($dynamicArgs[$param]);
+                    }
+                    else
+                    {
+                        throw new \InvalidArgumentException("Parameter [$param] is required");
+                    }
+                }
+            }
+        }
+
+        if ($dynamicArgs)
+        {
+            throw new \InvalidArgumentException(
+                sprintf("Too many parameters, parameter [%s] is not required", array_keys($dynamicArgs)[0])
+            );
+        }
     }
 
     /**
@@ -160,6 +240,11 @@ abstract class Station extends Section
         foreach ($this->getKeeps() as $keep)
         {
             $data[$keep] = $this->$keep;
+        }
+
+        if ($this->ps)
+        {
+            $data['ps'] = $this->ps;
         }
 
         return $data;
