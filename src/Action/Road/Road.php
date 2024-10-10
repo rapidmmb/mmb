@@ -3,7 +3,7 @@
 namespace Mmb\Action\Road;
 
 use Closure;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineRegister;
@@ -366,6 +366,23 @@ class Road extends Action
         }
 
         return null;
+    }
+
+    /**
+     * Default rtl mode enabling
+     *
+     * @var bool|null
+     */
+    protected ?bool $rtl = null;
+
+    /**
+     * Get default rtl mode
+     *
+     * @return bool|null
+     */
+    public function getRtl() : ?bool
+    {
+        return $this->rtl;
     }
 
 }

@@ -3,9 +3,9 @@
 namespace Mmb\Action\Road\Station;
 
 use Closure;
-use Mmb\Action\Road\Customize\Concerns\HasMenuCustomizing;
 use Mmb\Action\Road\Sign;
 use Mmb\Action\Road\Station;
+use Mmb\Action\Road\Station\Concerns\SignWithMenuCustomizing;
 use Mmb\Action\Road\Station\List\ListViewer;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\MenuKey;
@@ -50,7 +50,7 @@ use Mmb\Support\Format\KeyFormatterBuilder;
  */
 class ListSign extends Sign
 {
-    use HasMenuCustomizing,
+    use SignWithMenuCustomizing,
         Concerns\SignWithQuery,
         Concerns\SignWithItems,
         Concerns\SignWithResponse,
@@ -67,6 +67,8 @@ class ListSign extends Sign
         parent::boot();
         $this->defineKey('titleKey', 'header', 50, 0);
         $this->defineKey('emptyKey', 'empty', 50, 50);
+        $this->defineKey('searchKey', 'header', 0, 100);
+        $this->defineKey('searchingKey', 'header', 0, 100);
     }
 
     // - - - - - - - - - - - - Title Key - - - - - - - - - - - - \\
@@ -80,7 +82,7 @@ class ListSign extends Sign
 
         return $menu->key(
             $label,
-            fn () => $station->fireSign('titleKeyAction'),
+            fn () => $this->fireBy($station, 'titleKeyAction'),
         );
     }
 
@@ -105,7 +107,7 @@ class ListSign extends Sign
 
         return $menu->key(
             $label,
-            fn () => $station->fireSign('emptyKeyAction'),
+            fn () => $this->fireBy($station, 'emptyKeyAction'),
         );
     }
 
@@ -119,6 +121,40 @@ class ListSign extends Sign
         $this->getViewer()->use($station)->onEmptyKeyAction();
     }
 
+    // - - - - - - - - - - - - Search Section - - - - - - - - - - - - \\
+
+    public SearchSign $searchSign;
+
+    /**
+     * Searchable list
+     *
+     * @param (Closure(SearchSign): void)|false|null $callback
+     * @return $this
+     */
+    public function searchable(Closure|null|false $callback = null)
+    {
+        if ($callback === false)
+        {
+            if (isset($this->searchSign))
+            {
+                $this->searchSign->die();
+            }
+
+            unset($this->searchSign);
+            return $this;
+        }
+
+        $search = $this->searchSign ?? new SearchSign($this->road, $this);
+
+        if ($callback)
+        {
+            $callback($search);
+        }
+
+        return $this;
+    }
+
+    // - - - - - - - - - - - - Create Station - - - - - - - - - - - - \\
 
     /**
      * Create list station
@@ -177,6 +213,55 @@ class ListSign extends Sign
         return $this->view(new Station\List\ListPaginateViewer($perPage, $columns));
     }
 
+
+    public const PAGINATOR_AT_NOTHING = 0;
+    public const PAGINATOR_AT_TOP     = 1;
+    public const PAGINATOR_AT_BOTTOM  = 2;
+    public const PAGINATOR_AT_BOTH    = 3;
+
+    protected int $paginatorAt = self::PAGINATOR_AT_BOTTOM;
+
+    /**
+     * Set the paginator position
+     *
+     * @param int $at
+     * @return $this
+     */
+    public function paginatorAt(int $at)
+    {
+        $this->paginatorAt = $at;
+        return $this;
+    }
+
+    public function paginatorHide()
+    {
+        return $this->paginatorAt(self::PAGINATOR_AT_NOTHING);
+    }
+
+    public function paginatorAtTop()
+    {
+        return $this->paginatorAt(self::PAGINATOR_AT_TOP);
+    }
+
+    public function paginatorAtBottom()
+    {
+        return $this->paginatorAt(self::PAGINATOR_AT_BOTTOM);
+    }
+
+    public function paginatorAtBoth()
+    {
+        return $this->paginatorAt(self::PAGINATOR_AT_BOTH);
+    }
+
+    /**
+     * Get paginator position
+     *
+     * @return int
+     */
+    public function getPaginatorAt()
+    {
+        return $this->paginatorAt;
+    }
 
     // - - - - - - - - - - - - List Formatting - - - - - - - - - - - - \\
 

@@ -2,13 +2,14 @@
 
 namespace Mmb\Action\Road\Station\Concerns;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Road\Station;
 use Mmb\Support\Caller\EventCaller;
 use Closure;
 
 trait SignWithQuery
 {
+    use SignWithQueryFilters;
 
     /**
      * Get the query
@@ -18,7 +19,7 @@ trait SignWithQuery
      */
     public function getQuery(Station $station) : Builder
     {
-        return $station->fireSign('queryUsing', $station->fireSign('createQuery'));
+        return $this->getFilteredQuery($station, $this->fireBy($station, 'createQuery'));
     }
 
     /**
@@ -53,25 +54,6 @@ trait SignWithQuery
         }
 
         throw new \InvalidArgumentException("No query or model passed");
-    }
-
-
-    /**
-     * Build the query using callback
-     *
-     * @param Closure(Builder): Builder $callback
-     * @return $this
-     */
-    public function queryUsing(Closure $callback)
-    {
-        return $this->listen('queryUsing', $callback);
-    }
-
-    protected function getEventOptionsOnQueryUsing()
-    {
-        return [
-            'call' => EventCaller::CALL_BUILDER,
-        ];
     }
 
 }

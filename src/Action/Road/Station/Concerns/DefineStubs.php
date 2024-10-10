@@ -2,22 +2,21 @@
 
 namespace Mmb\Action\Road\Station\Concerns;
 
-use Illuminate\Contracts\Support\Arrayable;
-use Mmb\Action\Road\Customize\Concerns\HasMenuCustomizing;
-use Mmb\Action\Road\Station;
-use Mmb\Action\Section\Menu;
-use Mmb\Support\Caller\EventCaller;
 use Closure;
+use Illuminate\Contracts\Support\Arrayable;
+use Mmb\Action\Contracts\Menuable;
+use Mmb\Action\Road\Station;
+use Mmb\Action\Road\WeakSign;
+use Mmb\Action\Section\Menu;
+use Mmb\Support\Caller\Caller;
+use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Modes\StringContent;
 use Mmb\Support\Encoding\Text;
 
 trait DefineStubs
 {
-    use HasMenuCustomizing;
-
-    // todo
-
+    
     /**
      * Define a label
      *
@@ -72,7 +71,7 @@ trait DefineStubs
                         $args = func_get_args();
                         array_shift($args);
 
-                        $string = EventCaller::get('station')->fireSign($string, ...$args);
+                        $string = EventCaller::get('station')->fireSignAs($this, $string, ...$args);
                     }
 
                     return $string . $text;
@@ -92,7 +91,7 @@ trait DefineStubs
                         $args = func_get_args();
                         array_shift($args);
 
-                        $string = EventCaller::get('station')->fireSign($string, ...$args);
+                        $string = EventCaller::get('station')->fireSignAs($this, $string, ...$args);
                     }
 
                     return $text . $string;
@@ -111,9 +110,9 @@ trait DefineStubs
      */
     protected function getDefinedLabel(Station $station, string $name, ...$args) : string
     {
-        $string = $station->fireSign($name, ...$args);
+        $string = $this->fireBy($station, $name, ...$args);
 
-        return $station->fireSign($name . 'Using', $string, ...$args);
+        return $this->fireBy($station, $name . 'Using', $string, ...$args);
     }
 
     /**
@@ -126,12 +125,12 @@ trait DefineStubs
      */
     protected function getDefinedNullableLabel(Station $station, string $name, ...$args) : ?string
     {
-        $string = $station->fireSign($name, ...$args);
+        $string = $this->fireBy($station, $name, ...$args);
 
         if ($string === null)
             return null;
 
-        return $station->fireSign($name . 'Using', $string, ...$args);
+        return $this->fireBy($station, $name . 'Using', $string, ...$args);
     }
 
     /**
@@ -181,23 +180,65 @@ trait DefineStubs
      */
     protected final function defineKey(string $name, string $group, int $dx, int $dy)
     {
+        $this->defineProxyKey($this, $name, $group, $dx, $dy);
+    }
+
+    /**
+     * Define a Key in other sign
+     *
+     * ```
+     * method $this name(Closure|false $callback, int $x = DEFAULT_X, int $y = DEFAULT_Y)
+     * method $this nameDefault(int $x = DEFAULT_X, int $y = DEFAULT_Y)
+     * method $this nameAction(Closure $action)
+     * method $this nameLabel(Closure $callback)
+     * method $this nameLabelUsing(Closure $callback)
+     * method $this nameLabelPrefix(string|Closure $string)
+     * method $this nameLabelSuffix(string|Closure $string)
+     * ```
+     *
+     * @param WeakSign $in
+     * @param string   $name
+     * @param string   $group
+     * @param int      $dx
+     * @param int      $dy
+     * @return void
+     */
+    protected function defineProxyKey(WeakSign $in, string $name, string $group, int $dx, int $dy)
+    {
         if ($hasDefault = method_exists($this, $fn = 'onDefault' . $name))
         {
-            $this->insertKey($group, $this->$fn(...), $name, $dx, $dy);
+            $in->insertKey($group, $this->$fn(...), $name, $dx, $dy);
         }
+
+        $hasProxy = method_exists($this, $proxyMethod = 'on' . $name . 'Via');
 
         // testKey()
         $this->defineMethod(
             $name,
             function (Closure|false $callback, ?int $x = null, ?int $y = null) use (
-                $name, $group, $dx, $dy
+                $name, $group, $dx, $dy, $hasProxy, $proxyMethod, $in
             )
             {
-                $this->removeKey($group, $name);
+                $in->removeKey($group, $name);
 
                 if ($callback)
                 {
-                    $this->insertKey($group, $callback, $name, $x ?? $dx, $y ?? $dy);
+                    if ($hasProxy)
+                    {
+                        $callback = function (...$args) use ($callback, $proxyMethod)
+                        {
+                            return Caller::invoke(
+                                $this->$proxyMethod(...),
+                                [
+                                    fn (...$args) => Caller::invoke($callback, $args, EventCaller::all()),
+                                    ...$args,
+                                ],
+                                EventCaller::all()
+                            );
+                        };
+                    }
+
+                    $in->insertKey($group, $callback, $name, $x ?? $dx, $y ?? $dy);
                 }
 
                 return $this;
@@ -209,12 +250,12 @@ trait DefineStubs
             // testKeyDefault()
             $this->defineMethod(
                 $name . 'Default',
-                function (?int $x = null, ?int $y = null) use ($name, $group, $dx, $dy)
+                function (?int $x = null, ?int $y = null) use ($name, $group, $dx, $dy, $in)
                 {
-                    $this->removeKey($group, $name);
+                    $in->removeKey($group, $name);
 
                     $default = 'onDefault' . $name;
-                    $this->insertKey($group, $this->$default(...), $name, $x ?? $dx, $y ?? $dy);
+                    $in->insertKey($group, $this->$default(...), $name, $x ?? $dx, $y ?? $dy);
 
                     return $this;
                 }
@@ -223,6 +264,11 @@ trait DefineStubs
 
         $this->defineLabel($name . 'Label');
         $this->defineAction($name . 'Action');
+    }
+
+    protected function shutdownProxyKey(WeakSign $in, string $name, string $group)
+    {
+        $in->removeKey($group, $name);
     }
 
     /**
@@ -245,7 +291,7 @@ trait DefineStubs
         // test()
         $this->defineMethod(
             $name,
-            fn (Closure|false $callback) => $this->listen($name, $callback),
+            fn (Closure|false $callback) => $this->listen($name, $callback ?: fn () => null),
         );
         $this->defineEvent(
             $name,
@@ -264,13 +310,13 @@ trait DefineStubs
      *
      * @param Station $station
      * @param string  $name
-     * @param Menu    $menu
+     * @param Menuable    $menu
      * @param         ...$args
      * @return mixed
      */
-    protected function getDefinedDynamicKey(Station $station, string $name, Menu $menu, ...$args)
+    protected function getDefinedDynamicKey(Station $station, string $name, Menuable $menu, ...$args)
     {
-        return $station->fireSign($name, $menu, ...$args);
+        return $this->fireBy($station, $name, $menu, ...$args);
     }
 
     /**
@@ -375,7 +421,7 @@ trait DefineStubs
                         $args = func_get_args();
                         array_shift($args);
 
-                        $string = EventCaller::get('station')->fireSign($string, ...$args, mode: $mode);
+                        $string = EventCaller::get('station')->fireSignAs($this, $string, ...$args, mode: $mode);
                     }
 
                     return $mode->string($string) . $text;
@@ -395,7 +441,7 @@ trait DefineStubs
                         $args = func_get_args();
                         array_shift($args);
 
-                        $string = EventCaller::get('station')->fireSign($string, ...$args, mode: $mode);
+                        $string = EventCaller::get('station')->fireSignAs($this, $string, ...$args, mode: $mode);
                     }
 
                     return $text . $mode->string($string);
@@ -414,7 +460,7 @@ trait DefineStubs
      */
     protected function getDefinedMessage(Station $station, string $name, ...$args) : array
     {
-        $mode = $station->fireSign($name . 'Mode', ...$args);
+        $mode = $this->fireBy($station, $name . 'Mode', ...$args);
         $mode = match (true)
         {
             is_string($mode)      => Text::mode($mode),
@@ -425,7 +471,7 @@ trait DefineStubs
             ),
         };
 
-        $message = $station->fireSign($name, ...$args, mode: $mode);
+        $message = $this->fireBy($station, $name, ...$args, mode: $mode);
         $message = match (true)
         {
             is_null($message)                 => [],
@@ -438,9 +484,10 @@ trait DefineStubs
             ),
         };
 
-        $message = (array) $station->fireSign($name . 'Using', $message, ...$args, mode: $mode);
+        $message = (array) $this->fireBy($station, $name . 'Using', $message, ...$args, mode: $mode);
 
-        $message['text'] = (string) $station->fireSign(
+        $message['text'] = (string) $this->fireBy(
+            $station,
             $name . 'TextUsing',
             $message['text'] ?? '',
             ...$args,

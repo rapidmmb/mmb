@@ -100,21 +100,13 @@ class InlineFormRunner extends Form
 
 
     /**
-     * @param bool $enable
+     * @param bool $enabled
      * @return $this
      */
-    public function defaultFormKey(bool $enable = true)
+    public function defaultFormKey(bool $enabled = true)
     {
-        $this->defaultFormKey = $enable;
+        $this->defaultFormKey = $enabled;
         return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function disableDefaultFormKey()
-    {
-        return $this->defaultFormKey(false);
     }
 
     /**
@@ -128,14 +120,6 @@ class InlineFormRunner extends Form
     }
 
     /**
-     * @return $this
-     */
-    public function disableCancelKey()
-    {
-        return $this->cancelKey(false);
-    }
-
-    /**
      * @param bool|string $text
      * @return $this
      */
@@ -143,14 +127,6 @@ class InlineFormRunner extends Form
     {
         $this->skipKey = $text;
         return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function disableSkipKey()
-    {
-        return $this->skipKey(false);
     }
 
     /**
@@ -164,29 +140,33 @@ class InlineFormRunner extends Form
     }
 
     /**
+     * @param bool $enabled
      * @return $this
      */
-    public function disablePreviousKey()
+    public function mirrorKey(bool $enabled = true)
     {
-        return $this->previousKey(false);
-    }
-
-    /**
-     * @param bool $enable
-     * @return $this
-     */
-    public function mirrorKey(bool $enable = true)
-    {
-        $this->mirrorKey = $enable;
+        $this->mirrorKey = $enabled;
         return $this;
     }
 
     /**
+     * @param bool $enabled
      * @return $this
      */
-    public function disableMirrorKey()
+    public function ineffectiveKey(bool $enabled)
     {
-        return $this->mirrorKey(false);
+        $this->ineffectiveKey = $enabled;
+        return $this;
+    }
+
+    /**
+     * @param bool $enabled
+     * @return $this
+     */
+    public function withoutChangesKey(bool $enabled)
+    {
+        $this->withoutChangesKey = $enabled;
+        return $this;
     }
 
 }

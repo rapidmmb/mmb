@@ -502,4 +502,15 @@ class EventCaller
         return array_key_exists($name, $stack) ? $stack[$name] : value($default);
     }
 
+    /**
+     * Get all dynamic arguments from last calling
+     *
+     * @param mixed $default
+     * @return array|mixed
+     */
+    public static function all($default = null)
+    {
+        return static::$eventDynamicStack ? end(static::$eventDynamicStack) : value($default);
+    }
+
 }

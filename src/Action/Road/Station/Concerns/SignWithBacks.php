@@ -3,6 +3,8 @@
 namespace Mmb\Action\Road\Station\Concerns;
 
 use closure;
+use Mmb\Action\Contracts\Menuable;
+use Mmb\Action\Form\Input;
 use Mmb\Action\Road\Station;
 use Mmb\Action\Section\Menu;
 
@@ -23,11 +25,11 @@ trait SignWithBacks
         $this->defineKey('backKey', 'footer', 50, 200);
     }
 
-    protected function onDefaultBackKey(Menu $menu, Station $station)
+    protected function onDefaultBackKey(Menuable $menuable, Station $station)
     {
-        return $menu->key(
+        return $menuable->createActionKey(
             $this->getDefinedLabel($station, 'backKeyLabel'),
-            fn () => $station->fireSign('backKeyAction')
+            fn () => $this->fireBy($station, 'backKeyAction')
         );
     }
 

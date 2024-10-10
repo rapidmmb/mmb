@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\Action\Road\Customize\Concerns;
+namespace Mmb\Action\Road\Station\Concerns;
 
 use Closure;
 use Illuminate\Support\Str;
@@ -15,14 +15,24 @@ use Mmb\Action\Section\MenuKey;
  * @method $this removeBodyKey(string $name)
  * @method $this moveBodyKey(string $name, ?int $x, ?int $y)
  */
-trait HasMenuCustomizing
+trait SignWithMenuCustomizing
 {
+
+    protected function bootHasMenuCustomizing()
+    {
+        match ($this->road->getRtl())
+        {
+            true => $this->rtl(),
+            false => $this->ltr(),
+            default => null,
+        };
+    }
 
     private MenuCustomizer $_menuCustomizer;
 
     public function getMenuCustomizer() : MenuCustomizer
     {
-        return $this->_menuCustomizer ??= new MenuCustomizer();
+        return $this->_menuCustomizer ??= new MenuCustomizer($this);
     }
 
     /**
@@ -31,7 +41,7 @@ trait HasMenuCustomizing
      * @param Closure $callback
      * @return $this
      */
-    public function useMenuCustomizer(Closure $callback)
+    public function useMenu(Closure $callback)
     {
         $callback($this->getMenuCustomizer());
         return $this;

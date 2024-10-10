@@ -3,7 +3,7 @@
 namespace Mmb\Action\Road\Station\List;
 
 use Closure;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Mmb\Action\Section\Menu;
 use Mmb\Support\Format\KeyFormatter;

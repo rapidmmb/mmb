@@ -58,7 +58,7 @@ trait SignWithItems
      */
     public function getItemKeyAction(Station $station, $record) : Closure
     {
-        return fn () => $station->fireSign('itemKeyAction', $record);
+        return fn () => $this->fireBy($station, 'itemKeyAction', $record);
     }
 
     protected function onItemKey(Menu $menu, $record, Station $station) : ?MenuKey

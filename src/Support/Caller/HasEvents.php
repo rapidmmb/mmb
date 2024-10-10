@@ -44,6 +44,26 @@ trait HasEvents
     }
 
     /**
+     * Remove all listeners
+     *
+     * @param string|null $on
+     * @return $this
+     */
+    public function removeListeners(?string $on = null)
+    {
+        if (isset($on))
+        {
+            unset($this->_listened_events[$on]);
+        }
+        else
+        {
+            $this->_listened_events = [];
+        }
+
+        return $this;
+    }
+
+    /**
      * Fire an event
      *
      * @param string|Closure|array $event

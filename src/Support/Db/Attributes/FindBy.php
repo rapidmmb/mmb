@@ -13,9 +13,11 @@ use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
+use Mmb\Action\Road\Attributes\StationPropertyResolverAttributeContract;
 use Mmb\Support\Caller\Attributes\CallingPassParameterInsteadContract;
 use Mmb\Support\Db\ModelFinder;
 use ReflectionParameter;
+use ReflectionProperty;
 use ReflectionType;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
@@ -24,7 +26,8 @@ class FindBy implements
     InlineWithPropertyAttributeContract,
     FormDynamicPropertyAttributeContract,
     CallingPassParameterInsteadContract,
-    StationParameterResolverAttributeContract
+    StationParameterResolverAttributeContract,
+    StationPropertyResolverAttributeContract
 {
 
     public function __construct(
@@ -205,4 +208,21 @@ class FindBy implements
         return $this->getUsableValue($value);
     }
 
+    public function getStationPropertyForStore(ReflectionProperty $parameter, $value)
+    {
+        $this->setClassTypeUsing(
+            $parameter->getType()
+        );
+
+        return $this->getStorableValue($value);
+    }
+
+    public function getStationPropertyForLoad(ReflectionProperty $parameter, $value)
+    {
+        $this->setClassTypeUsing(
+            $parameter->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
 }

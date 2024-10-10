@@ -220,4 +220,130 @@ class InlineForm extends InlineAction
         $this->request();
     }
 
+    /**
+     * @param bool $enabled
+     * @return $this
+     */
+    public function defaultFormKey(bool $enabled = true)
+    {
+        $this->form->defaultFormKey($enabled);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableDefaultFormKey()
+    {
+        return $this->defaultFormKey(false);
+    }
+
+    /**
+     * @param bool|string $text
+     * @return $this
+     */
+    public function cancelKey(bool|string $text = true)
+    {
+        $this->form->cancelKey($text);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableCancelKey()
+    {
+        return $this->cancelKey(false);
+    }
+
+    /**
+     * @param bool|string $text
+     * @return $this
+     */
+    public function skipKey(bool|string $text = true)
+    {
+        $this->form->skipKey($text);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableSkipKey()
+    {
+        return $this->skipKey(false);
+    }
+
+    /**
+     * @param bool|string $text
+     * @return $this
+     */
+    public function previousKey(bool|string $text = true)
+    {
+        $this->form->previousKey($text);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disablePreviousKey()
+    {
+        return $this->previousKey(false);
+    }
+
+    /**
+     * @param bool $enabled
+     * @return $this
+     */
+    public function mirrorKey(bool $enabled = true)
+    {
+        $this->form->mirrorKey($enabled);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableMirrorKey()
+    {
+        return $this->mirrorKey(false);
+    }
+
+    /**
+     * @param bool $enabled
+     * @return $this
+     */
+    public function ineffectiveKey(bool $enabled)
+    {
+        $this->form->ineffectiveKey($enabled);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableIneffectiveKey()
+    {
+        return $this->ineffectiveKey(false);
+    }
+
+    /**
+     * @param bool $enabled
+     * @return $this
+     */
+    public function withoutChangesKey(bool $enabled)
+    {
+        $this->form->withoutChangesKey($enabled);
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableWithoutChangesKey()
+    {
+        return $this->withoutChangesKey(false);
+    }
+
 }

@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Traits\Macroable;
 use Mmb\Action\Action;
+use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Filter\Filter;
 use Mmb\Action\Filter\Filterable;
 use Mmb\Action\Filter\FilterFailException;
@@ -26,7 +27,7 @@ use Mmb\Support\Action\ActionCallback;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Db\ModelFinder;
 
-class Menu extends InlineAction
+class Menu extends InlineAction implements Menuable
 {
     use Macroable, Filterable, HasEventFilter;
     use Traits\CustomizesKeyboard;
@@ -707,4 +708,13 @@ class Menu extends InlineAction
         return $this->response();
     }
 
+    public function addMenuSchema(array $key) : void
+    {
+        $this->schema($key);
+    }
+
+    public function createActionKey(string $text, Closure $callback)
+    {
+        return $this->key($text, $callback);
+    }
 }

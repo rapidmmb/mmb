@@ -4,6 +4,7 @@ namespace Mmb\Action\Form;
 
 use Closure;
 use Illuminate\Support\Traits\Conditionable;
+use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Filter\Filterable;
 use Mmb\Action\Filter\FilterableShort;
 use Mmb\Action\Filter\FilterFailException;
@@ -17,7 +18,7 @@ use Mmb\Support\Encoding\Text;
 /**
  * @property mixed $value
  */
-class Input
+class Input implements Menuable
 {
     use Filterable, FilterableShort, HasEventFilter, HasEvents;
     use Conditionable;
@@ -922,4 +923,13 @@ class Input
     {
     }
 
+    public function addMenuSchema(array $key) : void
+    {
+        $this->add($key);
+    }
+
+    public function createActionKey(string $text, Closure $callback)
+    {
+        return $this->keyAction($text, $callback);
+    }
 }

@@ -12,8 +12,10 @@ use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
+use Mmb\Action\Road\Attributes\StationPropertyResolverAttributeContract;
 use Mmb\Support\Caller\Attributes\CallingPassParameterInsteadContract;
 use ReflectionParameter;
+use ReflectionProperty;
 
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER)]
 class CastEnum implements
@@ -21,7 +23,8 @@ class CastEnum implements
     InlineWithPropertyAttributeContract,
     FormDynamicPropertyAttributeContract,
     CallingPassParameterInsteadContract,
-    StationParameterResolverAttributeContract
+    StationParameterResolverAttributeContract,
+    StationPropertyResolverAttributeContract
 {
 
     private bool $allowNull;
@@ -187,6 +190,24 @@ class CastEnum implements
     }
 
     public function getStationParameterForLoad(ReflectionParameter $parameter, $value)
+    {
+        $this->setClassTypeUsing(
+            $parameter->getType()
+        );
+
+        return $this->getUsableValue($value);
+    }
+
+    public function getStationPropertyForStore(ReflectionProperty $parameter, $value)
+    {
+        $this->setClassTypeUsing(
+            $parameter->getType()
+        );
+
+        return $this->getStorableValue($value);
+    }
+
+    public function getStationPropertyForLoad(ReflectionProperty $parameter, $value)
     {
         $this->setClassTypeUsing(
             $parameter->getType()

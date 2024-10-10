@@ -3,7 +3,7 @@
 namespace Mmb\Action\Road\Station\List;
 
 use Closure;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Road\Station\ListStation;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\MenuKey;

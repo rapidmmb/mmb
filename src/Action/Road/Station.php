@@ -7,10 +7,12 @@ use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
+use Mmb\Action\Road\Attributes\StationPropertyResolverAttributeContract;
 use Mmb\Action\Section\Dialog;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\Section;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Caller\Caller;
 
 /**
@@ -70,7 +72,7 @@ abstract class Station extends Section
             {
                 $register->inlineAction->with(...$this->road->getStationWith($this));
                 $register->inlineAction->withOn('$', $this, 'ps');
-                
+
                 if ($register instanceof InlineLoadRegister)
                 {
                     $this->loadPsCallData();
@@ -88,7 +90,20 @@ abstract class Station extends Section
      */
     public function fireSign(string|array|Closure $event, ...$args)
     {
-        return $this->sign->fire($event, ...$args, ...$this->getDynamicArgs());
+        return $this->sign->fire($event, ...array_merge($args, $this->getDynamicArgs()));
+    }
+
+    /**
+     * Fire a sign event
+     *
+     * @param WeakSign             $sign
+     * @param string|array|Closure $event
+     * @param                      ...$args
+     * @return mixed
+     */
+    public function fireSignAs(WeakSign $sign, string|array|Closure $event, ...$args)
+    {
+        return $sign->fire($event, ...array_merge($args, $this->getDynamicArgs()));
     }
 
 
@@ -248,7 +263,20 @@ abstract class Station extends Section
         $data = [];
         foreach ($this->getKeeps() as $keep)
         {
-            $data[$keep] = $this->$keep;
+            $resolver = AttributeLoader::getPropertyAttributeOf(
+                $this, $keep, StationPropertyResolverAttributeContract::class
+            );
+
+            if ($resolver)
+            {
+                $data[$keep] = $resolver->getStationPropertyForStore(
+                    new \ReflectionProperty($this, $keep), $this->$keep
+                );
+            }
+            else
+            {
+                $data[$keep] = $this->$keep;
+            }
         }
 
         if ($this->ps)
@@ -269,12 +297,27 @@ abstract class Station extends Section
     {
         foreach ($data as $name => $value)
         {
-            $this->$name = $value;
-
             if ($name == 'ps')
             {
+                $this->ps = $value;
                 $this->loadPsCallData();
+                continue;
             }
+
+            if (property_exists($this, $name))
+            {
+                $resolver = AttributeLoader::getPropertyAttributeOf(
+                    $this, $name, StationPropertyResolverAttributeContract::class
+                );
+
+                if ($resolver)
+                {
+                    $this->$name = $resolver->getStationPropertyForLoad(new \ReflectionProperty($this, $name), $value);
+                    continue;
+                }
+            }
+
+            $this->$name = $value;
         }
     }
 
