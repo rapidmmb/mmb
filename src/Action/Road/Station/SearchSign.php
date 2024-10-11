@@ -77,8 +77,8 @@ class SearchSign extends WeakSign
 
         $this->insertInput('search', $this->searchInput(...), customize: $this->searchCustomizeInput(...));
 
-        $this->defineProxyKey($this->listSign, 'searchKey', 'header', 0, 100);
-        $this->defineProxyKey($this->listSign, 'searchingKey', 'header', 0, 100);
+        $this->defineProxyKey($this->listSign, 'searchKey', 'header', 100, 0);
+        $this->defineProxyKey($this->listSign, 'searchingKey', 'header', 100, 0);
         $this->defineMessage('message');
         $this->defineDynamicKey('resetKey');
     }
@@ -93,12 +93,12 @@ class SearchSign extends WeakSign
 
     // - - - - - - - - - - - - Search Input - - - - - - - - - - - - \\
 
-    protected function searchCustomizeInput(InputCustomizer $input, ListStation $station)
+    protected function searchCustomizeInput(InputCustomizer $input)
     {
         $input
             ->insertKey(
                 'body',
-                fn (Menuable $menu) => $this->getDefinedDynamicKey($station, 'resetKey', $menu),
+                fn (Menuable $menu, ListStation $station) => $this->getDefinedDynamicKey($station, 'resetKey', $menu),
                 'resetKey',
                 50,
                 0,
@@ -112,6 +112,16 @@ class SearchSign extends WeakSign
             ->textSingleLine();
     }
 
+    protected function onMessage()
+    {
+        return __('mmb::road.search.message');
+    }
+
+    protected function onBackKeyAction(ListStation $station)
+    {
+        $station->searchCancel();
+    }
+
     // - - - - - - - - - - - - Search Key - - - - - - - - - - - - \\
 
     protected function onDefaultSearchKey(Menu $menu, ListStation $station)
@@ -119,7 +129,7 @@ class SearchSign extends WeakSign
         return $menu->key(
             $this->getDefinedLabel($station, 'searchKeyLabel'),
             fn () => $this->fireBy($station, 'searchKeyAction'),
-        );
+        )->if($station->search === null);
     }
 
     protected function onDefaultSearchingKey(Menu $menu, ListStation $station)
@@ -127,7 +137,7 @@ class SearchSign extends WeakSign
         return $menu->key(
             $this->getDefinedLabel($station, 'searchingKeyLabel'),
             fn () => $this->fireBy($station, 'searchingKeyAction'),
-        );
+        )->if($station->search !== null);
     }
 
     protected function onSearchKeyLabel()

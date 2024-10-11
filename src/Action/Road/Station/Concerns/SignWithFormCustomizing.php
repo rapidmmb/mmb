@@ -5,12 +5,18 @@ namespace Mmb\Action\Road\Station\Concerns;
 use Illuminate\Support\Str;
 use Mmb\Action\Form\Form;
 use Mmb\Action\Form\FormKey;
-use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Form\Input;
 use Mmb\Action\Road\Customize\FormCustomizer;
 use Closure;
 use Mmb\Action\Road\Customize\InputCustomizer;
 
+/**
+ * @method $this insertBodyKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
+ * @method $this insertBodyRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
+ * @method $this insertBodySchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
+ * @method $this removeBodyKey(string $name)
+ * @method $this moveBodyKey(string $name, ?int $x, ?int $y)
+ */
 trait SignWithFormCustomizing
 {
 

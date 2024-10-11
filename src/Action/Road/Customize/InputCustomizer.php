@@ -61,13 +61,13 @@ class InputCustomizer
         $station->fireSignAs($this->sign, $this->callback, $input, form: $form);
 
         $schema = $this->fetchMultipleSchema($station, [$this, $this->formCustomizer], 'header', $input);
-        $input->addHeader($schema);
+        $input->header($schema);
 
         $schema = $this->fetchMultipleSchema($station, [$this, $this->formCustomizer], 'body', $input);
-        $input->add($schema);
+        $input->options($schema);
 
         $schema = $this->fetchMultipleSchema($station, [$this, $this->formCustomizer], 'footer', $input);
-        $input->addFooter($schema);
+        $input->footer($schema);
     }
 
 }

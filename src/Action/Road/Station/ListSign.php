@@ -144,7 +144,7 @@ class ListSign extends Sign
             return $this;
         }
 
-        $search = $this->searchSign ?? new SearchSign($this->road, $this);
+        $search = $this->searchSign ??= new SearchSign($this->road, $this);
 
         if ($callback)
         {

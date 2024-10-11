@@ -38,7 +38,7 @@ trait HasEvents
     public function removeListener(string $on, Closure $callback)
     {
         $this->_listened_events[$on] =
-            array_filter($this->_listened_events[$on] ?? [], fn($value) => $value !== $callback);
+            array_filter($this->_listened_events[$on] ?? [], fn ($value) => $value !== $callback);
 
         return $this;
     }
@@ -92,7 +92,8 @@ trait HasEvents
         if (is_array($event))
         {
             // Empty array -> Nothing
-            if (!$event) return null;
+            if (!$event)
+                return null;
 
             // Array<String> -> Call multiple events
             if (is_string(head($event)))
@@ -118,7 +119,7 @@ trait HasEvents
             $options,
             is_array($event) ? $event : $this->_listened_events[$event] ?? [],
             $normalArgs,
-            $dynamicArgs,
+            $dynamicArgs + (is_string($event) ? $this->getEventDynamicArgs($event) : $this->getEventDynamicArgs('*')),
             is_string($event) && method_exists($this, $fn = 'on' . $event) ? $this->$fn(...) : null,
         );
     }
@@ -141,7 +142,7 @@ trait HasEvents
      * @param string $event
      * @return array
      */
-    private function getEventDefaultOptions(string $event): array
+    private function getEventDefaultOptions(string $event) : array
     {
         if (method_exists($this, $fn = 'getEventOptionsOn' . $event))
         {
@@ -168,9 +169,9 @@ trait HasEvents
      * @param string $event
      * @return array
      */
-    private function getEventDefaultDynamicArgs(string $event): array
+    private function getEventDefaultDynamicArgs(string $event) : array
     {
-        if (method_exists($this, $fn = 'getEventDynamicArgsOn' . $event))
+        if ($event != '*' && method_exists($this, $fn = 'getEventDynamicArgsOn' . $event))
         {
             return (array) $this->$fn();
         }

@@ -116,6 +116,11 @@ class ListStation extends Station
         $this->inlineForm('searchForm')->request();
     }
 
+    public function searchCancel()
+    {
+        $this->main();
+    }
+
     public function searchForm(InlineForm $form)
     {
         $form->withOn('$', $this, ...$this->getWith());
