@@ -354,6 +354,7 @@ class ResourceListModule extends ResourceModule
                 ->add(
                     fn () => __('mmb::resource.trash.enabled'), fn ($query) => $query->onlyTrashed()
                 )
+                ->toggle()
                 ->when($init, fn () => $this->valueOf($init, $filter)),
             $x
         );

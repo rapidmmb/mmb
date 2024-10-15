@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Section\Resource;
 
+use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Section\ResourceMaker;
 
@@ -38,6 +39,12 @@ trait TResourceFormHasModel
         $this->theModel = $this->getRecordFrom($id);
         $this->setDynArgs(record: $this->theModel);
         $this->form($form);
+    }
+
+    public function withRecord(Model $record)
+    {
+        $this->theModel = $record;
+        return $this;
     }
 
 }

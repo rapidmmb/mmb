@@ -78,7 +78,7 @@ class ResourceInfoModule extends ResourceModule
         if($init) $init($softDelete);
 
         $this->addHeadKey(
-            fn() => $softDelete->getKeyLabel(),
+            fn($record) => $softDelete->withRecord($record)->getKeyLabel(),
             fn($record) => $softDelete->request($record),
             x: $x,
             y: $y,

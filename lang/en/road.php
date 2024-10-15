@@ -10,4 +10,8 @@ return [
 
         'message' => 'Search:',
     ],
+
+    'filter' => [
+        'none' => 'None',
+    ],
 ];

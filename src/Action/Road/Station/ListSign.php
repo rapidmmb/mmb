@@ -3,6 +3,7 @@
 namespace Mmb\Action\Road\Station;
 
 use Closure;
+use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Road\Sign;
 use Mmb\Action\Road\Station;
 use Mmb\Action\Road\Station\Concerns\SignWithMenuCustomizing;
@@ -320,6 +321,93 @@ class ListSign extends Sign
         return [
             'call' => EventCaller::CALL_BUILDER,
         ];
+    }
+
+    // - - - - - - - - - - - - Filters - - - - - - - - - - - - \\
+
+    protected static function detectFilterableTypeFromCallback(Closure $callback) : ?string
+    {
+        if ($type = @(new \ReflectionFunction($callback))->getParameters()[0]?->getType())
+        {
+            if ($type instanceof \ReflectionNamedType && $classType = $type->getName())
+            {
+                if (is_a($classType, Filterable::class, true))
+                {
+                    return $classType;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    protected array $filters = [];
+
+    /**
+     * Add a filter
+     *
+     * @param string             $name
+     * @param Filterable|Closure $filter
+     * @return $this
+     */
+    public function filter(
+        string $name,
+        Filterable|Closure $filter,
+    )
+    {
+        if (array_key_exists($name, $this->filters))
+        {
+            throw new \InvalidArgumentException("Filter [$name] is already exists");
+        }
+
+        if ($filter instanceof Closure)
+        {
+            $callback = $filter;
+            if (!$type = static::detectFilterableTypeFromCallback($callback))
+            {
+                throw new \InvalidArgumentException("Filter callback has not a valid filterable type");
+            }
+
+            $filter = new $type($this->road, $this);
+            $callback($filter);
+        }
+
+        $this->filters[$name] = $filter;
+
+        return $this;
+    }
+
+    /**
+     * Get a filterable value
+     *
+     * @param string $name
+     * @return Filterable|null
+     */
+    public function getFilterable(string $name) : ?Filterable
+    {
+        return $this->filters[$name] ?? null;
+    }
+
+    /**
+     * Get all filterables
+     *
+     * @return Filterable[]
+     */
+    public function getFilterables()
+    {
+        return $this->filters;
+    }
+
+    /**
+     * Get a filter name
+     *
+     * @param Filterable $filterable
+     * @return string|null
+     */
+    public function getFilterableName(Filterable $filterable) : ?string
+    {
+        $key = array_search($filterable, $this->filters, true);
+        return $key === false ? null : $key;
     }
 
 }

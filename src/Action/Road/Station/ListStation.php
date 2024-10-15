@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Road\Station;
 
+use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Form\Form;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Road\Station;
@@ -20,11 +21,23 @@ class ListStation extends Station
     {
         if (isset($this->sign->searchSign))
             yield 'search';
+        if ($this->sign->getFilterables())
+            yield 'filters';
     }
 
     // - - - - - - - - - - - - Main Menu - - - - - - - - - - - - \\
 
-    protected string $defaultAction = 'main';
+    protected string $defaultAction = 'mainInit';
+
+    public function mainInit()
+    {
+        foreach ($this->sign->getFilterables() as $filterable)
+        {
+            $filterable->initializeFirst($this);
+        }
+
+        $this->main();
+    }
 
     public function main()
     {
@@ -138,6 +151,61 @@ class ListStation extends Station
         // Set the response
         // $menu->responseUsing(fn ($args) => $this->fireSignAs($this->sign->searchSign, 'response', $args));
         // $form->form->listen('request', fn () => $this->sign->searchSign->getMessage($this));
+    }
+
+    // - - - - - - - - - - - - Filter Section - - - - - - - - - - - - \\
+
+    public array $filters = [];
+
+    public function applyFilters(Builder $query)
+    {
+        foreach ($this->filters as $name => $value)
+        {
+            if (($value === null) || !($filterable = $this->sign->getFilterable($name)))
+            {
+                unset($this->filters[$name]);
+                continue;
+            }
+
+            $filterable->applyOnWhere($this, $query, $value);
+            $filterable->applyOnQuery($this, $query, $value);
+        }
+    }
+
+    public function fireFilter(string $name)
+    {
+        if ($filterable = $this->sign->getFilterable($name))
+        {
+            $filterable->fireFilter($this);
+        }
+        else
+        {
+            $this->main();
+        }
+    }
+
+    public function filterRequest(Filterable $filterable)
+    {
+        if ($name = $this->sign->getFilterableName($filterable))
+        {
+            $this->menu('filterMenu', fName: $name)->response();
+        }
+        else
+        {
+            $this->main();
+        }
+    }
+
+    public function filterMenu(Menu $menu, string $fName)
+    {
+        if (!$filterable = $this->sign->getFilterable($fName))
+        {
+            // TODO: Exception
+            // $this->main();
+            // return;
+        }
+
+        $filterable->initializeMenu($this, $menu);
     }
 
 }

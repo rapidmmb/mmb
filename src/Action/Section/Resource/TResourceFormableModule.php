@@ -186,7 +186,7 @@ trait TResourceFormableModule
      */
     public function chunks(array $chunks)
     {
-        $this->chunks = $chunks;
+        $this->chunks = array_replace($this->chunks ?? [], $chunks);
         return $this;
     }
 

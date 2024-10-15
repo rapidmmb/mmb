@@ -2,10 +2,12 @@
 
 namespace Mmb\Action\Form;
 
+use Illuminate\Support\Traits\Conditionable;
 use Mmb\Core\Updates\Update;
 
 class FormKey
 {
+    use Conditionable;
 
     public function __construct(
         public string $text,
@@ -180,21 +182,9 @@ class FormKey
      * @param $condition
      * @return $this
      */
-    public function when($condition)
+    public function if($condition)
     {
         $this->enabled = (bool) value($condition);
-        return $this;
-    }
-
-    /**
-     * Enable unless condition
-     *
-     * @param $condition
-     * @return $this
-     */
-    public function unless($condition)
-    {
-        $this->enabled = !value($condition);
         return $this;
     }
 
