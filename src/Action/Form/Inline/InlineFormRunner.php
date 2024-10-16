@@ -42,10 +42,7 @@ class InlineFormRunner extends Form
 
         if ($callback = $this->inputInits[$input->name] ?? false)
         {
-            Caller::invoke($callback, [], [
-                'input' => $input,
-                'form' => $this,
-            ]);
+            $this->fire($callback, $input);
         }
     }
 

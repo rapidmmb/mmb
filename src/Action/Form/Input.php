@@ -302,7 +302,7 @@ class Input implements Menuable
      */
     public function filled($callback)
     {
-        $this->listen('fill', $callback);
+        $this->listen('filled', $callback);
         return $this;
     }
 

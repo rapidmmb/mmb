@@ -173,7 +173,7 @@ class ResourceSoftDeleteModule extends ResourceFormModule
 
         $form->input('delete_confirm', function (Input $input, Form $form)
         {
-            if ($form->confirm != 'force')
+            if ($form->confirm !== 'force')
             {
                 $form->next();
             }
@@ -186,7 +186,7 @@ class ResourceSoftDeleteModule extends ResourceFormModule
 
     protected function formFinished(Form $form, array $attributes)
     {
-        if ($form->confirm == 'force')
+        if ($form->confirm === 'force')
         {
             if (isset($this->deleting))
             {
@@ -197,7 +197,7 @@ class ResourceSoftDeleteModule extends ResourceFormModule
                 $this->theModel->forceDelete();
             }
         }
-        elseif ($form->confirm == 'restore')
+        elseif ($form->confirm === 'restore')
         {
             if (isset($this->restoring))
             {
