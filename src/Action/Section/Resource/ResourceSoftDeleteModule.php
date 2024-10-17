@@ -158,6 +158,7 @@ class ResourceSoftDeleteModule extends ResourceFormModule
             if (!$this->theModel->trashed())
             {
                 $input
+                    ->onlyOptions()
                     ->add($this->getConfirm(), true)
                     ->add($this->getDeleteKey(), 'force')
                     ->prompt($this->getMessage());
@@ -165,8 +166,9 @@ class ResourceSoftDeleteModule extends ResourceFormModule
             else
             {
                 $input
-                    ->add($this->getDeleteKey(), 'force')
+                    ->onlyOptions()
                     ->add($this->getRestoreKey(), 'restore')
+                    ->add($this->getDeleteKey(), 'force')
                     ->prompt($this->getViewMessage());
             }
         });
@@ -179,6 +181,7 @@ class ResourceSoftDeleteModule extends ResourceFormModule
             }
 
             $input
+                ->onlyOptions()
                 ->add($this->getDeleteConfirm(), true)
                 ->prompt($this->getDeleteMessage());
         });
