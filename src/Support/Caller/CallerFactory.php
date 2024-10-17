@@ -178,7 +178,7 @@ class CallerFactory
                 }
             }
         }
-        elseif($type instanceof \ReflectionIntersectionType)
+        elseif($type instanceof \ReflectionUnionType || $type instanceof \ReflectionIntersectionType)
         {
             $types = [];
             foreach($type->getTypes() as $t)
