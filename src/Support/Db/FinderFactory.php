@@ -3,166 +3,232 @@
 namespace Mmb\Support\Db;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Mmb\Exceptions\AbortException;
 
 class FinderFactory
 {
 
-    protected array $caches = [];
+    protected array $caches   = [];
     protected array $currents = [];
 
     /**
-     * Find from model by id
+     * Find from model
      *
-     * @param string $model
-     * @param        $id
-     * @param        $default
+     * @param string               $model
+     * @param mixed                $id
+     * @param mixed                $default
+     * @param string|null          $by
+     * @param bool                 $withTrashed
+     * @param int|string|true|null $orFail
+     * @param mixed|null           $failMessage
+     * @param bool                 $useCache
      * @return Model|mixed
      */
-    public function find(string $model, $id, $default = null)
+    public function find(
+        string               $model,
+        mixed                $id,
+        mixed                $default = null,
+        ?string              $by = null,
+        bool                 $withTrashed = false,
+        null|int|string|true $orFail = null,
+        mixed                $failMessage = null,
+        bool                 $useCache = true,
+    )
     {
-        if(isset($this->caches[$model][$id]))
+        if ($by === '')
         {
-            return $this->caches[$model][$id];
+            $by = null;
         }
 
-        $object = $model::find($id);
-
-        if($object === null)
+        if ($useCache)
         {
-            return value($default);
+            if (isset($by))
+            {
+                foreach ($this->caches[$model] ?? [] as $record)
+                {
+                    if ($record->getAttribute($by) == $id)
+                    {
+                        return $record;
+                    }
+                }
+            }
+            else
+            {
+                if (isset($this->caches[$model][$id]))
+                {
+                    return $this->caches[$model][$id];
+                }
+            }
         }
 
-        return @$this->caches[$model][$id] = $object;
+        /** @var Builder $query */
+        $query = $model::query();
+
+        $query = isset($by) ? $query->where($by, $id) : $query->whereKey($id);
+
+        if ($withTrashed)
+        {
+            $query = $this->applyWithTrashed($model, $query);
+        }
+
+        $record = $query->first();
+
+        if ($record === null)
+        {
+            return $this->runDefault($default, $orFail, $failMessage);
+        }
+
+        if (!$useCache)
+        {
+            return $record;
+        }
+
+        return @$this->caches[$model][$record->getKey()] = $record;
     }
 
     /**
      * Find by key and caching
      *
-     * @param string $model
-     * @param string $key
-     * @param        $value
-     * @param        $default
+     * @param string               $model
+     * @param string|null          $key
+     * @param mixed                $value
+     * @param mixed                $default
+     * @param bool                 $withTrashed
+     * @param int|string|true|null $orFail
+     * @param mixed|null           $failMessage
+     * @param bool                 $useCache
      * @return Model|mixed
      */
-    public function findBy(string $model, string $key, $value, $default = null)
+    public function findBy(
+        string               $model,
+        ?string              $key,
+        mixed                $value,
+        mixed                $default = null,
+        bool                 $withTrashed = false,
+        null|int|string|true $orFail = null,
+        mixed                $failMessage = null,
+        bool                 $useCache = true,
+    )
     {
-        if($key === '')
-        {
-            return $this->find($model, $value, $default);
-        }
-
-        if(isset($this->caches[$model]))
-        {
-            /** @var Model $object */
-            foreach($this->caches[$model] as $object)
-            {
-                if($object->getAttribute($key) == $value)
-                {
-                    return $object;
-                }
-            }
-        }
-
-        $object = $model::where($key, $value)->first();
-
-        if($object === null)
-        {
-            return value($default);
-        }
-
-        return @$this->caches[$model][$object->getKey()] = $object;
+        return $this->find($model, $value, $default, $key, $withTrashed, $orFail, $failMessage, $useCache);
     }
 
     /**
      * Find model or fail
      *
-     * @param string $model
-     * @param        $id
-     * @param int    $code
+     * @param string      $model
+     * @param mixed       $id
+     * @param string|null $by
+     * @param bool        $withTrashed
+     * @param int|string  $code
+     * @param mixed|null  $message
+     * @param bool        $useCache
      * @return Model|mixed
      */
-    public function findOrFail(string $model, $id, int $code = 404)
+    public function findOrFail(
+        string     $model,
+        mixed      $id,
+        ?string    $by = null,
+        bool       $withTrashed = false,
+        int|string $code = 404,
+        mixed      $message = null,
+        bool       $useCache = true,
+    )
     {
-        return $this->find($model, $id, fn() => abort($code));
+        return $this->find($model, $id, null, $by, $withTrashed, $code, $message, $useCache);
     }
 
     /**
-     * Find model by key or fail
+     * Find model or fail
      *
-     * @param string $model
-     * @param string $key
-     * @param        $id
-     * @param int    $code
+     * @param string     $model
+     * @param string     $key
+     * @param mixed      $value
+     * @param bool       $withTrashed
+     * @param int|string $code
+     * @param mixed|null $message
+     * @param bool       $useCache
      * @return Model|mixed
      */
-    public function findByOrFail(string $model, string $key, $id, int $code = 404)
+    public function findByOrFail(
+        string     $model,
+        string     $key,
+        mixed      $value,
+        bool       $withTrashed = false,
+        int|string $code = 404,
+        mixed      $message = null,
+        bool       $useCache = true,
+    )
     {
-        return $this->findBy($model, $key, $id, fn() => abort($code));
+        return $this->findOrFail($model, $value, null, $key, $withTrashed, $code, $message, $useCache);
     }
 
     /**
      * Store model to caches
      *
-     * @param Model|array $model
+     * @param Model|array $records
      * @return mixed
      */
-    public function store(Model|array $model)
+    public function store(Model|array $records)
     {
-        if(is_array($model))
+        if (is_array($records))
         {
             $ids = [];
-            foreach($model as $model2)
+            foreach ($records as $record)
             {
-                $ids[] = $this->store($model2);
+                $ids[] = $this->store($record);
             }
 
             return $ids;
         }
 
-        @$this->caches[$model::class][$key = $model->getKey()] = $model;
+        @$this->caches[$records::class][$key = $records->getKey()] = $records;
         return $key;
     }
 
     /**
      * Store a dynamic model to caches
      *
-     * @param Model|array $model
+     * @param Model|array $records
+     * @param string|null $by
      * @return mixed
      */
-    public function storeDynamic(Model|array $model)
+    public function storeDynamic(Model|array $records, ?string $by = null)
     {
-        if(is_array($model))
+        if (is_array($records))
         {
             $ids = [];
-            foreach($model as $model2)
+            foreach ($records as $record)
             {
-                $ids[] = $this->storeDynamic($model2);
+                $ids[] = $this->storeDynamic($record, $by);
             }
 
             return $ids;
         }
 
-        $this->store($model);
-        return class_basename($model) . ':' . $model->getKey();
+        $this->store($records);
+        return class_basename($records) . ':' . (isset($by) ? $records->getAttribute($by) : $records->getKey());
     }
 
     /**
      * Forget model or model class from caches
      *
-     * @param string|Model $model
+     * @param string|Model $record
      * @return void
      */
-    public function forget(string|Model $model)
+    public function forget(string|Model $record)
     {
-        if(is_string($model))
+        if (is_string($record))
         {
-            unset($this->caches[$model]);
+            unset($this->caches[$record]);
         }
         else
         {
-            unset($this->caches[$model::class][$model->getKey()]);
+            unset($this->caches[$record::class][$record->getKey()]);
         }
     }
 
@@ -179,20 +245,15 @@ class FinderFactory
     /**
      * Store current of model to cache
      *
-     * @param Model $model
+     * @param Model $record
      * @return Model
      */
-    public function storeCurrent(Model $model)
+    public function storeCurrent(Model $record)
     {
-        $this->store($model);
-        $this->currents[$model::class] = $model;
+        $this->store($record);
+        $this->currents[$record::class] = $record;
 
-        // if($model instanceof Authenticatable)
-        // {
-            // auth()->setUser($model); // TODO: Remove
-        // }
-
-        return $model;
+        return $record;
     }
 
     /**
@@ -204,55 +265,80 @@ class FinderFactory
      */
     public function current(string $model)
     {
-        // if (!isset($this->currents[$model]) && is_a($model, Authenticatable::class))
-        // {
-        //     Auth::guard('bot')->user(); // TODO : Remove
-        // }
-
         return @$this->currents[$model];
     }
 
     /**
      * Find from multiple models by id
      *
-     * @param array $classes
-     * @param            $id
-     * @param null       $default
+     * @param array                $classes
+     * @param mixed                $id
+     * @param null                 $default
+     * @param string|null          $by
+     * @param bool                 $withTrashed
+     * @param int|string|true|null $orFail
+     * @param mixed|null           $failMessage
+     * @param bool                 $useCache
      * @return Model|mixed
      */
-    public function findDynamic(array $classes, $id, $default = null)
+    public function findDynamic(
+        array                $classes,
+        mixed                $id,
+        mixed                $default = null,
+        ?string              $by = null,
+        bool                 $withTrashed = false,
+        null|int|string|true $orFail = null,
+        mixed                $failMessage = null,
+        bool                 $useCache = true,
+    )
     {
-        @[$classBase, $id] = explode(':', $id, 2);
-
-        foreach($classes as $class)
+        if (is_string($id))
         {
-            if(class_basename($class) == $classBase)
+            @[$classBase, $id] = explode(':', $id, 2);
+
+            foreach ($classes as $class)
             {
-                return $this->find($class, $id, $default);
+                if (class_basename($class) == $classBase)
+                {
+                    return $this->find($class, $id, $default, $by, $withTrashed, $orFail, $failMessage, $useCache);
+                }
             }
         }
 
-        return value($default);
+        return $this->runDefault($default, $orFail, $failMessage);
     }
 
     /**
      * Find by key and caching
      *
-     * @param array  $classes
-     * @param string $key
-     * @param        $value
-     * @param null   $default
+     * @param array                $classes
+     * @param string               $key
+     * @param mixed                $value
+     * @param null                 $default
+     * @param bool                 $withTrashed
+     * @param int|string|true|null $orFail
+     * @param mixed|null           $failMessage
+     * @param bool                 $useCache
      * @return Model|mixed
      */
-    public function findDynamicBy(array $classes, string $key, $value, $default = null)
+    public function findDynamicBy(
+        array                $classes,
+        string               $key,
+        mixed                $value,
+        mixed                $default = null,
+        bool                 $withTrashed = false,
+        null|int|string|true $orFail = null,
+        mixed                $failMessage = null,
+        bool                 $useCache = true,
+    )
     {
         @[$classBase, $id] = explode(':', $value, 2);
 
-        foreach($classes as $class)
+        foreach ($classes as $class)
         {
-            if(class_basename($class) == $classBase)
+            if (class_basename($class) == $classBase)
             {
-                return $this->findBy($class, $key, $id, $default);
+                return $this->findBy($class, $key, $id, $default, $withTrashed, $orFail, $failMessage, $useCache);
             }
         }
 
@@ -262,28 +348,92 @@ class FinderFactory
     /**
      * Find dynamic model or fail
      *
-     * @param array  $classes
-     * @param        $id
-     * @param int    $code
+     * @param array           $classes
+     * @param mixed           $id
+     * @param string|null     $by
+     * @param bool            $withTrashed
+     * @param int|string|null $code
+     * @param mixed|null      $message
+     * @param bool            $useCache
      * @return Model|mixed
      */
-    public function findDynamicOrFail(array $classes, $id, int $code = 404)
+    public function findDynamicOrFail(
+        array      $classes,
+        mixed      $id,
+        ?string    $by = null,
+        bool       $withTrashed = false,
+        int|string $code = null,
+        mixed      $message = null,
+        bool       $useCache = true,
+    )
     {
-        return $this->findDynamic($classes, $id, fn() => abort($code));
+        return $this->findDynamic($classes, $id, null, $by, $withTrashed, $code, $message, $useCache);
     }
 
     /**
      * Find dynamic model by key or fail
      *
-     * @param array  $classes
-     * @param string $key
-     * @param        $id
-     * @param int    $code
+     * @param array           $classes
+     * @param string          $key
+     * @param mixed           $id
+     * @param bool            $withTrashed
+     * @param int|string|null $code
+     * @param mixed|null      $message
+     * @param bool            $useCache
      * @return Model|mixed
      */
-    public function findDynamicByOrFail(array $classes, string $key, $id, int $code = 404)
+    public function findDynamicByOrFail(
+        array      $classes,
+        string     $key,
+        mixed      $id,
+        bool       $withTrashed = false,
+        int|string $code = null,
+        mixed      $message = null,
+        bool       $useCache = true,
+    )
     {
-        return $this->findDynamicBy($classes, $key, $id, fn() => abort($code));
+        return $this->findDynamicBy($classes, $key, $id, null, $withTrashed, $code, $message, $useCache);
+    }
+
+    /**
+     * Checks the model that has soft deletes
+     *
+     * @param string|Model $model
+     * @return bool
+     */
+    protected function hasSoftDeletes(string|Model $model)
+    {
+        return $model::hasGlobalScope(SoftDeletingScope::class);
+    }
+
+    /**
+     * Apply [withTrashed] scope if available
+     *
+     * @param string|Model $model
+     * @param              $query
+     * @return mixed
+     */
+    protected function applyWithTrashed(string|Model $model, $query)
+    {
+        return $this->hasSoftDeletes($model) ? $query->withTrashed() : $query;
+    }
+
+    /**
+     * Run the default action
+     *
+     * @param $default
+     * @param $error
+     * @param $message
+     * @return mixed
+     */
+    protected function runDefault($default, $error, $message)
+    {
+        if ($error)
+        {
+            throw new AbortException($error === true ? 404 : $error, $message);
+        }
+
+        return value($default);
     }
 
 }
