@@ -6,31 +6,17 @@ use Attribute;
 use Mmb\Support\Db\ModelFinder;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
-class FindById extends FindBy
+class FindById extends Find
 {
 
     public function __construct(
-        ?int $error = 404,
+        ?int    $error = null,
+        mixed   $failMessage = null,
+        bool    $nullOnFail = false,
+        bool    $withTrashed = false,
     )
     {
-        parent::__construct('', $error);
-    }
-
-    public function cast($value, string $class)
-    {
-        if($value instanceof $class || $value === null)
-        {
-            return $value;
-        }
-
-        if($this->error)
-        {
-            return ModelFinder::find($class, $value, fn() => abort($this->error));
-        }
-        else
-        {
-            return ModelFinder::find($class, $value);
-        }
+        parent::__construct(null, $error, $failMessage, $nullOnFail, $withTrashed);
     }
 
 }

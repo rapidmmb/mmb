@@ -9,10 +9,13 @@ class FindDynamicById extends FindDynamicBy
 {
 
     public function __construct(
-        ?int $error = 404,
+        ?int  $error = null,
+        mixed $failMessage = null,
+        bool  $nullOnFail = false,
+        bool  $withTrashed = false,
     )
     {
-        parent::__construct('', $error);
+        parent::__construct(null, $error, $failMessage, $nullOnFail, $withTrashed);
     }
 
 }

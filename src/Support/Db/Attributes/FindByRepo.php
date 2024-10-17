@@ -5,7 +5,7 @@ namespace Mmb\Support\Db\Attributes;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
-class FindByRepo extends FindBy
+class FindByRepo extends Find
 {
 
     public function __construct(
@@ -13,7 +13,7 @@ class FindByRepo extends FindBy
         public ?int $error = 404,
     )
     {
-        parent::__construct('', $this->error);
+        parent::__construct(null, $this->error);
     }
 
     protected function getRepo()
@@ -24,6 +24,8 @@ class FindByRepo extends FindBy
     protected function getUsableValue($value)
     {
         $repo = $this->getRepo();
+
+        // todo: should change
 
         if (method_exists($repo, 'findOr'))
         {
