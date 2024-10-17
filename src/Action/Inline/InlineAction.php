@@ -494,6 +494,8 @@ abstract class InlineAction implements ConvertableToStep
      * @param string $class
      * @param        $default
      * @return Model|mixed
+     *
+     * @deprecated 0.0
      */
     public function getModel(string $name, string $class, $default = null)
     {

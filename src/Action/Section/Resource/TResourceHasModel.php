@@ -27,7 +27,7 @@ trait TResourceHasModel
             throw new \TypeError(sprintf("Expected model of type [%s], given [%s]", $modelClass, smartTypeOf($model)));
         }
 
-        return ModelFinder::findOrFail($modelClass, $model);
+        return ModelFinder::find($modelClass, $model, withTrashed: true, orFail: true);
     }
 
     public function getIdFrom($record)
