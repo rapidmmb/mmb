@@ -2,13 +2,14 @@
 
 namespace Mmb\Core\Updates\Messages;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Traits\Macroable;
 use Mmb\Core\Data;
 use Mmb\Core\Traits\HasBot;
 use Mmb\Core\Updates\Files\PhotoCollection;
 use Mmb\Support\Serialize\ShortableProperties;
 
-class MessageBuilder implements ShortableProperties
+class MessageBuilder implements ShortableProperties, Arrayable
 {
     use HasBot, Macroable;
 
@@ -51,6 +52,13 @@ class MessageBuilder implements ShortableProperties
         {
             return $this->bot()->sendMessage($args, ...$namedArgs, text: $this->text);
         }
+    }
+
+    public function toArray()
+    {
+        return [
+            'text' => $this->text, // todo...
+        ];
     }
 
 }
