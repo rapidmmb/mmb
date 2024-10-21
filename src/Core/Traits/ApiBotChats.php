@@ -117,7 +117,7 @@ trait ApiBotChats
 
     public function getChatMember(array $args = [], ...$namedArgs)
     {
-        return $this->makeDataCollection(
+        return $this->makeData(
             ChatMember::class,
             $this->request('getChatMember', $args + $namedArgs)
         );
