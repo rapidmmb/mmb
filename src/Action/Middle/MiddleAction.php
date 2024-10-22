@@ -20,7 +20,17 @@ class MiddleAction extends Section implements UpdateHandling
         parent::onInitializeInlineRegister($register);
 
         $register->before(
-            fn() => $register->inlineAction->with('redirectTo', 'redirectWith')
+            function () use ($register)
+            {
+                $register->inlineAction->with('redirectTo');
+
+                if ($register->inlineAction->isCreating() && !$this->redirectWith)
+                {
+                    return;
+                }
+
+                $register->inlineAction->with('redirectWith');
+            }
         );
     }
 
@@ -54,7 +64,7 @@ class MiddleAction extends Section implements UpdateHandling
      *
      * @var array
      */
-    public $redirectWith;
+    public $redirectWith = [];
 
     /**
      * Set redirect path
