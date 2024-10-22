@@ -192,6 +192,52 @@ class Input implements Menuable
         return $this;
     }
 
+    /**
+     * Skip the input if condition is true, otherwise run the input.
+     * If value not passed, input will not set.
+     *
+     * @param      $condition
+     * @param mixed $value
+     * @return $this
+     */
+    public function jump($condition, mixed $value = null)
+    {
+        if ($this->isCreating() && value($condition))
+        {
+            if (count(func_get_args()) > 1)
+            {
+                $this->value = value($value);
+            }
+
+            $this->form->next();
+        }
+
+        return $this;
+    }
+
+    /**
+     * Skip the input if the input is filled.
+     * If value not passed, input will not set.
+     *
+     * @param mixed $value
+     * @return $this
+     */
+    public function jumpFilled(mixed $value = null)
+    {
+        if ($this->isCreating() && $this->value !== null)
+        {
+            if (count(func_get_args()) > 0)
+            {
+                $this->value = value($value);
+            }
+
+            $this->form->next();
+        }
+
+        return $this;
+    }
+
+
 
     /**
      * Pass update
