@@ -1,5 +1,5 @@
 {
-    "name": "rapid/mmb-core",
+    "name": "mmb/mmb",
     "description": "Make your bot with Laravel framework",
     "type": "library",
     "require": {
