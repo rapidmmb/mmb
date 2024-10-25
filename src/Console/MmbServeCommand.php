@@ -41,9 +41,6 @@ class MmbServeCommand extends Command
             received: function ()
             {
                 \Laravel\Prompts\info(sprintf("New update received at %s", date('H:i:s')));
-
-                ModelFinder::clear();
-                Step::setModel(null);
             },
             delay: +$this->option('delay') ?? 100,
         );

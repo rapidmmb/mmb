@@ -5,8 +5,10 @@ namespace Mmb\Core\Traits;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Mmb\Action\Memory\Step;
 use Mmb\Core\Updates\Update;
 use Mmb\Core\Updates\Webhooks\WebhookInfo;
+use Mmb\Support\Db\ModelFinder;
 
 trait ApiBotUpdates
 {
@@ -40,20 +42,22 @@ trait ApiBotUpdates
     /**
      * Get updates from telegram api
      *
-     * @param       $offset
-     * @param       $limit
-     * @param       $allowedUpdates
+     * @param mixed  $offset
+     * @param mixed  $limit
+     * @param mixed  $allowedUpdates
+     * @param int   $timeout
      * @param array $args
      * @param       ...$namedArgs
      * @return Collection
      */
-    public function getUpdates($offset = null, $limit = null, $allowedUpdates = null, array $args = [], ...$namedArgs)
+    public function getUpdates($offset = null, $limit = null, $allowedUpdates = null, $timeout = 0, array $args = [], ...$namedArgs)
     {
         $args = $this->mergeMultiple(
             [
                 'offset'         => $offset,
                 'limit'          => $limit,
                 'allowedUpdates' => $allowedUpdates,
+                'timeout'        => $timeout,
             ],
             $args + $namedArgs
         );
@@ -74,7 +78,7 @@ trait ApiBotUpdates
      * @param              $delay
      * @return never
      */
-    public function loopUpdates(Closure $callback = null, Closure $received = null, $delay = 100)
+    public function loopUpdates(Closure $callback = null, Closure $received = null, $delay = 0)
     {
         // Delete webhook
         if(($web = $this->getWebhook()) && $web->url)
@@ -83,16 +87,23 @@ trait ApiBotUpdates
         }
 
         // Default callbacks
-        $callback ??= fn(Update $update) => $update->handle();
+        $callback ??= function (Update $update)
+        {
+            // Remove the cache before handling update
+            ModelFinder::clear();
+            Step::setModel(null);
+
+            $update->handle();
+        };
 
         $offset = -1;
         $limit = 10;
         $allowedUpdates = null;
 
-        while(true)
+        while (true)
         {
             // Try to get updates
-            $updates = retry(5, fn() => $this->getUpdates($offset, $limit, $allowedUpdates), $delay);
+            $updates = retry(5, fn() => $this->getUpdates($offset, $limit, $allowedUpdates, 60), $delay);
 
             // Loop and pass to callback
             if($updates->isNotEmpty())
@@ -111,7 +122,10 @@ trait ApiBotUpdates
                 $offset = $updates->last()->id + 1;
             }
 
-            usleep($delay * 1000);
+            if ($delay)
+            {
+                usleep($delay * 1000);
+            }
         }
     }
 
