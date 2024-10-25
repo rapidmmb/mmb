@@ -42,7 +42,7 @@ class MmbServeCommand extends Command
             {
                 \Laravel\Prompts\info(sprintf("New update received at %s", date('H:i:s')));
             },
-            delay: +$this->option('delay') ?? 100,
+            delay: +$this->option('delay') ?? 0,
         );
     }
 }
