@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Mmb\Action\Form\Form;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Form\Input;
-use Spatie\Searchable\Search;
 
 class ResourceSearchModule extends ResourceModule
 {
@@ -182,7 +181,7 @@ class ResourceSearchModule extends ResourceModule
             })
         ;
 
-        $form->form->disableCancelKey();
+        $form->disableCancelKey();
     }
 
     public function bootLinked(ResourceModule $module)
