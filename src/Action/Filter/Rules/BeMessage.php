@@ -16,12 +16,15 @@ class BeMessage extends FilterRule
 
     public function pass(Update $update, &$value)
     {
-        if(!$update->message)
+        if (!$update->message)
         {
             $this->fail(value($this->messageError ?? __('mmb::filter.message')));
         }
 
-        $value = $update->message;
+        if ($value == $update)
+        {
+            $value = $update->message;
+        }
     }
 
 }

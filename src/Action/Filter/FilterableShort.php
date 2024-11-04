@@ -20,6 +20,34 @@ trait FilterableShort
     }
 
     /**
+     * Add message type filter
+     *
+     * @param string|array $types
+     * @param              $typeError
+     * @param              $messageError
+     * @return $this
+     */
+    public function messageType(string|array $types, $typeError = null, $messageError = null)
+    {
+        $this->getFilter()->messageType(...func_get_args());
+        return $this;
+    }
+
+    /**
+     * Add message global type filter
+     *
+     * @param string|array $types
+     * @param              $typeError
+     * @param              $messageError
+     * @return $this
+     */
+    public function messageGlobalType(string|array $types, $typeError = null, $messageError = null)
+    {
+        $this->getFilter()->messageGlobalType(...func_get_args());
+        return $this;
+    }
+
+    /**
      * Add message media filter
      *
      * @param $mediaError

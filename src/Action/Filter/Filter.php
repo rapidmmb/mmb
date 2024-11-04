@@ -261,6 +261,32 @@ class Filter extends FilterRule
     }
 
     /**
+     * Add message type filter
+     *
+     * @param string|array $types
+     * @param              $typeError
+     * @param              $messageError
+     * @return $this
+     */
+    public function messageType(string|array $types, $typeError = null, $messageError = null)
+    {
+        return $this->add(new Rules\FilterMessageType($types, $typeError, $messageError));
+    }
+
+    /**
+     * Add message global type filter
+     *
+     * @param string|array $types
+     * @param              $typeError
+     * @param              $messageError
+     * @return $this
+     */
+    public function messageGlobalType(string|array $types, $typeError = null, $messageError = null)
+    {
+        return $this->add(new Rules\FilterMessageGlobalType($types, $typeError, $messageError));
+    }
+
+    /**
      * Add media filter
      *
      * @param $mediaError
