@@ -41,9 +41,9 @@ class ConfirmInput extends Input
         parent::onInitialized();
 
         $this
-            ->prompt($this->prompt ?? __('mmb::form.scopes.delete.prompt'))
+            ->prompt($this->promptMessage ?? __('mmb::form.scopes.delete.prompt'))
             ->onlyOptions()
-            ->add($this->confirm ?? __('mmb::form.scopes.delete.confirm'), true);
+            ->add($this->confirmKey ?? __('mmb::form.scopes.delete.confirm'), true);
     }
 
 }
