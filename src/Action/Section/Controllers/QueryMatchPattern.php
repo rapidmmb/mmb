@@ -273,7 +273,7 @@ class QueryMatchPattern
             }
 
             $this->regex = preg_replace_callback(
-                '/\\\\\{(.+?)(\\\\:(.*?))?\\\\\}/',
+                '/\\\\\{\s*(.+?)\s*(\\\\:\s*(.*?)\s*)?\\\\}/',
                 function($match)
                 {
                     if(isset($this->patterns[$match[1]]))
