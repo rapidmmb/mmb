@@ -268,7 +268,7 @@ class Filter extends FilterRule
      * @param              $messageError
      * @return $this
      */
-    public function messageType(string|array $types, $typeError = null, $messageError = null)
+    public function messageType(string|array $types, $typeError, $messageError = null)
     {
         return $this->add(new Rules\FilterMessageType($types, $typeError, $messageError));
     }
@@ -281,7 +281,7 @@ class Filter extends FilterRule
      * @param              $messageError
      * @return $this
      */
-    public function messageGlobalType(string|array $types, $typeError = null, $messageError = null)
+    public function messageGlobalType(string|array $types, $typeError, $messageError = null)
     {
         return $this->add(new Rules\FilterMessageGlobalType($types, $typeError, $messageError));
     }

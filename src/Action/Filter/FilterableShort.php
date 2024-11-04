@@ -27,7 +27,7 @@ trait FilterableShort
      * @param              $messageError
      * @return $this
      */
-    public function messageType(string|array $types, $typeError = null, $messageError = null)
+    public function messageType(string|array $types, $typeError, $messageError = null)
     {
         $this->getFilter()->messageType(...func_get_args());
         return $this;
@@ -41,7 +41,7 @@ trait FilterableShort
      * @param              $messageError
      * @return $this
      */
-    public function messageGlobalType(string|array $types, $typeError = null, $messageError = null)
+    public function messageGlobalType(string|array $types, $typeError, $messageError = null)
     {
         $this->getFilter()->messageGlobalType(...func_get_args());
         return $this;
