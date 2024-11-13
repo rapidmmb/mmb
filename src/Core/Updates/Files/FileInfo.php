@@ -32,14 +32,18 @@ class FileInfo extends Data
         ];
     }
 
-    public function getDownloadUrl()
-    {
-        return $this->bot()->getFileDownloadUrl($this->filePath);
-    }
+    // public function getDownloadUrl()
+    // {
+    //     // return $this->bot()->getFileDownloadUrl($this->filePath); todo : remove
+    // }
 
     public function download(string $path)
     {
-        return copy($this->getDownloadUrl(), $path);
+        // return copy($this->getDownloadUrl(), $path);
+        return $this->bot()->request('download', [
+            'file' => $this->filePath,
+            'path' => $path,
+        ]);
     }
 
     public function downloadToStorage(string $dir, string $name = null)

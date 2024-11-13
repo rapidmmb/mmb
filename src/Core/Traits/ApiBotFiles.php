@@ -15,9 +15,9 @@ trait ApiBotFiles
         );
     }
 
-    public function getFileDownloadUrl(string $filePath)
-    {
-        return "https://api.telegram.org/file/bot" . $this->info->token . "/" . $filePath;
-    }
+    // public function getFileDownloadUrl(string $filePath)
+    // {
+    //     return "https://api.telegram.org/file/bot" . $this->info->token . "/" . $filePath; todo : remove
+    // }
 
 }

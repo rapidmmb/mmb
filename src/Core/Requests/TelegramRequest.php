@@ -12,12 +12,19 @@ class TelegramRequest extends RequestApi
 
     protected function execute()
     {
+        $finalArgs = $this->getFinalArgs();
+
+        if ($this->lowerMethod() == 'download')
+        {
+            return $this->executeDownload();
+        }
+
         $client = $this->getClient();
         $response = $client->post(
             "https://api.telegram.org/bot{$this->token}/{$this->method}",
             $this->getOptions(
                 [
-                    'query'       => $this->getFinalArgs(),
+                    'query'       => $finalArgs,
                     'http_errors' => false,
                 ]
             )
@@ -117,6 +124,24 @@ class TelegramRequest extends RequestApi
         }
 
         return $defaults;
+    }
+
+    public function executeDownload()
+    {
+        $finalArgs = $this->getFinalArgs();
+
+        $client = $this->getClient();
+        $response = $client->get(
+            "https://api.telegram.org/file/bot{$this->token}/{$finalArgs['file']}",
+            $this->getOptions(
+                [
+                    'query'       => $finalArgs,
+                    'http_errors' => false,
+                ]
+            )
+        );
+
+        return file_put_contents($finalArgs['path'], $response->getBody()->getContents()) !== false;
     }
 
 }
