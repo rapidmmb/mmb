@@ -23,8 +23,8 @@ class TelegramRequest extends RequestApi
         $response = $client->post(
             "https://api.telegram.org/bot{$this->token}/{$this->method}",
             $this->getOptions(
+                $this->wrapQuery($finalArgs) +
                 [
-                    'query'       => $finalArgs,
                     'http_errors' => false,
                 ]
             )

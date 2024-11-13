@@ -2,6 +2,7 @@
 
 namespace Mmb\Core\Requests;
 
+use Illuminate\Support\Arr;
 use Mmb\Core\Bot;
 use Mmb\Core\Requests\Parser\ArgsParser;
 
@@ -114,6 +115,34 @@ abstract class RequestApi
     public function isEditMethod()
     {
         return $this->_isEditing ??= str_starts_with($this->lowerMethod(), 'edit');
+    }
+    
+    /**
+     * Wrap query
+     *
+     * @param array $query
+     * @return array
+     */
+    protected function wrapQuery(array $query)
+    {
+        $isMultipart = (bool) Arr::first($query, fn ($item) => is_resource($item));
+
+        if (!$isMultipart)
+        {
+            return ['query' => $query];
+        }
+
+        $multipart = [];
+
+        foreach ($query as $key => $value)
+        {
+            $multipart[] = [
+                'name'     => $key,
+                'contents' => $value,
+            ];
+        }
+
+        return ['multipart' => $multipart];
     }
 
 }
