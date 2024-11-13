@@ -2,14 +2,15 @@
 
 namespace Mmb\Action\Section;
 
+use Mmb\Action\Inline\InlineAction;
 use Mmb\Core\Updates\Update;
 
 class DialogStepHandler extends MenuStepHandler
 {
 
-    public function handle(Update $update)
+    protected function makeInlineAction(Update $update) : ?InlineAction
     {
-        Dialog::handleFrom($this, $update);
+        return Dialog::makeFromStep($this, $update);
     }
 
 }

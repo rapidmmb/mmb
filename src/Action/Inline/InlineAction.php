@@ -80,6 +80,33 @@ abstract class InlineAction implements ConvertableToStep
     }
 
 
+    protected array $lost = [];
+
+    /**
+     * Set a callback to run when step changed
+     *
+     * @param Closure $callback
+     * @return $this
+     */
+    public function lost(Closure $callback)
+    {
+        $this->lost[] = $callback;
+        return $this;
+    }
+
+    /**
+     * Fire the lost listeners
+     *
+     * @return void
+     */
+    public function fireLost()
+    {
+        foreach ($this->lost as $callback)
+        {
+            $callback();
+        }
+    }
+
     /**
      * Creating mode
      *
@@ -501,10 +528,11 @@ abstract class InlineAction implements ConvertableToStep
     {
         $isDefault = false;
         $id = $this->get(
-            $name, function() use (&$isDefault)
-        {
-            $isDefault = true;
-        }
+            $name,
+            function() use (&$isDefault)
+            {
+                $isDefault = true;
+            }
         );
 
         if($isDefault)
@@ -524,11 +552,11 @@ abstract class InlineAction implements ConvertableToStep
     public function __get(string $name)
     {
         return $this->get(
-            $name, static function() use ($name)
-        {
-            error_log("Undefined property [$name]");
-            return null;
-        }
+            $name,
+            static function() use ($name)
+            {
+                throw new \RuntimeException("Undefined property [$name]");
+            }
         );
     }
 
@@ -585,6 +613,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     protected function saveToStep(InlineStepHandler $step)
     {
+        $step->setInlineAction($this);
         $this->makeReady();
 
         [$step->initalizeClass, $step->initalizeMethod] = $this->getInitializer();
@@ -602,22 +631,19 @@ abstract class InlineAction implements ConvertableToStep
     }
 
     /**
-     * Handle from step handler
+     * Make new instance from step
      *
      * @param InlineStepHandler $step
      * @param Update            $update
-     * @return void
+     * @return $this
      */
-    public static function handleFrom(InlineStepHandler $step, Update $update)
+    public static function makeFromStep(InlineStepHandler $step, Update $update) : static
     {
         $inline = new static($update);
         $inline->isCreating = false;
         $inline->loadFromStep($step, $update);
 
-        if($inline->handle($update) === false)
-        {
-            $update->skipHandler();
-        }
+        return $inline;
     }
 
     /**

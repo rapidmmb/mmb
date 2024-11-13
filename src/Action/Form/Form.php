@@ -286,6 +286,36 @@ class Form extends Action
         );
     }
 
+    /**
+     * Fire beginning update before all updates
+     *
+     * @return void
+     */
+    public function beginUpdate()
+    {
+        $this->fire('beginUpdate', $this->update);
+    }
+
+    /**
+     * Fire ending update after all updates
+     *
+     * @return void
+     */
+    public function endUpdate()
+    {
+        $this->fire('endUpdate', $this->update);
+    }
+
+    /**
+     * Fire lost events when step changed
+     *
+     * @return void
+     */
+    public function lost()
+    {
+        $this->fire('lost');
+    }
+
     public function handleBy($callback)
     {
         try
@@ -422,6 +452,7 @@ class Form extends Action
     public function storeStepHandler(bool $keep = true)
     {
         $stepHandler = FormStepHandler::make();
+        $stepHandler->setForm($this);
         $stepHandler->attributes = $this->getOutAttributes() ?: null;
         $stepHandler->currentInput = $this->currentInput?->name;
         $stepHandler->keyMap =
@@ -865,6 +896,18 @@ class Form extends Action
         $this->put('#backA', $baseClass);
 
         return $this;
+    }
+
+    public function onBeginUpdate(Update $update)
+    {
+    }
+
+    public function onEndUpdate(Update $update)
+    {
+    }
+
+    public function onLost()
+    {
     }
 
 }

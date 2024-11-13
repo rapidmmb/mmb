@@ -17,7 +17,7 @@ class StepHandlerPipe implements UpdateHandling
 
     public function handleUpdate(Update $update)
     {
-        if($step = $this->stepping->getStep())
+        if ($step = $this->stepping->getStep())
         {
             $step->handle($update);
             return; // TODO

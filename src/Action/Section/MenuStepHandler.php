@@ -3,6 +3,7 @@
 namespace Mmb\Action\Section;
 
 use Mmb\Action\Action;
+use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
@@ -19,9 +20,9 @@ class MenuStepHandler extends InlineStepHandler
     #[AsArray]
     public $actionMap;
 
-    public function handle(Update $update)
+    protected function makeInlineAction(Update $update) : ?InlineAction
     {
-        Menu::handleFrom($this, $update);
+        return Menu::makeFromStep($this, $update);
     }
 
 }

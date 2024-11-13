@@ -54,6 +54,7 @@ class InlineForm extends InlineAction
         $formStep->attributes = $step->attributes;
         $formStep->currentInput = $step->currentInput;
         $formStep->keyMap = $step->keyMap;
+        $formStep->setForm($this->form);
 
         $this->form->loadStepHandler($formStep);
     }

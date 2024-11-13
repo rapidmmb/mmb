@@ -3,6 +3,7 @@
 namespace Mmb\Action\Memory;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Mmb\Core\Updates\Update;
 use Mmb\Support\Step\ConvertableToStepping;
 use Mmb\Support\Step\Stepping;
 
@@ -45,17 +46,21 @@ class StepFactory
      */
     public function set(StepHandler|ConvertableToStep|null $step)
     {
-        if($step instanceof ConvertableToStep)
+        if ($step instanceof ConvertableToStep)
         {
             $step = $step->toStep();
         }
 
-        if(!$this->model)
+        if (!$this->model)
         {
             throw new ModelNotFoundException("Related model not found");
         }
 
+        $destroyedStep = $this->get();
+
         $this->model->setStep($step);
+
+        $destroyedStep?->lost(app(Update::class));
     }
 
     /**
@@ -65,7 +70,7 @@ class StepFactory
      */
     public function get()
     {
-        if(!$this->model)
+        if (!$this->model)
         {
             throw new ModelNotFoundException("Related model not found");
         }

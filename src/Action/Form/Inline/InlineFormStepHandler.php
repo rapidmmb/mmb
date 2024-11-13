@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Form\Inline;
 
+use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
@@ -22,9 +23,9 @@ class InlineFormStepHandler extends InlineStepHandler
     #[Serialize]
     public $keyMap;
 
-    public function handle(Update $update)
+    protected function makeInlineAction(Update $update) : ?InlineAction
     {
-        InlineForm::handleFrom($this, $update);
+        return InlineForm::makeFromStep($this, $update);
     }
 
 }

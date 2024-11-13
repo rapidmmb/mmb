@@ -81,7 +81,7 @@ class StepHandler
      *
      * @return void
      */
-    public function keep()
+    public function keep(): void
     {
         Step::set($this);
     }
@@ -92,7 +92,7 @@ class StepHandler
      * @param Update $update
      * @return void
      */
-    public function handle(Update $update)
+    public function handle(Update $update) : void
     {
     }
 
@@ -115,6 +115,16 @@ class StepHandler
      * @return void
      */
     public function end(Update $update) : void
+    {
+    }
+
+    /**
+     * Handle the update when step changed
+     *
+     * @param Update $update
+     * @return void
+     */
+    public function lost(Update $update)
     {
     }
 

@@ -34,13 +34,16 @@ class NextStepHandler extends StepHandler
         return $this;
     }
 
-    public function handle(Update $update)
+    public function handle(Update $update) : void
     {
-        if(class_exists($this->action) && method_exists($this->action, 'make'))
+        if (class_exists($this->action) && method_exists($this->action, 'make'))
         {
             $action = $this->action::make($update);
             $action->invoke($this->method);
+            return;
         }
+
+        $update->skipHandler();
     }
 
 }
