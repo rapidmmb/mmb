@@ -116,7 +116,7 @@ abstract class RequestApi
     {
         return $this->_isEditing ??= str_starts_with($this->lowerMethod(), 'edit');
     }
-    
+
     /**
      * Wrap query
      *

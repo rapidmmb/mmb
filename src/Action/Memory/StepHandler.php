@@ -104,7 +104,7 @@ class StepHandler
      * @param Update $update
      * @return void
      */
-    public function begin(Update $update) : void
+    public function onBegin(Update $update) : void
     {
     }
 
@@ -114,7 +114,7 @@ class StepHandler
      * @param Update $update
      * @return void
      */
-    public function end(Update $update) : void
+    public function onEnd(Update $update) : void
     {
     }
 
@@ -124,8 +124,25 @@ class StepHandler
      * @param Update $update
      * @return void
      */
-    public function lost(Update $update)
+    public function onLost(Update $update)
     {
+    }
+
+    /**
+     * Fire a custom event
+     *
+     * @param string $event
+     * @param        ...$args
+     * @return mixed
+     */
+    public function fire(string $event, ...$args)
+    {
+        if (method_exists($this, $fn = 'on' . $event))
+        {
+            return $this->$fn(...$args);
+        }
+
+        return null;
     }
 
 }

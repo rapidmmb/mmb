@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Arr;
 use Mmb\Action\Memory\Step;
+use Mmb\Action\Memory\StepEvent;
 use Mmb\Action\Memory\StepHandlerPipe;
 use Mmb\Action\Middle\MiddleAction;
 use Mmb\Action\Middle\MiddleActionHandledUpdateHandling;
@@ -439,7 +440,7 @@ class HandlerFactory
             if ($this->stepRecord)
             {
                 Step::setModel($this->stepRecord);
-                $this->stepRecord->getStep()?->begin($this->update);
+                StepEvent::fire('begin', $this->update);
             }
 
             if (!$this->update->isHandled)
@@ -507,7 +508,7 @@ class HandlerFactory
                 }
             }
 
-            $this->stepRecord?->getStep()?->end($this->update);
+            StepEvent::fire('end', $this->update);
 
             if ($final)
             {

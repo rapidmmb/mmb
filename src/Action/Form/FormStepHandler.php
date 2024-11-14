@@ -86,17 +86,17 @@ class FormStepHandler extends StepHandler
         $update->skipHandler();
     }
 
-    public function begin(Update $update) : void
+    public function onBegin(Update $update) : void
     {
         $this->getForm($update)?->beginUpdate();
     }
 
-    public function end(Update $update) : void
+    public function onEnd(Update $update) : void
     {
         $this->getForm($update)?->endUpdate();
     }
 
-    public function lost(Update $update)
+    public function onLost(Update $update)
     {
         $this->getForm($update)?->lost();
     }

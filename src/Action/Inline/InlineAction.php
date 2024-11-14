@@ -80,17 +80,25 @@ abstract class InlineAction implements ConvertableToStep
     }
 
 
-    protected array $lost = [];
+    /**
+     * List of step events
+     *
+     * @var array
+     */
+    protected array $stepEvents = [];
 
     /**
-     * Set a callback to run when step changed
+     * Listen to a step event
      *
+     * The event should be marked with `#[UseEvents]`
+     *
+     * @param string  $event
      * @param Closure $callback
      * @return $this
      */
-    public function lost(Closure $callback)
+    public function onStepEvent(string $event, Closure $callback)
     {
-        $this->lost[] = $callback;
+        @$this->stepEvents[strtolower($event)][] = $callback;
         return $this;
     }
 
@@ -99,12 +107,51 @@ abstract class InlineAction implements ConvertableToStep
      *
      * @return void
      */
-    public function fireLost()
+    public function fireStepEvent(string $event, ...$args)
     {
-        foreach ($this->lost as $callback)
+        foreach ($this->stepEvents[strtolower($event)] ?? [] as $callback)
         {
-            $callback();
+            $callback(...$args);
         }
+    }
+
+    /**
+     * Set a callback to run when step changed
+     *
+     * Lost event should be marked with `#[UseEvents('lost')]`
+     *
+     * @param Closure $callback
+     * @return $this
+     */
+    public function lost(Closure $callback)
+    {
+        return $this->onStepEvent('lost', $callback);
+    }
+
+    /**
+     * Set a callback to run when update is started
+     *
+     * Begin event should be marked with `#[UseEvents('begin')]`
+     *
+     * @param Closure $callback
+     * @return $this
+     */
+    public function beginUpdate(Closure $callback)
+    {
+        return $this->onStepEvent('begin', $callback);
+    }
+
+    /**
+     * Set a callback to run when update is finished
+     *
+     * End event should be marked with `#[UseEvents('end')]`
+     *
+     * @param Closure $callback
+     * @return $this
+     */
+    public function endUpdate(Closure $callback)
+    {
+        return $this->onStepEvent('end', $callback);
     }
 
     /**

@@ -8,6 +8,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\Attributes\InlineAttribute;
+use Mmb\Action\Inline\Attributes\UseEvents;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
@@ -18,6 +19,7 @@ use Mmb\Action\Section\Menu;
 use Mmb\Auth\AreaRegister;
 use Mmb\Core\Bot;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\AttributeLoader\HasAttributeLoader;
 use Mmb\Support\Auth\AuthorizeClass;
 use Mmb\Support\Caller\AuthorizationHandleBackException;
@@ -253,32 +255,42 @@ abstract class Action
 
         if (!method_exists($this, $register->method))
         {
-            if ($register->inlineAction instanceof Dialog)
-            {
-                if (method_exists($this, $register->method . 'dialog'))
-                {
-                    return $this->{$register->method . 'dialog'}(...);
-                }
-            }
-            elseif ($register->inlineAction instanceof Menu)
-            {
-                if (method_exists($this, $register->method . 'menu'))
-                {
-                    return $this->{$register->method . 'menu'}(...);
-                }
-            }
-            elseif ($register->inlineAction instanceof InlineForm)
-            {
-                if (method_exists($this, $register->method . 'form'))
-                {
-                    return $this->{$register->method . 'form'}(...);
-                }
-            }
+            // if ($register->inlineAction instanceof Dialog)
+            // {
+            //     if (method_exists($this, $register->method . 'dialog'))
+            //     {
+            //         return $this->{$register->method . 'dialog'}(...);
+            //     }
+            // }
+            // elseif ($register->inlineAction instanceof Menu)
+            // {
+            //     if (method_exists($this, $register->method . 'menu'))
+            //     {
+            //         return $this->{$register->method . 'menu'}(...);
+            //     }
+            // }
+            // elseif ($register->inlineAction instanceof InlineForm)
+            // {
+            //     if (method_exists($this, $register->method . 'form'))
+            //     {
+            //         return $this->{$register->method . 'form'}(...);
+            //     }
+            // }
 
             throw new BadMethodCallException(sprintf("Call to undefined inline method [%s] on [%s]", $register->method, static::class));
         }
 
         return $this->{$register->method}(...);
+    }
+
+    public static function getInlineUsingEvents(string $name) : array
+    {
+        if (method_exists(static::class, $name))
+        {
+            return AttributeLoader::getMethodAttributeOf(static::class, $name, UseEvents::class)?->events;
+        }
+
+        return [];
     }
 
     protected function onInitializeInlineRegister(InlineRegister $register)

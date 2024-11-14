@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Inline;
 
+use Mmb\Action\Action;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
 use Mmb\Action\Memory\Attributes\StepHandlerSerialize as Serialize;
@@ -67,6 +68,26 @@ abstract class InlineStepHandler extends StepHandler
     }
 
 
+    protected array $includeEvents;
+
+    public function getEvents() : array
+    {
+        if (!isset($this->includeEvents))
+        {
+            if (class_exists($this->initalizeClass) && is_a($this->initalizeClass, Action::class, true))
+            {
+                $this->includeEvents = $this->initalizeClass::getInlineUsingEvents($this->initalizeMethod);
+            }
+            else
+            {
+                $this->includeEvents = [];
+            }
+        }
+
+        return $this->includeEvents;
+    }
+
+
     public function handle(Update $update) : void
     {
         if ($inlineAction = $this->getInlineAction($update))
@@ -80,9 +101,14 @@ abstract class InlineStepHandler extends StepHandler
         $update->skipHandler();
     }
 
-    public function lost(Update $update)
+    public function fire(string $event, ...$args)
     {
-        $this->getInlineAction($update)?->fireLost();
+        if (in_array(strtolower($event), $this->getEvents()))
+        {
+            $this->getInlineAction(app(Update::class))->fireStepEvent($event, ...$args);
+        }
+
+        return parent::fire($event, $args);
     }
 
 }
