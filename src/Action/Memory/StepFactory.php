@@ -60,7 +60,7 @@ class StepFactory
 
         $this->model->setStep($step);
 
-        $destroyedStep?->lost(app(Update::class));
+        $destroyedStep?->fire('lost', app(Update::class));
     }
 
     /**

@@ -152,7 +152,7 @@ class AttributeLoader
      */
     public static function getClassAttributeOf(string|object $target, string $class)
     {
-        return @static::getClassAttributesOf($target, $class)[0];
+        return @head(static::getClassAttributesOf($target, $class));
     }
 
     /**
@@ -166,7 +166,7 @@ class AttributeLoader
      */
     public static function getPropertyAttributeOf(string|object $target, string $property, string $class)
     {
-        return @static::getPropertyAttributesOf($target, $property, $class)[0];
+        return @head(static::getPropertyAttributesOf($target, $property, $class));
     }
 
     /**
@@ -180,7 +180,7 @@ class AttributeLoader
      */
     public static function getMethodAttributeOf(string|object $target, string $method, string $class)
     {
-        return @static::getMethodAttributesOf($target, $method, $class)[0];
+        return @head(static::getMethodAttributesOf($target, $method, $class));
     }
 
 
@@ -254,7 +254,7 @@ class AttributeLoader
      */
     public static function getParameterAttributeOf(string|object $target, string $method, string $parameter, string $class)
     {
-        return @static::getParameterAttributesOf($target, $method, $parameter, $class)[0];
+        return @head(static::getParameterAttributesOf($target, $method, $parameter, $class));
     }
 
     /**

@@ -108,7 +108,7 @@ abstract class InlineStepHandler extends StepHandler
             $this->getInlineAction(app(Update::class))->fireStepEvent($event, ...$args);
         }
 
-        return parent::fire($event, $args);
+        return parent::fire($event, ...$args);
     }
 
 }
