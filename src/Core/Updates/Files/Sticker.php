@@ -31,10 +31,10 @@ class Sticker extends DataWithFile
 
     public function send(array $args = [], ...$namedArgs)
     {
-        return $this->bot()->send([
+        return $this->bot()->send($args + $namedArgs + [
             'type' => 'sticker',
-            'sticker' => $this->id,
-        ], $args, ...$namedArgs);
+            'value' => $this->id,
+        ]);
     }
 
     public function getStickerSet(array $args = [], ...$namedArgs)

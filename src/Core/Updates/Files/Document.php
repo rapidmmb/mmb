@@ -22,10 +22,10 @@ class Document extends DataWithFile
 
     public function send(array $args = [], ...$namedArgs)
     {
-        return $this->bot()->send([
+        return $this->bot()->send($args + $namedArgs + [
             'type' => 'document',
-            'document' => $this->id,
-        ], $args, ...$namedArgs);
+            'value' => $this->id,
+        ]);
     }
 
 }

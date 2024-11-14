@@ -30,7 +30,7 @@ class Location extends Data
 
     public function send(array $args = [], ...$namedArgs)
     {
-        $this->bot()->send([
+        $this->bot()->send($args + $namedArgs + [
             'type' => 'location',
             'longitude' => $this->longitude,
             'latitude' => $this->latitude,
@@ -38,7 +38,7 @@ class Location extends Data
             'live_period' => $this->livePeriods,
             'heading' => $this->heading,
             'proximity_alert_radius' => $this->proximityAlertRadius,
-        ], $args, ...$namedArgs);
+        ]);
     }
 
 }

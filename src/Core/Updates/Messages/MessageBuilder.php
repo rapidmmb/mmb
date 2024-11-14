@@ -46,11 +46,11 @@ class MessageBuilder implements ShortableProperties, Arrayable
     {
         if ($this->data)
         {
-            return $this->data->send($args, ...$namedArgs, text: $this->text);
+            return $this->data->send($args + $namedArgs + ['text' => $this->text]);
         }
         else
         {
-            return $this->bot()->sendMessage($args, ...$namedArgs, text: $this->text);
+            return $this->bot()->sendMessage($args + $namedArgs + ['text' => $this->text]);
         }
     }
 

@@ -33,12 +33,12 @@ class Contact extends Data
 
     public function send(array $args = [], ...$namedArgs)
     {
-        $this->bot()->send([
+        $this->bot()->send($args + $namedArgs + [
             'type' => 'contact',
             'phone_number' => $this->phoneNumber,
             'first_name' => $this->firstName,
             'last_name'  => $this->lastName,
-        ], $args, ...$namedArgs);
+        ]);
     }
 
 }
