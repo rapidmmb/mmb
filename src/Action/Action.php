@@ -287,7 +287,7 @@ abstract class Action
     {
         if (method_exists(static::class, $name))
         {
-            return AttributeLoader::getMethodAttributeOf(static::class, $name, UseEvents::class)?->events;
+            return AttributeLoader::getMethodAttributeOf(static::class, $name, UseEvents::class)?->events ?? [];
         }
 
         return [];
