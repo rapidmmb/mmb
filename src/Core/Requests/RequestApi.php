@@ -125,15 +125,28 @@ abstract class RequestApi
      */
     protected function wrapQuery(array $query)
     {
-        $isMultipart = (bool) Arr::first($query, fn ($item) => is_resource($item));
+        // Filter the query
+        $query = array_map(
+            function ($value)
+            {
+                if (is_array($value))
+                {
+                    return json_encode($value);
+                }
 
-        if (!$isMultipart)
+                return $value;
+            },
+            $query
+        );
+
+        // Normal query type
+        if (! Arr::first($query, fn ($item) => is_resource($item)))
         {
             return ['query' => $query];
         }
 
+        // Multipart query type
         $multipart = [];
-
         foreach ($query as $key => $value)
         {
             $multipart[] = [
