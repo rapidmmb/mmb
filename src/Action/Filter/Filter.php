@@ -629,14 +629,14 @@ class Filter extends FilterRule
      *
      * @param string       $table
      * @param string|null  $column
-     * @param mixed        $expect
+     * @param mixed        $except
      * @param Closure|null $query
      * @param null         $message
      * @return $this
      */
-    public function unique(string $table, ?string $column = null, $expect = null, ?Closure $query = null, $message = null)
+    public function unique(string $table, ?string $column = null, $except = null, ?Closure $query = null, $message = null)
     {
-        return $this->add(new Rules\FilterUnique($table, $column, $expect, $query, $message));
+        return $this->add(new Rules\FilterUnique($table, $column, $except, $query, $message));
     }
 
 

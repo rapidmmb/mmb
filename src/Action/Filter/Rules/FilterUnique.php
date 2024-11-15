@@ -14,9 +14,9 @@ class FilterUnique extends FilterRule
     public function __construct(
         public string   $table,
         public ?string  $column = null,
-        public $expect = null,
+        public          $except = null,
         public ?Closure $query = null,
-        public $message = null,
+        public          $message = null,
     )
     {
     }
@@ -47,18 +47,18 @@ class FilterUnique extends FilterRule
             $query->where('id', $value);
         }
 
-        // Add expect item
-        if (isset($this->expect))
+        // Add except item
+        if (isset($this->except))
         {
-            $expect = $this->expect instanceof Model ? $this->expect->getKey() : $this->expect;
+            $except = $this->except instanceof Model ? $this->except->getKey() : $this->except;
 
             if (method_exists($query, 'whereNotKey'))
             {
-                $query->whereNotKey($expect);
+                $query->whereNotKey($except);
             }
             else
             {
-                $query->where('id', '!=', $expect);
+                $query->where('id', '!=', $except);
             }
         }
 
