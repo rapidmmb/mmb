@@ -5,7 +5,7 @@ namespace Mmb\Support\Serialize;
 use BackedEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Mmb\Core\Updates\Callbacks\Callback;
+use Mmb\Core\Updates\Callbacks\CallbackQuery;
 use Mmb\Core\Updates\Data\Contact;
 use Mmb\Core\Updates\Data\Dice;
 use Mmb\Core\Updates\Data\Location;
@@ -50,7 +50,7 @@ class ShortSerialize
         'um' => Message::class,
         'uim' => InlineMessage::class,
         'umb' => MessageBuilder::class,
-        'uc' => Callback::class,
+        'uc' => CallbackQuery::class,
         'dc' => Contact::class,
         'dd' => Dice::class,
         'dl' => Location::class,

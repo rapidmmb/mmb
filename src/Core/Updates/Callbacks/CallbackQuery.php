@@ -18,7 +18,7 @@ use Mmb\Core\Updates\Messages\Message;
  *
  * @property ?InlineMessage $inlineMessage
  */
-class Callback extends Data
+class CallbackQuery extends Data
 {
 
     protected function dataCasts() : array

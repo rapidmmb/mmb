@@ -4,7 +4,7 @@ namespace Mmb\Core\Builder;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
-use Mmb\Core\Updates\Callbacks\Callback;
+use Mmb\Core\Updates\Callbacks\CallbackQuery;
 use Mmb\Core\Updates\Messages\Message;
 
 class ApiMessageBuilder extends ApiBuilder

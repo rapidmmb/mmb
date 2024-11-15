@@ -7,9 +7,10 @@ use Mmb\Action\Update\CancelHandlingException;
 use Mmb\Action\Update\RepeatHandlingException;
 use Mmb\Action\Update\StopHandlingException;
 use Mmb\Core\Data;
-use Mmb\Core\Updates\Callbacks\Callback;
+use Mmb\Core\Updates\Callbacks\CallbackQuery;
 use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Infos\UserInfo;
+use Mmb\Core\Updates\Inlines\InlineQuery;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Poll\Poll;
 use Mmb\Core\Updates\Poll\PollAnswer;
@@ -22,7 +23,7 @@ use Mmb\Core\Updates\Poll\PollAnswer;
  * @property ?Message            $editedChannelPost
  * @property ?InlineQuery        $inlineQuery
  * @property ?ChosenInlineResult $chosenInlineResult
- * @property ?Callback           $callbackQuery
+ * @property ?CallbackQuery      $callbackQuery
  * @property ?Poll               $poll
  * @property ?PollAnswer         $pollAnswer
  * @property ?ChatMemberUpdated  $myChatMember
@@ -59,9 +60,9 @@ class Update extends Data
             'edited_message'      => Message::class,
             'channel_post'        => Message::class,
             'edited_channel_post' => Message::class,
-            // 'inline_query'         => Message::class,
+            'inline_query'        => InlineQuery::class,
             // 'chosen_inline_result' => Message::class,
-            'callback_query'      => Callback::class,
+            'callback_query'      => CallbackQuery::class,
             'poll'                => Poll::class,
             'poll_answer'         => PollAnswer::class,
             // 'my_chat_member'       => Message::class,
@@ -86,7 +87,7 @@ class Update extends Data
     {
         return $this->makeCache(
             'Message',
-            fn() => match (true)
+            fn () => match (true)
             {
                 null !== $this->message           => $this->message,
                 null !== $this->editedMessage     => $this->editedMessage,
@@ -105,7 +106,7 @@ class Update extends Data
      */
     public function getChat()
     {
-        if($message = $this->getMessage())
+        if ($message = $this->getMessage())
         {
             return $message->chat;
         }

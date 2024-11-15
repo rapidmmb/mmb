@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Lang;
 use Mmb\Core\Bot;
-use Mmb\Core\Updates\Callbacks\Callback;
+use Mmb\Core\Updates\Callbacks\CallbackQuery;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Pov\POV;
@@ -35,7 +35,7 @@ if (!function_exists('msg'))
 
 if (!function_exists('callback'))
 {
-    function callback() : ?Callback
+    function callback() : ?CallbackQuery
     {
         return update()?->callbackQuery;
     }

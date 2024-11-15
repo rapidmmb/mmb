@@ -26,6 +26,7 @@ class Bot
         Traits\ApiBotMessages,
         Traits\ApiBotUpdates,
         Traits\ApiBotCallbacks,
+        Traits\ApiBotInlines,
         Traits\ApiBotChats,
         Traits\ApiBotUsers,
         Traits\ApiBotFiles,
