@@ -8,6 +8,7 @@ use Mmb\Core\DataCollection;
 
 /**
  * @implements IteratorAggregate<int, Photo>
+ * @implements DataCollection<Photo>
  */
 class PhotoCollection extends Photo implements Countable, IteratorAggregate
 {

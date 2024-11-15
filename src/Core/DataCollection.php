@@ -5,6 +5,9 @@ namespace Mmb\Core;
 use ArrayObject;
 use Traversable;
 
+/**
+ * @template T
+ */
 trait DataCollection
 {
 
@@ -31,21 +34,34 @@ trait DataCollection
 
     protected abstract function getCollectionClassType();
 
+    /**
+     * @return T
+     */
     public function getDefault()
     {
         return $this->first();
     }
 
+    /**
+     * @param int $index
+     * @return T
+     */
     public function get(int $index)
     {
         return $this->allData[$index];
     }
 
+    /**
+     * @return T
+     */
     public function first()
     {
         return $this->allData[0];
     }
 
+    /**
+     * @return T
+     */
     public function last()
     {
         return last($this->allData);
@@ -56,6 +72,9 @@ trait DataCollection
         return count($this->allData);
     }
 
+    /**
+     * @return Traversable<int, T>
+     */
     public function getIterator() : Traversable
     {
         return (new ArrayObject($this->allData))->getIterator();

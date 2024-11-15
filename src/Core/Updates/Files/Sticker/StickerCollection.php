@@ -5,6 +5,9 @@ namespace Mmb\Core\Updates\Files\Sticker;
 use Mmb\Core\DataCollection;
 use Mmb\Core\Updates\Files\Sticker;
 
+/**
+ * @implements DataCollection<Sticker>
+ */
 class StickerCollection extends Sticker implements \Countable, \IteratorAggregate
 {
     use DataCollection;

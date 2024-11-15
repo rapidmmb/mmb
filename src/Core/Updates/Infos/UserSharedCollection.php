@@ -9,6 +9,7 @@ use Mmb\Core\DataCollection;
 
 /**
  * @implements IteratorAggregate<int, UserShared>
+ * @implements DataCollection<UsersShared>
  */
 class UserSharedCollection extends Data implements Countable, IteratorAggregate
 {
