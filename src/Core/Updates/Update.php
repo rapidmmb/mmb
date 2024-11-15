@@ -124,7 +124,7 @@ class Update extends Data
         return match (true)
         {
             null !== $this->callbackQuery             => $this->callbackQuery->from,
-            // null !== $this->inlineQuery => $this->inlineQuery-> TODO
+            null !== $this->inlineQuery               => $this->inlineQuery->from,
             null !== ($message = $this->getMessage()) => $message->from,
             default                                   => null,
         };
