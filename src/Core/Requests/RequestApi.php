@@ -125,20 +125,6 @@ abstract class RequestApi
      */
     protected function wrapQuery(array $query)
     {
-        // Filter the query
-        $query = array_map(
-            function ($value)
-            {
-                if (is_array($value))
-                {
-                    return json_encode($value);
-                }
-
-                return $value;
-            },
-            $query
-        );
-
         // Normal query type
         if (! Arr::first($query, fn ($item) => is_resource($item)))
         {

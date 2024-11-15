@@ -23,9 +23,9 @@ class DefaultArgsParserTest extends TestCase
         return new TelegramRequest(bot(), '', $method, $args);
     }
 
-    public function assertParsed(array $actual, array $args, string $method = '')
+    public function assertParsed(array $expected, array $args, string $method = '')
     {
-        $this->assertSame($actual, $this->parser->normalize($this->createRequest($method, $args)));
+        $this->assertSame($expected, $this->parser->normalize($this->createRequest($method, $args)));
     }
 
 

@@ -51,9 +51,9 @@ class TelegramRequest extends RequestApi
     public function getFinalArgs()
     {
         $args = $this->parsedArgs();
-        foreach($args as $name => $value)
+        foreach ($args as $name => $value)
         {
-            if(is_array($value))
+            if (is_array($value))
             {
                 $args[$name] = json_encode($value);
             }
