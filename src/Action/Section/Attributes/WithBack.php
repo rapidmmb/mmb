@@ -3,11 +3,10 @@
 namespace Mmb\Action\Section\Attributes;
 
 use Attribute;
-use Mmb\Action\Inline\Attributes\InlineAttribute;
+use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\Attributes\InlineAttributeContract;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Menu;
-use Mmb\Auth\AreaRegister;
 use Mmb\Support\Behavior\Behavior;
 
 #[Attribute(Attribute::TARGET_METHOD)]
@@ -42,6 +41,10 @@ class WithBack implements InlineAttributeContract
                     [ $key ],
                 ]);
             });
+        }
+        elseif ($register->inlineAction instanceof InlineForm && isset($this->action))
+        {
+            $register->inlineAction->back($this->action);
         }
     }
 }
