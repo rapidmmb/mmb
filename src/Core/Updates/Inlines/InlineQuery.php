@@ -39,7 +39,7 @@ class InlineQuery extends Data
             $args + $namedArgs
         );
 
-        return $this->bot()->answerCallback($args);
+        return $this->bot()->answerInlineQuery($args);
     }
 
 }
