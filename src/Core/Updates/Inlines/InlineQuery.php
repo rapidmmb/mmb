@@ -29,14 +29,13 @@ class InlineQuery extends Data
         ];
     }
 
-    public function answer($results = null, array $args = [], ...$namedArgs)
+    public function answer(array $results = null, array $args = [], ...$namedArgs)
     {
         $args = $this->mergeMultiple(
             [
                 'inlineQueryId' => $this->id,
-                'results'       => $results,
             ],
-            $args + $namedArgs
+            $args + $namedArgs + ($results ?? [])
         );
 
         return $this->bot()->answerInlineQuery($args);
