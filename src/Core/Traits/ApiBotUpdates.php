@@ -31,7 +31,7 @@ trait ApiBotUpdates
      */
     public function getUpdateOf(Request $request)
     {
-        if($json = $request->json())
+        if ($json = $request->json())
         {
             return Update::make($json, $this, true);
         }
@@ -42,15 +42,17 @@ trait ApiBotUpdates
     /**
      * Get updates from telegram api
      *
-     * @param mixed  $offset
-     * @param mixed  $limit
-     * @param mixed  $allowedUpdates
+     * @param mixed $offset
+     * @param mixed $limit
+     * @param mixed $allowedUpdates
      * @param int   $timeout
      * @param array $args
      * @param       ...$namedArgs
      * @return Collection
      */
-    public function getUpdates($offset = null, $limit = null, $allowedUpdates = null, $timeout = 0, array $args = [], ...$namedArgs)
+    public function getUpdates(
+        $offset = null, $limit = null, $allowedUpdates = null, $timeout = 0, array $args = [], ...$namedArgs
+    )
     {
         $args = $this->mergeMultiple(
             [
@@ -62,10 +64,10 @@ trait ApiBotUpdates
             $args + $namedArgs
         );
 
-        if($updates = $this->request('getUpdates', $args))
+        if ($updates = $this->request('getUpdates', $args))
         {
             return collect($updates)
-                ->map(fn($update) => $this->makeData(Update::class, $update));
+                ->map(fn ($update) => $this->makeData(Update::class, $update));
         }
 
         return collect();
@@ -75,13 +77,22 @@ trait ApiBotUpdates
      * Loop updates
      *
      * @param Closure|null $callback
-     * @param              $delay
+     * @param Closure|null $received
+     * @param Closure|null $pass
+     * @param int          $timeout
+     * @param float        $delay
      * @return never
      */
-    public function loopUpdates(Closure $callback = null, Closure $received = null, $delay = 0)
+    public function loopUpdates(
+        Closure $callback = null,
+        Closure $received = null,
+        Closure $pass = null,
+        int     $timeout = 30,
+        float   $delay = 0,
+    )
     {
         // Delete webhook
-        if(($web = $this->getWebhook()) && $web->url)
+        if (($web = $this->getWebhook()) && $web->url)
         {
             $this->deleteWebhook();
         }
@@ -103,15 +114,15 @@ trait ApiBotUpdates
         while (true)
         {
             // Try to get updates
-            $updates = retry(5, fn() => $this->getUpdates($offset, $limit, $allowedUpdates, 60), $delay);
+            $updates = retry(5, fn () => $this->getUpdates($offset, $limit, $allowedUpdates, 60), $delay);
 
             // Loop and pass to callback
-            if($updates->isNotEmpty())
+            if ($updates->isNotEmpty())
             {
-                foreach($updates as $update)
+                foreach ($updates as $update)
                 {
                     // TODO: try and catch to pass into the debugger
-                    if($received)
+                    if ($received)
                     {
                         $received($update);
                     }
@@ -120,6 +131,11 @@ trait ApiBotUpdates
                 }
 
                 $offset = $updates->last()->id + 1;
+            }
+
+            if ($pass)
+            {
+                $pass();
             }
 
             if ($delay)
