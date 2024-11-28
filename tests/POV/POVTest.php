@@ -65,6 +65,18 @@ class POVTest extends TestCase
         $this->assertSame($original, app(Update::class));
     }
 
+    public function test_changin_user_changed_the_chat_id()
+    {
+        $original = new UserTest(['id' => 1234]);
+        $fake = new UserTest(['id' => 5678]);
+
+        ModelFinder::storeCurrent($original);
+
+        pov()->user($fake)->run(
+            fn() => $this->assertSame($fake->id, update()->getChat()->id)
+        );
+    }
+
     public function test_pov_double_start()
     {
         $fake = new Update([]);
