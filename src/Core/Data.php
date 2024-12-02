@@ -114,6 +114,14 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
         {
             return null;
         }
+        elseif(is_array($cast))
+        {
+            return collect($value)->map(fn($data) => $this->castSingleData($data, $cast[0], $trustedData));
+        }
+        elseif(!is_string($cast))
+        {
+            throw new \TypeError("Invalid cast of type [" . smartTypeOf($cast) . "]");
+        }
         elseif(class_exists($cast))
         {
             if($value instanceof $cast)
@@ -132,10 +140,6 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
             {
                 return new $cast(is_array($value) ? $value : [], $this->targetBot, $trustedData);
             }
-        }
-        elseif(is_array($cast))
-        {
-            return collect($value)->map(fn($data) => $this->castSingleData($data, $cast[0], $trustedData));
         }
         else
         {
