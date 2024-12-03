@@ -6,18 +6,16 @@ use BadMethodCallException;
 use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Mmb\Action\Form\Inline\InlineForm;
-use Mmb\Action\Inline\Attributes\InlineAttribute;
 use Mmb\Action\Inline\Attributes\UseEvents;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Inline\Register\InlineReloadRegister;
-use Mmb\Action\Section\Dialog;
-use Mmb\Action\Section\Menu;
 use Mmb\Auth\AreaRegister;
+use Mmb\Context;
 use Mmb\Core\Bot;
+use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\AttributeLoader\HasAttributeLoader;
@@ -27,23 +25,21 @@ use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\StatusHandleBackException;
 use Mmb\Support\Db\ModelFinder;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\Routing\Alias;
 
+/**
+ * @property $update
+ */
 abstract class Action
 {
     use HasAttributeLoader;
-    use AuthorizesRequests
-    {
+    use AuthorizesRequests {
         authorizeResource as private;
     }
 
-    public Update $update;
-
     public function __construct(
-        Update $update = null,
+        public Context $context,
     )
     {
-        $this->update = $update ?? app(Update::class);
         $this->boot();
     }
 
@@ -62,7 +58,7 @@ abstract class Action
     /**
      * Make cache
      *
-     * @param string  $name
+     * @param string $name
      * @param Closure $value
      * @return mixed
      */
@@ -78,20 +74,17 @@ abstract class Action
      *
      * @template T
      * @param class-string<T> $model
-     * @param string          $name
-     * @param string          $findBy
+     * @param string $name
+     * @param string $findBy
      * @return T
      */
     protected function modelOf(string $model, string $name, string $findBy = '')
     {
         return $this->cache(
             $name . ':model',
-            function() use ($model, $name, $findBy)
-            {
-                if($value = @$this->$name)
-                {
-                    if($value instanceof $model)
-                    {
+            function () use ($model, $name, $findBy) {
+                if ($value = @$this->$name) {
+                    if ($value instanceof $model) {
                         return $value;
                     }
 
@@ -112,37 +105,28 @@ abstract class Action
      */
     public function invoke(string $method, ...$args)
     {
-        try
-        {
+        try {
             app(AreaRegister::class)->authorize(static::class);
 
             return Caller::invoke([$this, $method], $args, $this->getInvokeDynamicParameters($method));
-        }
-        catch(AuthorizationException $exception)
-        {
-            if(!($exception instanceof AuthorizationHandleBackException))
-            {
-                if(
+        } catch (AuthorizationException $exception) {
+            if (!($exception instanceof AuthorizationHandleBackException)) {
+                if (
                     method_exists($this, $fn = 'errorAuthorize' . $exception->status()) ||
                     method_exists($this, $fn = 'errorAuthorize') ||
                     method_exists($this, $fn = 'error403')
-                )
-                {
+                ) {
                     throw AuthorizationHandleBackException::from($exception, [$this, $fn]);
                 }
             }
 
             throw $exception;
-        }
-        catch(HttpException $exception)
-        {
-            if(!($exception instanceof StatusHandleBackException))
-            {
-                if(
+        } catch (HttpException $exception) {
+            if (!($exception instanceof StatusHandleBackException)) {
+                if (
                     method_exists($this, $fn = 'error' . $exception->getStatusCode()) ||
                     method_exists($this, $fn = 'error')
-                )
-                {
+                ) {
                     throw StatusHandleBackException::from($exception, [$this, $fn]);
                 }
             }
@@ -155,45 +139,36 @@ abstract class Action
      * Invoke a method with dynamic parameters
      *
      * @param string $method
-     * @param array  $normalArgs
-     * @param array  $dynamicArgs
+     * @param array $normalArgs
+     * @param array $dynamicArgs
      * @return mixed
      */
     public function invokeDynamic(string $method, array $normalArgs, array $dynamicArgs)
     {
-        try
-        {
+        try {
             app(AreaRegister::class)->authorize(static::class);
 
             return Caller::invoke(
                 [$this, $method], $normalArgs, $dynamicArgs + $this->getInvokeDynamicParameters($method)
             );
-        }
-        catch(AuthorizationException $exception)
-        {
-            if(!($exception instanceof AuthorizationHandleBackException))
-            {
-                if(
+        } catch (AuthorizationException $exception) {
+            if (!($exception instanceof AuthorizationHandleBackException)) {
+                if (
                     method_exists($this, $fn = 'errorAuthorize' . $exception->status()) ||
                     method_exists($this, $fn = 'errorAuthorize') ||
                     method_exists($this, $fn = 'error403')
-                )
-                {
+                ) {
                     throw AuthorizationHandleBackException::from($exception, [$this, $fn]);
                 }
             }
 
             throw $exception;
-        }
-        catch(HttpException $exception)
-        {
-            if(!($exception instanceof StatusHandleBackException))
-            {
-                if(
+        } catch (HttpException $exception) {
+            if (!($exception instanceof StatusHandleBackException)) {
+                if (
                     method_exists($this, $fn = 'error' . $exception->getStatusCode()) ||
                     method_exists($this, $fn = 'error')
-                )
-                {
+                ) {
                     throw StatusHandleBackException::from($exception, [$this, $fn]);
                 }
             }
@@ -218,8 +193,8 @@ abstract class Action
      * Create an instance and invoke the method
      *
      * @param string $method
-     * @param array  $normalArgs
-     * @param array  $dynamicArgs
+     * @param array $normalArgs
+     * @param array $dynamicArgs
      * @return mixed
      */
     public static function invokeDynamics(string $method, array $normalArgs = [], array $dynamicArgs = [])
@@ -248,13 +223,11 @@ abstract class Action
      */
     protected function getInlineCallbackFor(InlineRegister $register)
     {
-        if ($alias = $this->getInlineAliases()[$register->method] ?? false)
-        {
+        if ($alias = $this->getInlineAliases()[$register->method] ?? false) {
             return $this->$alias(...);
         }
 
-        if (!method_exists($this, $register->method))
-        {
+        if (!method_exists($this, $register->method)) {
             // if ($register->inlineAction instanceof Dialog)
             // {
             //     if (method_exists($this, $register->method . 'dialog'))
@@ -280,13 +253,14 @@ abstract class Action
             throw new BadMethodCallException(sprintf("Call to undefined inline method [%s] on [%s]", $register->method, static::class));
         }
 
-        return $this->{$register->method}(...);
+        return $this->{
+        $register->method
+        }(...);
     }
 
-    public static function getInlineUsingEvents(string $name) : array
+    public static function getInlineUsingEvents(string $name): array
     {
-        if (method_exists(static::class, $name))
-        {
+        if (method_exists(static::class, $name)) {
             return AttributeLoader::getMethodAttributeOf(static::class, $name, UseEvents::class)?->events ?? [];
         }
 
@@ -300,7 +274,7 @@ abstract class Action
     public function createInlineRegister(string|InlineAction $inlineAction, string $name, array $args)
     {
         $register = new InlineCreateRegister(
-            $this->update,
+            $this->context,
             $inlineAction,
             target: $this,
             method: $name,
@@ -317,7 +291,7 @@ abstract class Action
     public function loadInlineRegister(InlineAction $inlineAction, string $name)
     {
         $register = new InlineLoadRegister(
-            $this->update,
+            $this->context,
             $inlineAction,
             target: $this,
             method: $name,
@@ -332,10 +306,10 @@ abstract class Action
 
     public function reloadInlineRegister(InlineAction $inlineAction)
     {
-        $newInlineAction = new (get_class($inlineAction))($this->update);
+        $newInlineAction = new (get_class($inlineAction))($this->context);
 
         $register = new InlineReloadRegister(
-            $this->update,
+            $this->context,
             $newInlineAction,
             target: $this,
             method: $inlineAction->getInitializer()[1],
@@ -368,45 +342,48 @@ abstract class Action
      */
     public static function allowed(?string $method = null)
     {
-        if (!app(AreaRegister::class)->can(static::class))
-        {
+        if (!app(AreaRegister::class)->can(static::class)) {
             return false;
         }
 
-        foreach (static::getClassAttributesOf(AuthorizeClass::class) as $auth)
-        {
-            if(!$auth->can())
-            {
+        foreach (static::getClassAttributesOf(AuthorizeClass::class) as $auth) {
+            if (!$auth->can()) {
                 return false;
             }
         }
 
-        if (isset($method))
-        {
-            try
-            {
-                foreach (static::getMethodAttributesOf($method, AuthorizeClass::class) as $auth)
-                {
-                    if (!$auth->can())
-                    {
+        if (isset($method)) {
+            try {
+                foreach (static::getMethodAttributesOf($method, AuthorizeClass::class) as $auth) {
+                    if (!$auth->can()) {
                         return false;
                     }
                 }
+            } catch (\Throwable $e) {
             }
-            catch (\Throwable $e) { }
         }
 
         return true;
     }
 
     /**
-     * Get bot
+     * Get the current bot
      *
-     * @return Bot
+     * @return ?Bot
      */
-    public function bot()
+    public function bot(): ?Bot
     {
-        return $this->update?->bot() ?? app(Bot::class);
+        return $this->context->bot;
+    }
+
+    /**
+     * Get the current update
+     *
+     * @return Update|null
+     */
+    public function update(): ?Update
+    {
+        return $this->context->update;
     }
 
     /**
@@ -415,11 +392,11 @@ abstract class Action
      * @param       $message
      * @param array $args
      * @param mixed ...$namedArgs
-     * @return mixed
+     * @return Message|null
      */
     public function response($message, array $args = [], ...$namedArgs)
     {
-        return $this->update->response($message, $args, ...$namedArgs);
+        return $this->update()->response($message, $args, ...$namedArgs);
     }
 
     /**
@@ -432,7 +409,7 @@ abstract class Action
      */
     public function tell($message = null, array $args = [], ...$namedArgs)
     {
-        return $this->update->tell($message, $args, ...$namedArgs);
+        return $this->update()->tell($message, $args, ...$namedArgs);
     }
 
 }

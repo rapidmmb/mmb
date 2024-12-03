@@ -7,6 +7,7 @@ use Mmb\Action\Action;
 use Mmb\Action\Inline\Attributes\InlineAttributeContract;
 use Mmb\Action\Inline\Attributes\InlineParameterAttributeContract;
 use Mmb\Action\Inline\InlineAction;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
@@ -16,7 +17,7 @@ abstract class InlineRegister
     public InlineAction $inlineAction;
 
     public function __construct(
-        public Update $update,
+        public Context $context,
         string|InlineAction $inlineAction,
 
         public Action $target,
@@ -27,7 +28,7 @@ abstract class InlineRegister
         public array $haveItems = [],
     )
     {
-        $this->inlineAction = is_string($inlineAction) ? new $inlineAction($this->update) : $inlineAction;
+        $this->inlineAction = is_string($inlineAction) ? new $inlineAction($this->context) : $inlineAction;
         $this->inlineAction->initializer($this->target, $this->method);
     }
 

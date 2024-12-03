@@ -37,7 +37,7 @@ class Road extends Action
      *
      * @return array
      */
-    protected function stations() : array
+    protected function stations(): array
     {
         return [];
     }
@@ -47,7 +47,7 @@ class Road extends Action
      *
      * @return array
      */
-    public function getStations() : array
+    public function getStations(): array
     {
         return [...$this->stations(), ...$this->stations];
     }
@@ -55,18 +55,15 @@ class Road extends Action
     /**
      * Merge a station
      *
-     * @param string       $name
+     * @param string $name
      * @param Closure|null $callback
      * @return void
      */
     public final function mergeStation(string $name, Closure $callback = null)
     {
-        if (isset($callback))
-        {
+        if (isset($callback)) {
             $this->stations[$name] = $callback;
-        }
-        else
-        {
+        } else {
             $this->stations[] = $name;
         }
     }
@@ -83,7 +80,7 @@ class Road extends Action
      *
      * @return array
      */
-    protected function with() : array
+    protected function with(): array
     {
         return [];
     }
@@ -93,7 +90,7 @@ class Road extends Action
      *
      * @return array
      */
-    public function getWith() : array
+    public function getWith(): array
     {
         return [...$this->with(), ...$this->with];
     }
@@ -104,7 +101,7 @@ class Road extends Action
      * @param Station $station
      * @return array
      */
-    public function getStationWith(Station $station) : array
+    public function getStationWith(Station $station): array
     {
         return ['wayStack', ...$this->getWith()];
     }
@@ -128,8 +125,7 @@ class Road extends Action
      */
     protected function getInlineCallbackFor(InlineRegister $register)
     {
-        if (str_contains($register->method, '.'))
-        {
+        if (str_contains($register->method, '.')) {
             [$stationName, $subName] = explode('.', $register->method, 2);
 
             $alias = $register->method;
@@ -165,37 +161,29 @@ class Road extends Action
      * @param string $name
      * @return Sign
      */
-    public function getSignOf(string $name) : Sign
+    public function getSignOf(string $name): Sign
     {
-        if (array_key_exists($name, $this->loadedSigns))
-        {
+        if (array_key_exists($name, $this->loadedSigns)) {
             return $this->loadedSigns[$name];
         }
 
         $stations = $this->getStations();
 
-        if (array_key_exists($name, $stations))
-        {
+        if (array_key_exists($name, $stations)) {
             $callback = $stations[$name];
-        }
-        elseif (in_array($name, $stations))
-        {
-            if (!method_exists($this, $name))
-            {
+        } elseif (in_array($name, $stations)) {
+            if (!method_exists($this, $name)) {
                 throw new \BadMethodCallException(sprintf("Station [%s] should defined by a method", $name));
             }
 
             $callback = $this->$name(...);
-        }
-        else
-        {
+        } else {
             throw new \BadMethodCallException(sprintf("Station [%s] is not exists", $name));
         }
 
         $type = static::detectSignTypeFromCallback($callback);
 
-        if (is_null($type))
-        {
+        if (is_null($type)) {
             throw new \BadMethodCallException(sprintf("Station [%s] has not a valid sign as first parameter", $name));
         }
 
@@ -210,12 +198,12 @@ class Road extends Action
      * @param string $name
      * @return Station
      */
-    public function createStation(string $name) : Station
+    public function createStation(string $name): Station
     {
         $sign = $this->getSignOf($name);
 
         $sign->fire('creatingStation');
-        $station = $sign->createStation($name, $this->update);
+        $station = $sign->createStation($name, $this->update());
         $sign->fire('createdStation', station: $station);
 
         return $station;
@@ -227,7 +215,7 @@ class Road extends Action
      * @param string $name
      * @return Station
      */
-    public function createHeadStation(string $name) : Station
+    public function createHeadStation(string $name): Station
     {
         return $this->head = $this->createStation($name);
     }
@@ -238,14 +226,11 @@ class Road extends Action
      * @param Closure $callback
      * @return string|null
      */
-    public static function detectSignTypeFromCallback(Closure $callback) : ?string
+    public static function detectSignTypeFromCallback(Closure $callback): ?string
     {
-        if ($type = @(new \ReflectionFunction($callback))->getParameters()[0]?->getType())
-        {
-            if ($type instanceof \ReflectionNamedType && $classType = $type->getName())
-            {
-                if (is_a($classType, Sign::class, true))
-                {
+        if ($type = @(new \ReflectionFunction($callback))->getParameters()[0]?->getType()) {
+            if ($type instanceof \ReflectionNamedType && $classType = $type->getName()) {
+                if (is_a($classType, Sign::class, true)) {
                     return $classType;
                 }
             }
@@ -265,24 +250,21 @@ class Road extends Action
      * Fire a station action
      *
      * @param string|Station $station
-     * @param string         $name
+     * @param string $name
      * @param                ...$args
      * @return mixed
      */
     public function fire(string|Station $station, string $name, ...$args)
     {
-        if (is_string($station))
-        {
+        if (is_string($station)) {
             $station = $this->createStation($station);
         }
 
-        if ($name != 'revert' && isset($this->head) && $station != $this->head)
-        {
+        if ($name != 'revert' && isset($this->head) && $station != $this->head) {
             $this->wayStack[] = array_filter([$this->head->name, $this->head->keepData()]);
         }
 
-        if (!isset($this->head) || $this->head != $station)
-        {
+        if (!isset($this->head) || $this->head != $station) {
             $this->head = $station;
         }
 
@@ -315,17 +297,13 @@ class Road extends Action
      */
     public function fireBack(...$args)
     {
-        if ($this->wayStack)
-        {
-            try
-            {
+        if ($this->wayStack) {
+            try {
                 @[$station, $with] = array_pop($this->wayStack);
 
                 $station = $this->createStation($station);
                 $station->revertData($with ?? []);
-            }
-            catch (\Throwable)
-            {
+            } catch (\Throwable) {
                 goto defaultBack;
             }
 
@@ -358,10 +336,9 @@ class Road extends Action
      *
      * @return Builder|null
      */
-    public function getQuery() : ?Builder
+    public function getQuery(): ?Builder
     {
-        if (isset($this->model))
-        {
+        if (isset($this->model)) {
             return $this->model::query();
         }
 
@@ -380,7 +357,7 @@ class Road extends Action
      *
      * @return bool|null
      */
-    public function getRtl() : ?bool
+    public function getRtl(): ?bool
     {
         return $this->rtl;
     }

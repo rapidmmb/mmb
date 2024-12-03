@@ -5,6 +5,7 @@ namespace Mmb\Action\Section;
 use Mmb\Action\Action;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\InlineAction;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\EventProxy;
 
@@ -14,14 +15,14 @@ class Section extends Action
     /**
      * Create new instance
      *
-     * @param Update|null $update
+     * @param Context $context
      * @return static
      */
     public static function make(
-        Update $update = null,
+        Context $context,
     )
     {
-        return new static($update);
+        return new static($context);
     }
 
     /**
