@@ -74,6 +74,8 @@ class Section extends Action
     /**
      * Call the method in the next step
      *
+     * todo: remove this section
+     * @deprecated
      * @param string $method
      * @return void
      */

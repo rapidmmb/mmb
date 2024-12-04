@@ -3,6 +3,7 @@
 namespace Mmb\Action\Filter\Rules;
 
 use Mmb\Action\Filter\FilterRule;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FilterClamp extends FilterRule
@@ -18,7 +19,7 @@ class FilterClamp extends FilterRule
     {
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
         if(!is_numeric($value))
         {

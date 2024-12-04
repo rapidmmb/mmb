@@ -10,8 +10,8 @@ use Mmb\Core\Bot;
 use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Step\ConvertableToStepping;
-use Mmb\Support\Step\Stepping;
+use Mmb\Support\Step\ConvertableToStepper;
+use Mmb\Support\Step\Stepper;
 
 class POVFactory
 {
@@ -25,10 +25,10 @@ class POVFactory
      * @deprecated
      */
     public function as(
-        Update $update,
-        Stepping|ConvertableToStepping|null $user,
-        Closure|array $callback,
-        bool $save = false,
+        Update                            $update,
+        Stepper|ConvertableToStepper|null $user,
+        Closure|array                     $callback,
+        bool                              $save = false,
     )
     {
         return $this->make()
@@ -39,10 +39,10 @@ class POVFactory
     }
 
     public function chat(
-        ChatInfo|int $chat,
-        Stepping|ConvertableToStepping|null $user,
-        Closure|array $callback,
-        bool $save = false,
+        ChatInfo|int                      $chat,
+        Stepper|ConvertableToStepper|null $user,
+        Closure|array                     $callback,
+        bool                              $save = false,
     )
     {
         return $this->make()
@@ -53,9 +53,9 @@ class POVFactory
     }
 
     public function user(
-        Stepping|ConvertableToStepping $user,
-        Closure|array $callback,
-        bool $save = true,
+        Stepper|ConvertableToStepper $user,
+        Closure|array                $callback,
+        bool                         $save = true,
     )
     {
         return $this->make()
@@ -70,7 +70,7 @@ class POVFactory
         $this->bindingUserCallbacks[] = [$apply, $revert];
     }
 
-    public function fireApplyingUser(Stepping $user, ?Stepping $old, bool $isSame)
+    public function fireApplyingUser(Stepper $user, ?Stepper $old, bool $isSame)
     {
         $store = [];
         foreach ($this->bindingUserCallbacks as $callback)
@@ -81,7 +81,7 @@ class POVFactory
         return $store;
     }
 
-    public function fireRevertingUser(Stepping $user, ?Stepping $old, bool $isSame, array $store)
+    public function fireRevertingUser(Stepper $user, ?Stepper $old, bool $isSame, array $store)
     {
         foreach ($this->bindingUserCallbacks as $i => $callback)
         {

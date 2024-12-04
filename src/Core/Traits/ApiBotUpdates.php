@@ -5,10 +5,9 @@ namespace Mmb\Core\Traits;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Mmb\Action\Memory\Step;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Core\Updates\Webhooks\WebhookInfo;
-use Mmb\Support\Db\ModelFinder;
 
 trait ApiBotUpdates
 {
@@ -101,10 +100,11 @@ trait ApiBotUpdates
         $callback ??= function (Update $update)
         {
             // Remove the cache before handling update
-            ModelFinder::clear();
-            Step::setModel(null);
+//            ModelFinder::clear();
+//            Step::setModel(null);
+//            todo: this is now context based
 
-            $update->handle();
+            $update->handle(new Context());
         };
 
         $offset = -1;

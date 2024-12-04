@@ -436,7 +436,7 @@ class Form extends Action
                 $this->currentInput?->getKeyBuilder()->toStorableMap() :
                 null;
         $stepHandler->class = static::class;
-        if ($keep) $stepHandler->keep();
+        if ($keep) $stepHandler->keep($this->context);
 
         return $stepHandler;
     }

@@ -3,6 +3,7 @@
 namespace Mmb\Action\Memory;
 
 use Mmb\Action\Memory\Attributes\StepHandlerAttribute;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\HasAttributeLoader;
 use ReflectionAttribute;
@@ -79,20 +80,22 @@ class StepHandler
     /**
      * Store step to user model
      *
+     * @param Context $context
      * @return void
      */
-    public function keep(): void
+    public function keep(Context $context): void
     {
-        Step::set($this);
+        $context->stepFactory->set($this);
     }
 
     /**
      * Handle the update
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function handle(Update $update) : void
+    public function handle(Context $context, Update $update) : void
     {
     }
 
@@ -101,30 +104,33 @@ class StepHandler
      *
      * Set the `$update->isHandled` true, to stop handling
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function onBegin(Update $update) : void
+    public function onBegin(Context $context, Update $update) : void
     {
     }
 
     /**
      * Handle the update in the end
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function onEnd(Update $update) : void
+    public function onEnd(Context $context, Update $update) : void
     {
     }
 
     /**
      * Handle the update when step changed
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function onLost(Update $update)
+    public function onLost(Context $context, Update $update)
     {
     }
 

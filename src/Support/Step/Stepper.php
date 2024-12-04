@@ -4,7 +4,7 @@ namespace Mmb\Support\Step;
 
 use Mmb\Action\Memory\StepHandler;
 
-interface Stepping
+interface Stepper
 {
 
     /**

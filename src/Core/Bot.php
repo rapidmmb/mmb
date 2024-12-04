@@ -14,6 +14,7 @@ use Mmb\Action\Update\Handle;
 use Mmb\Action\Update\HandlerFactory;
 use Mmb\Action\Update\HandlerNotMatchedException;
 use Mmb\Action\Update\UpdateHandler;
+use Mmb\Context;
 use Mmb\Core\Requests\HasRequest;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
@@ -111,9 +112,10 @@ class Bot
         $this->updateHandlers = $handlers;
     }
 
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
-        Handle::handle($update, $this->updateHandlers);
+        $context->bot = $this;
+        Handle::handle($context, $update, $this->updateHandlers);
     }
 
 

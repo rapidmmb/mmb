@@ -89,7 +89,7 @@ class Dialog extends Menu
             return null;
 
         return $this->dialogModel ??= $this->use::create([
-            'user_id' => $this->update->bot()->guard()->user()->id,
+            'user_id' => $this->context->bot->guard()->user()->getKey(),
         ]);
     }
 
@@ -232,7 +232,7 @@ class Dialog extends Menu
         try
         {
             return tap(
-                $this->update->getMessage()->editText($message, $args + $namedArgs + ['key' => $this->cachedKey]),
+                $this->context->message->editText($message, $args + $namedArgs + ['key' => $this->cachedKey]),
                 function($message)
                 {
                     if($message)
@@ -246,7 +246,7 @@ class Dialog extends Menu
         {
             if (str_contains($exception->getMessage(), 'Bad Request: message is not modified'))
             {
-                return $this->update->getMessage();
+                return $this->context->message;
             }
 
             throw $exception;
@@ -262,7 +262,7 @@ class Dialog extends Menu
      */
     public function answer($response, ...$callbacks)
     {
-        $this->update->tell($response);
+        $this->context->update->tell($response);
 
         foreach ($callbacks as $callback)
         {

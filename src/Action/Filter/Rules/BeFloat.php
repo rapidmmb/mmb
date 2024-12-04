@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Filter\Rules;
 
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class BeFloat extends BeText
@@ -17,7 +18,7 @@ class BeFloat extends BeText
         parent::__construct($textError, $messageError);
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
         parent::pass($update, $value);
 

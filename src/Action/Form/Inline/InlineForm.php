@@ -7,7 +7,6 @@ use Mmb\Action\Action;
 use Mmb\Action\Form\FormStepHandler;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
-use Mmb\Action\Memory\Step;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
@@ -18,7 +17,7 @@ class InlineForm extends InlineAction
 
     public function initializer($object, string $method)
     {
-        $this->form = new InlineFormRunner;
+        $this->form = InlineFormRunner::make($this->context);
         $this->form->inlineDefinedClass = get_class($object);
 
         return parent::initializer($object, $method);

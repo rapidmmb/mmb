@@ -3,13 +3,12 @@
 namespace Mmb\Action\Middle;
 
 use Mmb\Action\Action;
-use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
 use Mmb\Action\Inline\Register\InlineRegister;
-use Mmb\Action\Memory\Step;
 use Mmb\Action\Section\Section;
 use Mmb\Action\Update\StopHandlingException;
 use Mmb\Action\Update\UpdateHandling;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class MiddleAction extends Section implements UpdateHandling
@@ -111,22 +110,29 @@ class MiddleAction extends Section implements UpdateHandling
      */
     public function redirect(...$args)
     {
-        $this->update()->put(static::class . '::ran', true);
+        $this->context->put(static::class . '::ran', true);
 
         if (is_array($this->redirectTo) && count($this->redirectTo) == 2) {
+
             [$class, $method] = $this->redirectTo;
+
             if (class_exists($class) && is_a($class, Action::class, true)) {
-                $class::invokes($method, ...$this->redirectWith, ...$args);
+
+                $class::makeByContext($this->context)->invoke($method, ...$this->redirectWith, ...$args);
                 $this->update()->forget(static::class . '::ran');
                 return true;
+
             }
+
         } elseif ($this->redirectTo === '@step') {
-            Step::set(null);
-            $this->update()->put('middle-action-handled', $this);
+
+            $this->context->stepFactory->set(null);
+            $this->context->put('middle-action-handled', $this);
             $this->update()->repeatHandling();
+
         }
 
-        $this->update()->forget(static::class . '::ran');
+        $this->context->forget(static::class . '::ran');
 
         return false;
     }
@@ -220,18 +226,19 @@ class MiddleAction extends Section implements UpdateHandling
     /**
      * Request the action, if is required.
      *
+     * @param Context $context
      * @param array $backTo
      * @param       ...$args
      * @return void
      * @throws StopHandlingException
      */
-    public static function required(array $backTo, ...$args)
+    public static function required(Context $context, array $backTo, ...$args)
     {
         if (count($backTo) != 2) {
             throw new \ValueError("\$backTo size should equals to 2");
         }
 
-        $instance = static::make();
+        $instance = static::make($context);
         if ($instance->checksIsRequired(...$args)) {
             [$pass, $args] = $instance->getArgumentsAndWiths('main', ...$args);
 
@@ -246,15 +253,16 @@ class MiddleAction extends Section implements UpdateHandling
     /**
      * Request the action, if is required.
      *
+     * @param Context $context
      * @param string $class
      * @param string $method
      * @param        ...$args
      * @return void
      * @throws StopHandlingException
      */
-    public static function requiredAt(string $class, string $method, ...$args)
+    public static function requiredAt(Context $context, string $class, string $method, ...$args)
     {
-        static::required([$class, $method], ...$args);
+        static::required($context, [$class, $method], ...$args);
     }
 
     /**
@@ -262,24 +270,26 @@ class MiddleAction extends Section implements UpdateHandling
      *
      * This method fills class and method automatically by backtrace.
      *
+     * @param Context $context
      * @param ...$args
      * @return void
      * @throws StopHandlingException
      */
-    public static function requiredHere(...$args)
+    public static function requiredHere(Context $context, ...$args)
     {
         $at = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
-        static::required([$at['class'], $at['function']], ...$args);
+        static::required($context, [$at['class'], $at['function']], ...$args);
     }
 
 
     /**
      * Handle update for step handler
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
         if ($this->isMiddleActionStep()) {
             $update->skipHandler();
@@ -301,7 +311,7 @@ class MiddleAction extends Section implements UpdateHandling
 
     private function isMiddleActionStep()
     {
-        $step = Step::get();
+        $step = $this->context->stepFactory->get();
         if ($step instanceof InlineStepHandler) {
             return $step->initalizeClass &&
                 class_exists($step->initalizeClass) &&

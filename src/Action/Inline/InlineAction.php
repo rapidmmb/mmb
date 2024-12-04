@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\Attributes\InlineWithPropertyAttributeContract;
 use Mmb\Action\Memory\ConvertableToStep;
-use Mmb\Action\Memory\Step;
 use Mmb\Action\Memory\StepHandler;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Db\ModelFinder;
@@ -16,13 +16,10 @@ use Mmb\Support\Db\ModelFinder;
 abstract class InlineAction implements ConvertableToStep
 {
 
-    public Update $update;
-
     public function __construct(
-        Update $update = null,
+        public Context $context,
     )
     {
-        $this->update = $update ?? app(Update::class);
     }
 
     protected         $initializerClass  = null;
@@ -614,7 +611,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     protected function saveAction()
     {
-        Step::set($this);
+        $this->context->stepFactory->set($this);
     }
 
 

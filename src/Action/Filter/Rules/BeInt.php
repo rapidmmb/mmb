@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Filter\Rules;
 
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class BeInt extends BeText
@@ -17,9 +18,9 @@ class BeInt extends BeText
         parent::__construct($textError, $messageError);
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
-        parent::pass($update, $value);
+        parent::pass($context, $update, $value);
 
         $text = $update->message->text;
         if ($this->unsigned)

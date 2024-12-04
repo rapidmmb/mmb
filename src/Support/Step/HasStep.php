@@ -9,7 +9,6 @@ trait HasStep
 
     public static function bootHasStep()
     {
-
     }
 
     public function initializeHasStep()

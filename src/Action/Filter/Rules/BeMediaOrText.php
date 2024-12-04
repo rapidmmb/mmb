@@ -3,6 +3,7 @@
 namespace Mmb\Action\Filter\Rules;
 
 use Mmb\Action\Filter\FilterRule;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class BeMediaOrText extends BeMessage
@@ -16,9 +17,9 @@ class BeMediaOrText extends BeMessage
         parent::__construct($messageError);
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
-        parent::pass($update, $value);
+        parent::pass($context, $update, $value);
 
         if ($update->message->media)
         {

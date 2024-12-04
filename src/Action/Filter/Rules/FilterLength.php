@@ -3,6 +3,7 @@
 namespace Mmb\Action\Filter\Rules;
 
 use Mmb\Action\Filter\FilterRule;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FilterLength extends FilterRule
@@ -19,7 +20,7 @@ class FilterLength extends FilterRule
     {
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
         if(!is_string($value) && !is_int($value) && !is_float($value))
         {

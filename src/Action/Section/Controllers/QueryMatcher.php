@@ -30,8 +30,8 @@ class QueryMatcher
      * Make new instance and initialize it
      *
      * @param string|null $type
-     * @param Action      $object
-     * @param string      $method
+     * @param Action $object
+     * @param string $method
      * @return QueryMatcher
      */
     public static function makeFrom(?string $type, Action $object, string $method)
@@ -71,9 +71,9 @@ class QueryMatcher
     {
         $p = new QueryMatchPattern($pattern);
 
-        if(isset($action))
+        if (isset($action))
             $p->action($action);
-        if(isset($actionFrom))
+        if (isset($actionFrom))
             $p->actionFrom($actionFrom);
 
         $this->matches[] = $p;
@@ -99,48 +99,43 @@ class QueryMatcher
      */
     public function autoMatch(Action $object)
     {
-        $base = match ($this->type)
-        {
+        $base = match ($this->type) {
             'callback' => Attributes\OnCallback::class,
-            'inline'   => Attributes\OnInline::class,
-            default    => throw new \InvalidArgumentException(
+            'inline' => Attributes\OnInline::class,
+            default => throw new \InvalidArgumentException(
                 "Query matcher of type [$this->type] is not supported auto matching"
             ),
         };
         $prefix = static::getClassId(get_class($object)) . ':';
 
         $methods = [];
-        foreach(get_class_methods($object) as $method)
-        {
-            if($attr = $object::getMethodAttributeOf($method, $base))
-            {
-                if ($attr instanceof FixedDialog)
-                {
+        foreach (get_class_methods($object) as $method) {
+            if ($attr = $object::getMethodAttributeOf($method, $base)) {
+
+                if ($attr instanceof FixedDialog) {
+
                     $pattern = $this->match($attr->full ? $attr->pattern : $prefix . $attr->pattern);
                     $pattern->dontMake();
-                    $pattern->action(fn() => $attr->fire($pattern, get_class($object), $method));
-                }
-                else
-                {
-                    if (isset($attr->pattern))
-                    {
+                    $pattern->action(fn() => $attr->fire($object->context, $pattern, get_class($object), $method));
+
+                } else {
+
+                    if (isset($attr->pattern)) {
                         $pattern = $this->match($attr->full ? $attr->pattern : $prefix . $attr->pattern);
-                        if ($pattern->has('_'))
-                        {
+                        if ($pattern->has('_')) {
                             $pattern->same('_', $attr->name ?? $method);
                         }
                         $pattern->action($method);
-                    }
-                    else
-                    {
+                    } else {
                         $methods[] = $method;
                     }
+
                 }
+
             }
         }
 
-        if($methods)
-        {
+        if ($methods) {
             $this->match($prefix . '{_method}:{_args}')
                 ->in('_method', $methods)
                 ->json('_args')
@@ -156,10 +151,8 @@ class QueryMatcher
      */
     public function findPattern(string $value)
     {
-        foreach($this->matches as $match)
-        {
-            if($match->match($value))
-            {
+        foreach ($this->matches as $match) {
+            if ($match->match($value)) {
                 return $match;
             }
         }
@@ -175,10 +168,8 @@ class QueryMatcher
      */
     public function makeQuery(...$args)
     {
-        foreach($this->matches as $match)
-        {
-            if(($query = $match->make($args)) !== false)
-            {
+        foreach ($this->matches as $match) {
+            if (($query = $match->make($args)) !== false) {
                 return $query;
             }
         }

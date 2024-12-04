@@ -3,29 +3,20 @@
 namespace Mmb\Action\Section;
 
 use Closure;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Traits\Macroable;
-use Mmb\Action\Action;
 use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Filter\Filter;
 use Mmb\Action\Filter\Filterable;
-use Mmb\Action\Filter\FilterFailException;
 use Mmb\Action\Filter\FilterRule;
 use Mmb\Action\Filter\HasEventFilter;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
-use Mmb\Action\Memory\ConvertableToStep;
-use Mmb\Action\Memory\Step;
-use Mmb\Action\Memory\StepHandler;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\ActionCallback;
-use Mmb\Support\Caller\Caller;
-use Mmb\Support\Db\ModelFinder;
 
 class Menu extends InlineAction implements Menuable
 {
@@ -336,7 +327,7 @@ class Menu extends InlineAction implements Menuable
         // Else action
         if (isset($this->else))
         {
-            [$ok, $passed, $value] = $this->passFilter($update);
+            [$ok, $passed, $value] = $this->passFilter($this-> $update);
             if (!$ok)
             {
                 return $passed;
@@ -402,7 +393,7 @@ class Menu extends InlineAction implements Menuable
         $message ??= value($this->message);
 
         return tap(
-            $this->update->getChat()->sendMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
+            $this->context->update->getChat()->sendMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
             function($message)
             {
                 if ($message)
@@ -427,7 +418,7 @@ class Menu extends InlineAction implements Menuable
         $message ??= value($this->message);
 
         return tap(
-            $this->update->getMessage()->replyMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
+            $this->context->message->replyMessage($message, $args + $namedArgs + ['key' => $this->cachedKey]),
             function($message)
             {
                 if ($message)
@@ -457,7 +448,7 @@ class Menu extends InlineAction implements Menuable
             $args = ['text' => $message] + $args;
 
         return tap(
-            ($this->responseUsing ?? $this->update->response(...))($args + $namedArgs + ['key' => $this->cachedKey]),
+            ($this->responseUsing ?? $this->context->update->response(...))($args + $namedArgs + ['key' => $this->cachedKey]),
             function($message)
             {
                 if ($message)

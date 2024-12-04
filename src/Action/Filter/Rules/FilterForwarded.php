@@ -3,6 +3,7 @@
 namespace Mmb\Action\Filter\Rules;
 
 use Mmb\Action\Filter\FilterRule;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FilterForwarded extends FilterRule
@@ -17,7 +18,7 @@ class FilterForwarded extends FilterRule
     {
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
         if (!$update->message)
         {

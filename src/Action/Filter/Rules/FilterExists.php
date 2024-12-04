@@ -5,6 +5,7 @@ namespace Mmb\Action\Filter\Rules;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Mmb\Action\Filter\FilterRule;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FilterExists extends FilterRule
@@ -19,7 +20,7 @@ class FilterExists extends FilterRule
     {
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
         // Create query builder
         if (class_exists($this->table))

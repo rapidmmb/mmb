@@ -9,48 +9,62 @@ use Mmb\Core\Updates\Update;
 use Mmb\Support\Pov\POV;
 use Mmb\Support\Pov\POVBuilder;
 
-if (!function_exists('bot'))
-{
-    function bot() : ?Bot
+if (!function_exists('bot')) {
+    /**
+     * Get main bot instance
+     *
+     * If you have a multi bot handler application, use `$context->bot` instead.
+     *
+     * @return Bot|null
+     */
+    function bot(): ?Bot
     {
         return app(Bot::class);
     }
 }
 
-if (!function_exists('update'))
-{
-    function update() : ?Update
+if (!function_exists('update')) {
+    /**
+     * @return Update|null
+     * @deprecated
+     */
+    function update(): ?Update
     {
-        return app(Update::class);
+//        return app(Update::class);
+        throw new \BadMethodCallException();
     }
 }
 
-if (!function_exists('msg'))
-{
-    function msg() : ?Message
+if (!function_exists('msg')) {
+    /**
+     * @deprecated
+     */
+    function msg(): ?Message
     {
-        return update()?->getMessage();
+//        return update()?->getMessage();
+        throw new \BadMethodCallException();
     }
 }
 
-if (!function_exists('callback'))
-{
-    function callback() : ?CallbackQuery
+if (!function_exists('callback')) {
+    /**
+     * @deprecated
+     */
+    function callback(): ?CallbackQuery
     {
-        return update()?->callbackQuery;
+//        return update()?->callbackQuery;
+        throw new \BadMethodCallException();
     }
 }
 
-if (!function_exists('smartTypeOf'))
-{
-    function smartTypeOf($value) : string
+if (!function_exists('smartTypeOf')) {
+    function smartTypeOf($value): string
     {
         return is_object($value) ? get_class($value) : gettype($value);
     }
 }
 
-if (!function_exists('byLang'))
-{
+if (!function_exists('byLang')) {
     function byLang(...$values)
     {
         return array_key_exists($key = Lang::getLocale(), $values) ?
@@ -62,16 +76,20 @@ if (!function_exists('byLang'))
     }
 }
 
-if (!function_exists('___'))
-{
+if (!function_exists('___')) {
     function ___(...$values)
     {
         return value(byLang(...$values));
     }
 }
 
-if (!function_exists('trim2'))
-{
+if (!function_exists('trim2')) {
+    /**
+     * @deprecated 
+     *
+     * @param string|array $value
+     * @return string
+     */
     function trim2(string|array $value)
     {
         if (is_string($value))
@@ -81,8 +99,7 @@ if (!function_exists('trim2'))
     }
 }
 
-if (!function_exists('pov'))
-{
+if (!function_exists('pov')) {
     function pov()
     {
         return POV::make();

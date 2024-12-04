@@ -4,10 +4,8 @@ namespace Mmb\Action\Update;
 
 use Closure;
 use Illuminate\Support\Arr;
-use Mmb\Action\Memory\Step;
-use Mmb\Action\Memory\StepEvent;
+use Mmb\Action\Action;
 use Mmb\Action\Memory\StepHandlerPipe;
-use Mmb\Action\Middle\MiddleAction;
 use Mmb\Action\Middle\MiddleActionHandledUpdateHandling;
 use Mmb\Action\Section\Controllers\CallbackControlGroupHandler;
 use Mmb\Action\Section\Controllers\CallbackControlHandler;
@@ -17,8 +15,8 @@ use Mmb\Context;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Step\ConvertableToStepping;
-use Mmb\Support\Step\Stepping;
+use Mmb\Support\Step\ConvertableToStepper;
+use Mmb\Support\Step\Stepper;
 
 class HandlerFactory
 {
@@ -283,7 +281,7 @@ class HandlerFactory
         );
     }
 
-    protected ?Stepping $stepRecord = null;
+    protected ?Stepper $stepperRecord = null;
 
     /**
      * Use a step record
@@ -356,7 +354,7 @@ class HandlerFactory
             autoSave: $autoSave,
         );
 
-        if ($this->dynamicArgs[$name] instanceof Stepping) {
+        if ($this->dynamicArgs[$name] instanceof Stepper) {
             $this->stepAs($this->dynamicArgs[$name]);
         }
 
@@ -366,13 +364,13 @@ class HandlerFactory
     /**
      * Set step record as
      *
-     * @param string|Stepping|ConvertableToStepping|Closure $value
+     * @param string|Stepper|ConvertableToStepper|Closure $value
      * @return $this
      */
-    public function stepAs(string|Stepping|ConvertableToStepping|Closure $value)
+    public function stepAs(string|Stepper|ConvertableToStepper|Closure $value)
     {
-        if ($value instanceof ConvertableToStepping) {
-            $value = $value->toStepping();
+        if ($value instanceof ConvertableToStepper) {
+            $value = $value->toStepper();
         }
 
         $value = $this->value($value);
@@ -381,7 +379,7 @@ class HandlerFactory
             $value = $this->dynamicArgs[$value];
         }
 
-        $this->stepRecord = $value;
+        $this->stepperRecord = $value;
 
         return $this;
     }
@@ -413,9 +411,9 @@ class HandlerFactory
         try {
             $this->context->update->isHandled = false;
 
-            if ($this->stepRecord) {
-                Step::setModel($this->stepRecord);
-                StepEvent::fire('begin', $this->context->update);
+            if ($this->stepperRecord) {
+                $this->context->stepFactory->setModel($this->stepperRecord);
+                $this->context->stepFactory->fire('begin', $this->context, $this->context->update);
             }
 
             if (!$this->context->update->isHandled) {
@@ -441,14 +439,16 @@ class HandlerFactory
                             }
 
                             if (is_string($handler)) {
-                                if (is_a($handler, MiddleAction::class, true)) {
-                                    $handler = $handler::make();
+                                if (is_a($handler, Action::class, true)) {
+                                    $handler = $handler::makeByContext($this->context);
                                 }
-                                $handler = new $handler;
+                                else {
+                                    $handler = new $handler;
+                                }
                             }
 
                             $this->context->update->isHandled = true;
-                            $handler->handleUpdate($this->context->update);
+                            $handler->handleUpdate($this->context, $this->context->update);
 
                             if ($this->context->update->isHandled) {
                                 break 2;
@@ -467,7 +467,7 @@ class HandlerFactory
                 }
             }
 
-            StepEvent::fire('end', $this->context->update);
+            $this->context->stepFactory?->fire('end', $this->context->update);
 
             if ($final) {
                 $this->call($final);
@@ -479,8 +479,8 @@ class HandlerFactory
                 $record->save();
             }
         } finally {
-            if ($this->stepRecord) {
-                Step::setModel(null);
+            if ($this->stepperRecord) {
+                $this->context->stepFactory->setModel(null);
             }
         }
 
@@ -495,8 +495,8 @@ class HandlerFactory
      */
     public function step()
     {
-        if ($this->stepRecord) {
-            return new StepHandlerPipe($this->stepRecord);
+        if ($this->stepperRecord) {
+            return new StepHandlerPipe($this->stepperRecord);
         }
 
         throw new \InvalidArgumentException("Step model is not set");

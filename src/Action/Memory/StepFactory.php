@@ -3,26 +3,33 @@
 namespace Mmb\Action\Memory;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
-use Mmb\Support\Step\ConvertableToStepping;
-use Mmb\Support\Step\Stepping;
+use Mmb\Support\Step\ConvertableToStepper;
+use Mmb\Support\Step\Stepper;
 
 class StepFactory
 {
 
-    public ?Stepping $model = null;
+    public function __construct(
+        public Context $context,
+    )
+    {
+    }
+
+    public ?Stepper $model = null;
 
     /**
      * Set related model
      *
-     * @param Stepping|ConvertableToStepping|null $model
+     * @param Stepper|ConvertableToStepper|null $model
      * @return void
      */
-    public function setModel(Stepping|ConvertableToStepping|null $model)
+    public function setModel(Stepper|ConvertableToStepper|null $model)
     {
-        if ($model instanceof ConvertableToStepping)
+        if ($model instanceof ConvertableToStepper)
         {
-            $model = $model->toStepping();
+            $model = $model->toStepper();
         }
 
         $this->model = $model;
@@ -31,7 +38,7 @@ class StepFactory
     /**
      * Get related model
      *
-     * @return Stepping|null
+     * @return Stepper|null
      */
     public function getModel()
     {
@@ -60,7 +67,7 @@ class StepFactory
 
         $this->model->setStep($step);
 
-        $destroyedStep?->fire('lost', app(Update::class));
+        $destroyedStep?->fire('lost', $this->context, $this->context->update);
     }
 
     /**
@@ -76,6 +83,18 @@ class StepFactory
         }
 
         return $this->model->getStep();
+    }
+
+    /**
+     * Fire current step event
+     *
+     * @param string $event
+     * @param ...$args
+     * @return mixed
+     */
+    public function fire(string $event, ...$args)
+    {
+        return $this->get()?->fire($event, ...$args);
     }
 
 }

@@ -10,6 +10,7 @@ use Mmb\Action\Filter\FilterableShort;
 use Mmb\Action\Filter\FilterFailException;
 use Mmb\Action\Filter\HasEventFilter;
 use Mmb\Action\Filter\Rules\FilterFailAnyway;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
@@ -301,7 +302,7 @@ class Input implements Menuable
         }
         else
         {
-            $this->value = $this->passFilter($update)[2];
+            $this->value = $this->passFilter($this->form->context, $update)[2];
             $this->fire('filled');
         }
 
@@ -393,10 +394,11 @@ class Input implements Menuable
      * Default fail catching
      *
      * @param FilterFailException $e
-     * @param Update              $update
+     * @param Context $context
+     * @param Update $update
      * @return void
      */
-    protected function defaultFailCatch(FilterFailException $e, Update $update)
+    protected function defaultFailCatch(FilterFailException $e, Context $context, Update $update)
     {
         $this->form->error($e);
     }

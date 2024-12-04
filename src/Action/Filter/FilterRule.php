@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Filter;
 
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 abstract class FilterRule
@@ -10,11 +11,12 @@ abstract class FilterRule
     /**
      * Pass update and check filter
      *
+     * @param Context $context
      * @param Update $update
      * @param        $value
      * @return void
      */
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
     }
 

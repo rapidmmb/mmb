@@ -4,6 +4,7 @@ namespace Mmb\Action\Filter\Rules;
 
 use Closure;
 use Mmb\Action\Filter\FilterRule;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FilterCallback extends FilterRule
@@ -15,10 +16,9 @@ class FilterCallback extends FilterRule
     {
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
-        $fn = $this->callback;
-        $fn($update, $value, $this);
+        ($this->callback)($update, $value, $this);
     }
 
 }

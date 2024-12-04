@@ -12,10 +12,11 @@ use Mmb\Core\Updates\Infos\UserInfo;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Step\ConvertableToStepping;
-use Mmb\Support\Step\Stepping;
+use Mmb\Support\Step\ConvertableToStepper;
+use Mmb\Support\Step\Stepper;
 use Throwable;
 
+// todo : this can be better now ! using context
 class POVBuilder
 {
     use Conditionable;
@@ -257,12 +258,12 @@ class POVBuilder
     /**
      * Set the current user
      *
-     * @param Stepping|ConvertableToStepping $user
+     * @param Stepper|ConvertableToStepper $user
      * @param bool                           $save
      * @param ?bool                          $changeUpdate
      * @return $this
      */
-    public function user(Stepping|ConvertableToStepping $user, bool $save = true, ?bool $changeUpdate = null)
+    public function user(Stepper|ConvertableToStepper $user, bool $save = true, ?bool $changeUpdate = null)
     {
         $oldCurrentModel = null;
         $oldGuardUser = null;
@@ -270,9 +271,9 @@ class POVBuilder
         $isSame = false;
         $store = [];
 
-        if ($user instanceof ConvertableToStepping)
+        if ($user instanceof ConvertableToStepper)
         {
-            $user = $user->toStepping();
+            $user = $user->toStepper();
         }
 
         if ($changeUpdate ?? !isset($this->update))

@@ -10,8 +10,8 @@ use Mmb\Support\Db\HasFinder;
 use Mmb\Support\Db\ModelFinder;
 use Mmb\Support\Pov\POV;
 use Mmb\Support\Pov\POVFactory;
-use Mmb\Support\Step\ConvertableToStepping;
-use Mmb\Support\Step\Stepping;
+use Mmb\Support\Step\ConvertableToStepper;
+use Mmb\Support\Step\Stepper;
 use Mmb\Tests\TestCase;
 
 class POVTest extends TestCase
@@ -150,13 +150,13 @@ class POVTest extends TestCase
     public function test_changing_the_user_by_convertable()
     {
         $fake = new UserTest();
-        $fakeConvertable = new class($fake) implements ConvertableToStepping
+        $fakeConvertable = new class($fake) implements ConvertableToStepper
         {
             public function __construct(public $fake)
             {
             }
 
-            public function toStepping() : Stepping
+            public function toStepper() : Stepper
             {
                 return $this->fake;
             }
@@ -169,7 +169,7 @@ class POVTest extends TestCase
 
 }
 
-class UserTest extends Model implements Stepping
+class UserTest extends Model implements Stepper
 {
     use HasFinder;
 

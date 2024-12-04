@@ -189,14 +189,11 @@ class FormKeyBuilder implements Arrayable
     /**
      * Get pressed key
      *
-     * @param Update|null $update
+     * @param Update $update
      * @return array|false
      */
-    public function getPressedAction(?Update $update = null)
+    public function getPressedAction(Update $update)
     {
-        /** @var Update $update */
-        $update ??= app(Update::class);
-
         $this->makeReady();
 
         $actionKey = FormKey::getActionKeyFromUpdate($update);

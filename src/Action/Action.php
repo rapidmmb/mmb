@@ -43,6 +43,11 @@ abstract class Action
         $this->boot();
     }
 
+    public static function makeByContext(Context $context): static
+    {
+        return new static($context);
+    }
+
     /**
      * Boot action
      *
@@ -184,9 +189,9 @@ abstract class Action
      * @param        ...$args
      * @return mixed
      */
-    public static function invokes(string $method, ...$args)
+    public static function invokes(Context $context, string $method, ...$args)
     {
-        return (method_exists(static::class, 'make') ? static::make() : new static)->invoke($method, ...$args);
+        return static::makeByContext($context)->invoke($method, ...$args);
     }
 
     /**
@@ -197,9 +202,9 @@ abstract class Action
      * @param array $dynamicArgs
      * @return mixed
      */
-    public static function invokeDynamics(string $method, array $normalArgs = [], array $dynamicArgs = [])
+    public static function invokeDynamics(Context $context, string $method, array $normalArgs = [], array $dynamicArgs = [])
     {
-        return (method_exists(static::class, 'make') ? static::make() : new static)->invokeDynamic($method, $normalArgs, $dynamicArgs);
+        return static::makeByContext($context)->invokeDynamic($method, $normalArgs, $dynamicArgs);
     }
 
 

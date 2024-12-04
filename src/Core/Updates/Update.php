@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Mmb\Action\Update\CancelHandlingException;
 use Mmb\Action\Update\RepeatHandlingException;
 use Mmb\Action\Update\StopHandlingException;
+use Mmb\Context;
 use Mmb\Core\Data;
 use Mmb\Core\Updates\Callbacks\CallbackQuery;
 use Mmb\Core\Updates\Infos\ChatInfo;
@@ -188,9 +189,9 @@ class Update extends Data
      *
      * @return void
      */
-    public function handle()
+    public function handle(Context $context)
     {
-        $this->bot()->handleUpdate($this);
+        $this->bot()->handleUpdate($context, $this);
     }
 
 
