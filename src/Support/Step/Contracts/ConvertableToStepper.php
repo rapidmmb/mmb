@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\Support\Step;
+namespace Mmb\Support\Step\Contracts;
 
 interface ConvertableToStepper
 {

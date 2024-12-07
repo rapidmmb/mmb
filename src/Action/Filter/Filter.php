@@ -126,7 +126,7 @@ class Filter extends FilterRule
 
                 // AND group
                 foreach ($group as $rule) {
-                    $rule->pass($update, $initValue);
+                    $rule->pass($context, $update, $initValue);
                 }
 
                 // Passed

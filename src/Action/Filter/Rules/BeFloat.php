@@ -20,7 +20,7 @@ class BeFloat extends BeText
 
     public function pass(Context $context, Update $update, &$value)
     {
-        parent::pass($update, $value);
+        parent::pass($context, $update, $value);
 
         $text = $update->message->text;
         if ($this->unsigned)

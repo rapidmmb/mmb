@@ -119,7 +119,7 @@ class MiddleAction extends Section implements UpdateHandling
             if (class_exists($class) && is_a($class, Action::class, true)) {
 
                 $class::makeByContext($this->context)->invoke($method, ...$this->redirectWith, ...$args);
-                $this->update()->forget(static::class . '::ran');
+                $this->context->forget(static::class . '::ran');
                 return true;
 
             }
@@ -169,7 +169,7 @@ class MiddleAction extends Section implements UpdateHandling
      */
     private function checksIsRequired(...$args)
     {
-        if ($this->ignoreLoop && $this->update()->get(static::class . '::ran')) {
+        if ($this->ignoreLoop && $this->context->get(static::class . '::ran')) {
             return false;
         }
 

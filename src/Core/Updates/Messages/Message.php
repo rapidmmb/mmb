@@ -202,7 +202,7 @@ class Message extends Data
                 null !== $this->groupChatCreated      => 'groupChatCreated',
                 null !== $this->supergroupChatCreated => 'supergroupChatCreated',
                 null !== $this->channelChatCreated    => 'channelChatCreated',
-                null !== $this->invoice               => 'invoice',
+//                null !== $this->invoice               => 'invoice',
                 null !== $this->userShared            => 'userShared',
                 null !== $this->usersShared           => 'usersShared',
                 null !== $this->chatShared            => 'chatShared',

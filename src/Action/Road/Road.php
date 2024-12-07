@@ -321,7 +321,7 @@ class Road extends Action
      */
     public function back()
     {
-        Behavior::back(static::class);
+        Behavior::back($this->context, static::class);
     }
 
     /**

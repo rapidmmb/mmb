@@ -143,7 +143,7 @@ class ResourceSection extends Section
      */
     public function back()
     {
-        Behavior::back(static::class);
+        Behavior::back($this->context, static::class);
     }
 
 }

@@ -35,7 +35,7 @@ class SectionAbortTest extends TestCase
 
     public function test_abort()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             public function main()
             {

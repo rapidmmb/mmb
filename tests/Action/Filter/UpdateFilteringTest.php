@@ -29,14 +29,14 @@ class UpdateFilteringTest extends TestCase
 
     public function assertSuccess($value, Filter $filter, Update $update)
     {
-        $this->assertSame($value, $filter->filter($update));
+        $this->assertSame($value, $filter->filter($this->context, $update));
     }
 
     public function assertFail(string $description = null, Filter $filter, Update $update)
     {
         try
         {
-            $filter->filter($update);
+            $filter->filter($this->context, $update);
             $this->assertTrue(false, "Expected filter failing, but not failed");
         }
         catch (FilterFailException $e)
@@ -53,7 +53,7 @@ class UpdateFilteringTest extends TestCase
         $update = UpdateFaker::message(MessageFaker::simpleText("Hi"));
 
         $this->assertSuccess('Hi', Filter::make()->text(), $update);
-        $this->assertSame("Hi", Filter::make()->message()->filter($update)?->text);
+        $this->assertSame("Hi", Filter::make()->message()->filter($this->context, $update)?->text);
 
         // $this->assertFail(Filter::make()->int(), $update);
     }

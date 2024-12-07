@@ -72,7 +72,6 @@ class HandleFactory
         try {
 //            Container::getInstance()->instance(Update::class, $update); todo remove
             $context->update = $update;
-            $context->stepFactory = new StepFactory($context);
 
             if (!$this->handlers && !$mergedHandlers) {
                 throw new \Exception("Handlers is not set");

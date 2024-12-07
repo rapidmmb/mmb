@@ -3,8 +3,8 @@
 namespace Mmb\Action\Memory;
 
 use Illuminate\Support\Facades\Facade;
-use Mmb\Support\Step\ConvertableToStepper;
-use Mmb\Support\Step\Stepper;
+use Mmb\Support\Step\Contracts\ConvertableToStepper;
+use Mmb\Support\Step\Contracts\Stepper;
 
 /**
  * @deprecated

@@ -4,9 +4,8 @@ namespace Mmb\Action\Memory;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Mmb\Context;
-use Mmb\Core\Updates\Update;
-use Mmb\Support\Step\ConvertableToStepper;
-use Mmb\Support\Step\Stepper;
+use Mmb\Support\Step\Contracts\ConvertableToStepper;
+use Mmb\Support\Step\Contracts\Stepper;
 
 class StepFactory
 {

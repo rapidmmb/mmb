@@ -50,7 +50,7 @@ class InlineFormRunner extends Form
 
     protected function onBackDefault(bool $finished = true)
     {
-        Behavior::back($this->inlineDefinedClass, dynamicArgs: [
+        Behavior::back($this->context, $this->inlineDefinedClass, dynamicArgs: [
             'form' => $this,
             'finished' => $finished,
         ]);

@@ -12,7 +12,7 @@ class ActionTest extends TestCase
 
     public function test_invoke()
     {
-        $action = new class extends Action
+        $action = new class($this->context) extends Action
         {
             public function main()
             {

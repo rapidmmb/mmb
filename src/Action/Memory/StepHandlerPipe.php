@@ -5,7 +5,7 @@ namespace Mmb\Action\Memory;
 use Mmb\Action\Update\UpdateHandling;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
-use Mmb\Support\Step\Stepper;
+use Mmb\Support\Step\Contracts\Stepper;
 
 class StepHandlerPipe implements UpdateHandling
 {

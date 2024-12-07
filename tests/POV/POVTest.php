@@ -5,13 +5,13 @@ namespace Mmb\Tests\POV;
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Memory\Step;
 use Mmb\Action\Memory\StepHandler;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Db\HasFinder;
 use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Pov\POV;
 use Mmb\Support\Pov\POVFactory;
-use Mmb\Support\Step\ConvertableToStepper;
-use Mmb\Support\Step\Stepper;
+use Mmb\Support\Step\Contracts\ConvertableToStepper;
+use Mmb\Support\Step\Contracts\Stepper;
 use Mmb\Tests\TestCase;
 
 class POVTest extends TestCase
@@ -19,137 +19,48 @@ class POVTest extends TestCase
 
     public function test_changing_the_update_and_revert_it()
     {
-        $original = new Update([]);
-        $fake = new Update([]);
+        $original = $this->context;
+        $original->put('foo', 'bar');
 
-        app()->singleton(Update::class, fn() => $original);
-        $this->assertSame($original, app(Update::class));
-
-        pov()->update($fake)->run(
-            fn () => $this->assertSame($fake, app(Update::class)),
+        pov()->put('foo', 'not bar')->run(
+            function (Context $context) use ($original) {
+                $this->assertNotSame($original, $context);
+                $this->assertSame('not bar', $context->foo);
+            },
         );
-
-        $this->assertSame($original, app(Update::class));
     }
 
     public function test_changing_the_user_and_revert_it()
     {
-        $original = new UserTest();
-        $fake = new UserTest();
-
-        ModelFinder::storeCurrent($original);
+        $fake = new UserTest(['id' => 100]);
 
         pov()->user($fake)->run(
-            fn() => $this->assertSame($fake, UserTest::current())
+            fn(Context $context) => $this->assertSame($fake, $context->stepper)
         );
-
-        $this->assertSame($original, UserTest::current());
-        $this->assertSame(true, $fake->isSaved);
     }
 
     public function test_pov_with_start_and_end_functions()
     {
-        $original = new Update([]);
         $fake = new Update([]);
 
-        app()->singleton(Update::class, fn() => $original);
-        $this->assertSame($original, app(Update::class));
-
         $pov = pov()->update($fake);
-        $pov->start();
+        $context = $pov->toContext();
 
-        $this->assertSame($fake, app(Update::class));
-
-        $pov->end();
-
-        $this->assertSame($original, app(Update::class));
+        $this->assertSame($fake, $context->update);
     }
 
-    public function test_changin_user_changed_the_chat_id()
+    public function test_changing_user_changed_the_chat_id()
     {
-        $original = new UserTest(['id' => 1234]);
         $fake = new UserTest(['id' => 5678]);
 
-        ModelFinder::storeCurrent($original);
-
         pov()->user($fake)->run(
-            fn() => $this->assertSame($fake->id, update()->getChat()->id)
+            fn(Context $context) => $this->assertSame($fake->id, $context->update->getChat()->id)
         );
-    }
-
-    public function test_pov_double_start()
-    {
-        $fake = new Update([]);
-
-        $pov = pov()->update($fake);
-
-        $pov->start();
-
-        try
-        {
-            $pov->start();
-            $this->assertTrue(false, "Not exception thrown");
-        }
-        catch (\RuntimeException $e)
-        {
-            $this->assertSame("The POV already started", $e->getMessage());
-        }
-    }
-
-    public function test_pov_end_without_start()
-    {
-        $fake = new Update([]);
-
-        $pov = pov()->update($fake);
-
-        try
-        {
-            $pov->end();
-            $this->assertTrue(false, "Not exception thrown");
-        }
-        catch (\RuntimeException $e)
-        {
-            $this->assertSame("The POV is not started", $e->getMessage());
-        }
-    }
-
-    public function test_pov_user_with_advanced_events()
-    {
-        $povFactory = new POVFactory();
-        $original = new UserTest(['id' => 1]);
-        $fake = new UserTest(['id' => 2]);
-        $invoked = 0;
-
-        $povFactory->bindingUser(
-            function ($user, $old, $isSame) use($original, $fake, &$invoked)
-            {
-                $this->assertSame($user, $fake);
-                $this->assertSame($old, $original);
-                $this->assertSame(false, $isSame);
-                $invoked++;
-
-                return 'Foo';
-            },
-            function ($user, $old, $isSame, $store) use($original, $fake, &$invoked)
-            {
-                $invoked++;
-                $this->assertSame('Foo', $store);
-            },
-        );
-
-        Step::setModel($original);
-        ModelFinder::storeCurrent($original);
-
-        $povFactory->make()->user($fake)->run(
-            fn() => null,
-        );
-
-        $this->assertSame(2, $invoked);
     }
 
     public function test_changing_the_user_by_convertable()
     {
-        $fake = new UserTest();
+        $fake = new UserTest(['id' => 100]);
         $fakeConvertable = new class($fake) implements ConvertableToStepper
         {
             public function __construct(public $fake)
@@ -163,7 +74,7 @@ class POVTest extends TestCase
         };
 
         pov()->user($fakeConvertable)->run(
-            fn() => $this->assertSame($fake, UserTest::current())
+            fn(Context $context) => $this->assertSame($fake, $context->stepper)
         );
     }
 

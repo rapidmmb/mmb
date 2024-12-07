@@ -3,23 +3,20 @@
 namespace Mmb\Support\Pov;
 
 use Closure;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Mmb\Action\Action;
-use Mmb\Action\Memory\Step;
-use Mmb\Core\Bot;
+use Mmb\Context;
 use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Update;
-use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Step\ConvertableToStepper;
-use Mmb\Support\Step\Stepper;
+use Mmb\Support\Step\Contracts\ConvertableToStepper;
+use Mmb\Support\Step\Contracts\Stepper;
 
 class POVFactory
 {
 
-    public function make()
+    public function make(?Context $base = null)
     {
-        return new POVBuilder($this);
+        return new POVBuilder($this, $base);
     }
+
 
     /**
      * @deprecated
@@ -29,9 +26,10 @@ class POVFactory
         Stepper|ConvertableToStepper|null $user,
         Closure|array                     $callback,
         bool                              $save = false,
+        ?Context                          $base = null,
     )
     {
-        return $this->make()
+        return $this->make($base)
             ->update($update)
             ->when($user)
             ->user($user, $save)
@@ -43,9 +41,10 @@ class POVFactory
         Stepper|ConvertableToStepper|null $user,
         Closure|array                     $callback,
         bool                              $save = false,
+        ?Context $base = null,
     )
     {
-        return $this->make()
+        return $this->make($base)
             ->updateChat($chat)
             ->when($user)
             ->user($user, $save)
@@ -56,37 +55,12 @@ class POVFactory
         Stepper|ConvertableToStepper $user,
         Closure|array                $callback,
         bool                         $save = true,
+        ?Context $base = null,
     )
     {
-        return $this->make()
+        return $this->make($base)
             ->user($user, $save)
             ->run($callback);
-    }
-
-    public array $bindingUserCallbacks = [];
-
-    public function bindingUser(Closure $apply, Closure $revert)
-    {
-        $this->bindingUserCallbacks[] = [$apply, $revert];
-    }
-
-    public function fireApplyingUser(Stepper $user, ?Stepper $old, bool $isSame)
-    {
-        $store = [];
-        foreach ($this->bindingUserCallbacks as $callback)
-        {
-            $store[] = $callback[0]($user, $old, $isSame);
-        }
-
-        return $store;
-    }
-
-    public function fireRevertingUser(Stepper $user, ?Stepper $old, bool $isSame, array $store)
-    {
-        foreach ($this->bindingUserCallbacks as $i => $callback)
-        {
-            $callback[1]($user, $old, $isSame, $store[$i] ?? null);
-        }
     }
 
 }

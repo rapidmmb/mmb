@@ -30,11 +30,9 @@ abstract class Station extends Section
         public readonly Sign $sign,
 
         public string        $name,
-
-        Update               $update = null,
     )
     {
-        parent::__construct($update);
+        parent::__construct($road->context);
     }
 
     public function menu(string $name, ...$args)

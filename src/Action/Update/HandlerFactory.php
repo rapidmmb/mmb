@@ -15,8 +15,8 @@ use Mmb\Context;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Step\ConvertableToStepper;
-use Mmb\Support\Step\Stepper;
+use Mmb\Support\Step\Contracts\ConvertableToStepper;
+use Mmb\Support\Step\Contracts\Stepper;
 
 class HandlerFactory
 {

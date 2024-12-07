@@ -11,12 +11,12 @@ use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Text;
 use Mmb\Tests\TestCase;
 
-class ExtendsSignTest extends TestCase
+class ExtendsTestSignTest extends TestCase
 {
 
     public function test_define_method()
     {
-        $sign = new class(new Road()) extends _TestSign
+        $sign = new class(new Road($this->context)) extends _TestSign
         {
             protected function boot()
             {
@@ -35,7 +35,7 @@ class ExtendsSignTest extends TestCase
 
     public function test_define_label()
     {
-        $road = new Road;
+        $road = new Road($this->context);
         $sign = new class($road) extends _TestSign
         {
             protected function boot()
@@ -60,7 +60,7 @@ class ExtendsSignTest extends TestCase
                 return $this->getDefinedLabel($station, 'testLabel');
             }
         };
-        $station = new _TestStation($road, $sign);
+        $station = new _TestStation($road, $sign, 'test');
 
         $this->assertSame('#Foo#', $sign->getTestLabel($station));
 
@@ -80,7 +80,7 @@ class ExtendsSignTest extends TestCase
 
     public function test_define_message()
     {
-        $road = new Road;
+        $road = new Road($this->context);
         $sign = new class($road) extends _TestSign
         {
             protected function boot()
@@ -118,7 +118,7 @@ class ExtendsSignTest extends TestCase
                 return $this->getDefinedMessage($station, 'message');
             }
         };
-        $station = new _TestStation($road, $sign);
+        $station = new _TestStation($road, $sign, 'test');
 
         $markdown2 = Text::mode('MarkDown2');
         $html = Text::mode('Html');
