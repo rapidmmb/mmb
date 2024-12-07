@@ -203,7 +203,7 @@ class Road extends Action
         $sign = $this->getSignOf($name);
 
         $sign->fire('creatingStation');
-        $station = $sign->createStation($name, $this->update());
+        $station = $sign->createStation($name);
         $sign->fire('createdStation', station: $station);
 
         return $station;

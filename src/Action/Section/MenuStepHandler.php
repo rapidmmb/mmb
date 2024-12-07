@@ -11,6 +11,7 @@ use Mmb\Action\Memory\Attributes\StepHandlerSerialize as Serialize;
 use Mmb\Action\Memory\Attributes\StepHandlerShortClass as ShortClass;
 use Mmb\Action\Memory\Attributes\StepHandlerArray as AsArray;
 use Mmb\Action\Memory\StepHandler;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class MenuStepHandler extends InlineStepHandler
@@ -20,9 +21,9 @@ class MenuStepHandler extends InlineStepHandler
     #[AsArray]
     public $actionMap;
 
-    protected function makeInlineAction(Update $update) : ?InlineAction
+    protected function makeInlineAction(Context $context, Update $update) : ?InlineAction
     {
-        return Menu::makeFromStep($this, $update);
+        return Menu::makeFromStep($context, $this, $update);
     }
 
 }

@@ -3,6 +3,7 @@
 namespace Mmb\Action\Middle;
 
 use Mmb\Action\Update\UpdateHandling;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class MiddleActionHandledUpdateHandling implements UpdateHandling
@@ -33,7 +34,7 @@ class MiddleActionHandledUpdateHandling implements UpdateHandling
         return $this;
     }
 
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
         if($middle = $update->get('middle-action-handled'))
         {
@@ -49,7 +50,7 @@ class MiddleActionHandledUpdateHandling implements UpdateHandling
                 return;
             }
 
-            $this->class::make($update)->invoke($this->method, ...$this->args);
+            $this->class::makeByContext($context)->invoke($this->method, ...$this->args);
             return;
         }
 

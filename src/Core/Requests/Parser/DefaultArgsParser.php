@@ -174,6 +174,8 @@ class DefaultArgsParser extends ArgsParserFactory
                 $type => $value,
             ];
         }
+
+        return [];
     }
 
 }

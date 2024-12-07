@@ -161,12 +161,11 @@ class ListSign extends Sign
      * Create list station
      *
      * @param string $name
-     * @param Update $update
      * @return ListStation
      */
-    public function createStation(string $name, Update $update) : Station
+    public function createStation(string $name) : Station
     {
-        return new ListStation($this->road, $this, $name, $update);
+        return new ListStation($this->road, $this, $name);
     }
 
 

@@ -6,6 +6,7 @@ use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
 use Mmb\Action\Memory\Attributes\StepHandlerShortClass as ShortClass;
 use Mmb\Action\Memory\StepHandler;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class NextStepHandler extends StepHandler
@@ -34,11 +35,11 @@ class NextStepHandler extends StepHandler
         return $this;
     }
 
-    public function handle(Update $update) : void
+    public function handle(Context $context, Update $update) : void
     {
         if (class_exists($this->action) && method_exists($this->action, 'make'))
         {
-            $action = $this->action::make($update);
+            $action = $this->action::makeByContext($context);
             $action->invoke($this->method);
             return;
         }

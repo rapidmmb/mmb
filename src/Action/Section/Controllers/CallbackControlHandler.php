@@ -3,6 +3,7 @@
 namespace Mmb\Action\Section\Controllers;
 
 use Mmb\Action\Update\UpdateHandling;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class CallbackControlHandler implements UpdateHandling
@@ -14,11 +15,11 @@ class CallbackControlHandler implements UpdateHandling
     {
     }
 
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
         if($update->callbackQuery)
         {
-            $object = $this->class::make($update);
+            $object = $this->class::makeByContext($context);
             /** @var ?QueryMatchPattern $pattern */
             if($pattern = $object->getCallbackMatcher()->findPattern($update->callbackQuery->data))
             {

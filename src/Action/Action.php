@@ -26,9 +26,6 @@ use Mmb\Support\Caller\StatusHandleBackException;
 use Mmb\Support\Db\ModelFinder;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-/**
- * @property $update
- */
 abstract class Action
 {
     use HasAttributeLoader;

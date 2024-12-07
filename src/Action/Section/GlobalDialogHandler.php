@@ -3,6 +3,7 @@
 namespace Mmb\Action\Section;
 
 use Mmb\Action\Update\UpdateHandling;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Db\ModelFinder;
 
@@ -85,19 +86,19 @@ class GlobalDialogHandler implements UpdateHandling
         return !is_object($this->found) || $this->found->user_id == $this->lastUpdate->bot()->guard()->user()->id;
     }
 
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
         if ($this->check($update))
         {
             if (is_object($this->found))
             {
-                $this->found->target?->handle($update);
+                $this->found->target?->handle($context, $update);
             }
             else
             {
                 [$class, $method, $action] = $this->found;
 
-                $class::make()->dialog($method)->handle($update);
+                $class::makeByContext($context)->dialog($method)->handle($update);
             }
         }
 

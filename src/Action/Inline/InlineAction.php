@@ -433,8 +433,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function haveEnum(string $name, string $class, &$value, $default = null)
     {
-        if(is_a($class, \UnitEnum::class))
-        {
+        if (is_a($class, \UnitEnum::class)) {
             return $this->haveAs(
                 $name,
                 $value,
@@ -455,8 +454,7 @@ abstract class InlineAction implements ConvertableToStep
                 $default,
             );
         }
-        elseif(is_a($class, \BackedEnum::class))
-        {
+        elseif(is_a($class, \BackedEnum::class)) {
             return $this->haveAs(
                 $name,
                 $value,
@@ -465,6 +463,9 @@ abstract class InlineAction implements ConvertableToStep
                 count(func_get_args()) > 3,
                 $default,
             );
+        }
+        else {
+            throw new \TypeError("Expected UnitEnum or BackedEnum, given {$class}");
         }
     }
 
@@ -677,13 +678,14 @@ abstract class InlineAction implements ConvertableToStep
     /**
      * Make new instance from step
      *
+     * @param Context $context
      * @param InlineStepHandler $step
-     * @param Update            $update
+     * @param Update $update
      * @return $this
      */
-    public static function makeFromStep(InlineStepHandler $step, Update $update) : static
+    public static function makeFromStep(Context $context, InlineStepHandler $step, Update $update) : static
     {
-        $inline = new static($update);
+        $inline = new static($context);
         $inline->isCreating = false;
         $inline->loadFromStep($step, $update);
 
