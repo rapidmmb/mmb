@@ -623,7 +623,7 @@ class Menu extends InlineAction implements Menuable
 
         $name->invoke(
             $this->initializerClass,
-            $update,
+            $this->context,
             $args,
             [
                 'sender' => $this,

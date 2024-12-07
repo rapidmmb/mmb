@@ -467,7 +467,7 @@ class HandlerFactory
                 }
             }
 
-            $this->context->stepFactory?->fire('end', $this->context->update);
+            $this->context->stepFactory?->fire('end', $this->context, $this->context->update);
 
             if ($final) {
                 $this->call($final);
