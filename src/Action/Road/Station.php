@@ -218,8 +218,8 @@ abstract class Station extends Section
                     [$resolver, $ref] = $resolvers[$name] ?? [null, null];
 
                     $this->psCall[$name]
-                        = $pass[$name] = $resolver ? $resolver->getStationParameterForLoad($ref, $value) : $value;
-                    $this->ps[$name] = $resolver ? $resolver->getStationParameterForStore($ref, $value) : $value;
+                        = $pass[$name] = $resolver ? $resolver->getStationParameterForLoad($this->context, $ref, $value) : $value;
+                    $this->ps[$name] = $resolver ? $resolver->getStationParameterForStore($this->context, $ref, $value) : $value;
                 }
                 elseif (!$callback)
                 {
@@ -268,6 +268,7 @@ abstract class Station extends Section
             if ($resolver)
             {
                 $data[$keep] = $resolver->getStationPropertyForStore(
+                    $this->context,
                     new \ReflectionProperty($this, $keep), $this->$keep
                 );
             }
@@ -310,7 +311,7 @@ abstract class Station extends Section
 
                 if ($resolver)
                 {
-                    $this->$name = $resolver->getStationPropertyForLoad(new \ReflectionProperty($this, $name), $value);
+                    $this->$name = $resolver->getStationPropertyForLoad($this->context, new \ReflectionProperty($this, $name), $value);
                     continue;
                 }
             }
@@ -335,7 +336,7 @@ abstract class Station extends Section
                     /** @var ?StationParameterResolverAttributeContract $resolver */
                     [$resolver, $ref] = $resolvers[$name] ?? [null, null];
 
-                    $this->psCall[$name] = $resolver ? $resolver->getStationParameterForLoad($ref, $value) : $value;
+                    $this->psCall[$name] = $resolver ? $resolver->getStationParameterForLoad($this->context, $ref, $value) : $value;
                 }
             }
         }

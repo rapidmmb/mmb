@@ -7,7 +7,7 @@ use Mmb\Action\Action;
 use Mmb\Context;
 
 /**
- * @method static mixed invoke($callable, array $normalArgs, array $dynamicArgs = [])
+ * @method static mixed invoke(Context $context, $callable, array $normalArgs, array $dynamicArgs = [])
  * @method static mixed invokeAction(Context $context, array|string|Action $callable, array $normalArgs, array $dynamicArgs = [])
  * @method static array splitArguments(array $args)
  */

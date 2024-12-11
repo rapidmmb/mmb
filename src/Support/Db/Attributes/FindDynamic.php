@@ -14,9 +14,9 @@ use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
 use Mmb\Action\Road\Attributes\StationPropertyResolverAttributeContract;
+use Mmb\Context;
 use Mmb\Exceptions\AbortException;
 use Mmb\Support\Caller\Attributes\CallingPassParameterInsteadContract;
-use Mmb\Support\Db\ModelFinder;
 use ReflectionParameter;
 use ReflectionProperty;
 use ReflectionType;
@@ -90,7 +90,7 @@ class FindDynamic implements
      * @param $value
      * @return mixed
      */
-    protected function getStorableValue($value)
+    protected function getStorableValue(Context $context, $value)
     {
         if ($value instanceof Model)
         {
@@ -107,7 +107,7 @@ class FindDynamic implements
                 );
             }
 
-            return ModelFinder::storeDynamic($value, $this->by);
+            return $context->finder->storeDynamic($value, $this->by);
         }
 
         return $value;
@@ -119,7 +119,7 @@ class FindDynamic implements
      * @param $value
      * @return Model|mixed
      */
-    protected function getUsableValue($value)
+    protected function getUsableValue(Context $context, $value)
     {
         if ($value instanceof Model)
         {
@@ -136,7 +136,7 @@ class FindDynamic implements
             throw new AbortException($this->error ?? 404, $this->failMessage);
         }
 
-        return ModelFinder::findDynamic(
+        return $context->finder->findDynamic(
             $this->classType,
             $value,
             by         : $this->by,
@@ -147,7 +147,7 @@ class FindDynamic implements
     }
 
 
-    public function registerInlineParameter(InlineRegister $register, string $name)
+    public function registerInlineParameter(Context $context, InlineRegister $register, string $name)
     {
         $this->setClassTypeUsing(
             (new \ReflectionParameter($register->init, $name))->getType()
@@ -156,27 +156,27 @@ class FindDynamic implements
         if ($register instanceof InlineCreateRegister)
         {
             $register->before(
-                fn () => $register->shouldHave($name, $this->getStorableValue($register->getHaveItem($name))),
+                fn () => $register->shouldHave($name, $this->getStorableValue($context, $register->getHaveItem($name))),
             );
         }
         elseif ($register instanceof InlineLoadRegister)
         {
             $register->before(
-                fn () => $register->callArgs[$name] = $this->getUsableValue($register->callArgs[$name]),
+                fn () => $register->callArgs[$name] = $this->getUsableValue($context, $register->callArgs[$name]),
             );
         }
     }
 
-    public function getInlineWithPropertyForStore(InlineAction $inline, string $name, $value)
+    public function getInlineWithPropertyForStore(Context $context, InlineAction $inline, string $name, $value)
     {
         $this->setClassTypeUsing(
             (new \ReflectionProperty($inline->getInitializer()[0], $name))->getType()
         );
 
-        return $this->getStorableValue($value);
+        return $this->getStorableValue($context, $value);
     }
 
-    public function getInlineWithPropertyForLoad(InlineAction $inline, string $name, $value)
+    public function getInlineWithPropertyForLoad(Context $context, InlineAction $inline, string $name, $value)
     {
         $this->setClassTypeUsing(
             (new \ReflectionProperty($inline->getInitializer()[0], $name))->getType()
@@ -185,66 +185,66 @@ class FindDynamic implements
         return $this->getUsableValue($value);
     }
 
-    public function getFormDynamicPropertyForStore(Form $form, string $name, $value)
+    public function getFormDynamicPropertyForStore(Context $context, Form $form, string $name, $value)
     {
         $this->setClassTypeUsing(
             (new \ReflectionProperty($form, $name))->getType()
         );
 
-        return $this->getStorableValue($value);
+        return $this->getStorableValue($context, $value);
     }
 
-    public function getFormDynamicPropertyForLoad(Form $form, string $name, $value)
+    public function getFormDynamicPropertyForLoad(Context $context, Form $form, string $name, $value)
     {
         $this->setClassTypeUsing(
             (new \ReflectionProperty($form, $name))->getType()
         );
 
-        return $this->getUsableValue($value);
+        return $this->getUsableValue($context, $value);
     }
 
-    public function getPassParameterInstead(ReflectionParameter $parameter, $value)
+    public function getPassParameterInstead(Context $context, ReflectionParameter $parameter, $value)
     {
         $this->setClassTypeUsing(
             $parameter->getType()
         );
 
-        return $this->getUsableValue($value);
+        return $this->getUsableValue($context, $value);
     }
 
-    public function getStationParameterForStore(ReflectionParameter $parameter, $value)
+    public function getStationParameterForStore(Context $context, ReflectionParameter $parameter, $value)
     {
         $this->setClassTypeUsing(
             $parameter->getType()
         );
 
-        return $this->getStorableValue($value);
+        return $this->getStorableValue($context, $value);
     }
 
-    public function getStationParameterForLoad(ReflectionParameter $parameter, $value)
+    public function getStationParameterForLoad(Context $context, ReflectionParameter $parameter, $value)
     {
         $this->setClassTypeUsing(
             $parameter->getType()
         );
 
-        return $this->getUsableValue($value);
+        return $this->getUsableValue($context, $value);
     }
 
-    public function getStationPropertyForStore(ReflectionProperty $parameter, $value)
+    public function getStationPropertyForStore(Context $context, ReflectionProperty $parameter, $value)
     {
         $this->setClassTypeUsing(
             $parameter->getType()
         );
 
-        return $this->getStorableValue($value);
+        return $this->getStorableValue($context, $value);
     }
 
-    public function getStationPropertyForLoad(ReflectionProperty $parameter, $value)
+    public function getStationPropertyForLoad(Context $context, ReflectionProperty $parameter, $value)
     {
         $this->setClassTypeUsing(
             $parameter->getType()
         );
 
-        return $this->getUsableValue($value);
+        return $this->getUsableValue($context, $value);
     }
 }

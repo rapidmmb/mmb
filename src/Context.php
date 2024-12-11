@@ -10,6 +10,7 @@ use Mmb\Core\Updates\Callbacks\CallbackQuery;
 use Mmb\Core\Updates\Inlines\InlineQuery;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Db\ModelFinder;
 use Mmb\Support\Step\Contracts\Stepper;
 
 /**
@@ -20,6 +21,7 @@ use Mmb\Support\Step\Contracts\Stepper;
  * @property-read ?InlineQuery $inlineQuery
  * @property StepFactory $stepFactory
  * @property-read ?Stepper $stepper
+ * @property-read ModelFinder $finder
  */
 class Context implements ArrayAccess
 {
@@ -27,6 +29,7 @@ class Context implements ArrayAccess
     public function __construct()
     {
         $this->instance(new StepFactory($this));
+        $this->instance(new ModelFinder($this));
     }
 
     public function copy(): static
@@ -34,16 +37,26 @@ class Context implements ArrayAccess
         $copy = clone $this;
 
 //        if ($object = $this->get(StepFactory::class)) {
-//            $copy->instance(clone $object);
+//            $object = clone $object;
+//            $object->context = $copy;
+//            $copy->instance($object);
 //        }
 
         return $copy;
+    }
+
+    protected static Context $globalContext;
+
+    public static function global(): Context
+    {
+        return static::$globalContext ??= new Context();
     }
 
     protected static array $aliases = [
         'bot' => Bot::class,
         'update' => Update::class,
         'stepFactory' => StepFactory::class,
+        'finder' => ModelFinder::class,
     ];
 
     /**

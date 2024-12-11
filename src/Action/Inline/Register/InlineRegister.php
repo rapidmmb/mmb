@@ -101,7 +101,7 @@ abstract class InlineRegister
                 /** @var InlineAttributeContract $attribute */
                 $attribute = $attribute->newInstance();
 
-                $attribute->registerInline($this);
+                $attribute->registerInline($this->context, $this);
             }
         }
 
@@ -118,7 +118,7 @@ abstract class InlineRegister
                         /** @var InlineParameterAttributeContract $attribute */
                         $attribute = $attribute->newInstance();
 
-                        $attribute->registerInlineParameter($this, $parameter->name);
+                        $attribute->registerInlineParameter($this->context, $this, $parameter->name);
                     }
                 }
 
@@ -164,6 +164,7 @@ abstract class InlineRegister
     protected function registerByCall()
     {
         Caller::invoke(
+            $this->context,
             $this->init,
             [$this->inlineAction, ...$this->callArgs]
         );

@@ -11,7 +11,6 @@ use Mmb\Action\Memory\StepHandler;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\AttributeLoader;
-use Mmb\Support\Db\ModelFinder;
 
 abstract class InlineAction implements ConvertableToStep
 {
@@ -257,7 +256,7 @@ abstract class InlineAction implements ConvertableToStep
 
                     foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
                     {
-                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                        $value = $attr->getInlineWithPropertyForLoad($this->context, $this, $name, $value);
                     }
 
                     $this->initializerClass->$name = $value;
@@ -276,7 +275,7 @@ abstract class InlineAction implements ConvertableToStep
 
                     foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
                     {
-                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                        $value = $attr->getInlineWithPropertyForLoad($this->context, $this, $name, $value);
                     }
 
                     $this->initializerClass->$name = $value;
@@ -312,7 +311,7 @@ abstract class InlineAction implements ConvertableToStep
 
                     foreach (AttributeLoader::getPropertyAttributesOf($object, $name, InlineWithPropertyAttributeContract::class) as $attr)
                     {
-                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                        $value = $attr->getInlineWithPropertyForLoad($this->context, $this, $name, $value);
                     }
 
                     $object->$name = $value;
@@ -389,8 +388,8 @@ abstract class InlineAction implements ConvertableToStep
         return $this->haveAs(
             $name,
             $value,
-            fn($model) => ModelFinder::store($model),
-            fn($key) => ModelFinder::findOrFail($class, $key),
+            fn($model) => $this->context->finder->store($model),
+            fn($key) => $this->context->finder->findOrFail($class, $key),
             count(func_get_args()) > 3,
             $default,
         );
@@ -412,8 +411,8 @@ abstract class InlineAction implements ConvertableToStep
         return $this->haveAs(
             $name,
             $value,
-            fn($model) => ModelFinder::storeDynamic($model),
-            fn($key) => ModelFinder::findDynamicOrFail($classes, $key),
+            fn($model) => $this->context->finder->storeDynamic($model),
+            fn($key) => $this->context->finder->findDynamicOrFail($classes, $key),
             count(func_get_args()) > 3,
             $default,
         );
@@ -505,7 +504,7 @@ abstract class InlineAction implements ConvertableToStep
 
                 foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $with, InlineWithPropertyAttributeContract::class) as $attr)
                 {
-                    $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
+                    $value = $attr->getInlineWithPropertyForStore($this->context, $this, $with, $value);
                 }
 
                 $this->cachedWithinData[$with] = $value;
@@ -519,7 +518,7 @@ abstract class InlineAction implements ConvertableToStep
 
                     foreach (AttributeLoader::getPropertyAttributesOf($object, $with, InlineWithPropertyAttributeContract::class) as $attr)
                     {
-                        $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
+                        $value = $attr->getInlineWithPropertyForStore($this->context, $this, $with, $value);
                     }
 
                     $this->cachedWithinData[$namespace . ':' . $with] = $value;
@@ -585,7 +584,7 @@ abstract class InlineAction implements ConvertableToStep
             return value($default);
         }
 
-        return ModelFinder::find($class, $id);
+        return $this->context->finder->find($class, $id);
     }
 
     /**
@@ -638,7 +637,7 @@ abstract class InlineAction implements ConvertableToStep
         )
         {
             /** @var Action $instance */
-            $instance = new ($step->initalizeClass)($update);
+            $instance = $step->initalizeClass::makeByContext($this->context);
             $instance->loadInlineRegister($this, $step->initalizeMethod)->register();
         }
     }

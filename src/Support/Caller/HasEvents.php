@@ -116,6 +116,7 @@ trait HasEvents
         [$normalArgs, $dynamicArgs] = Caller::splitArguments($args);
 
         return EventCaller::fire(
+            $this->context,
             $options,
             is_array($event) ? $event : $this->_listened_events[$event] ?? [],
             $normalArgs,

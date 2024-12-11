@@ -97,7 +97,7 @@ class HandleFactory
                     }
 
                     if ($e instanceof CallableException) {
-                        $e->invoke($update);
+                        $e->invoke($context);
                         return;
                     }
 

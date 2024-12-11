@@ -45,7 +45,7 @@ trait HasSimpleEvents
         $event = strtolower($event);
         foreach ($this->_events[$event] ?? [] as $listener)
         {
-            if (Caller::invoke($listener, $normalArgs, $dynamicArgs))
+            if (Caller::invoke($this->context, $listener, $normalArgs, $dynamicArgs))
             {
                 return true;
             }

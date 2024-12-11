@@ -23,7 +23,6 @@ use Mmb\Support\Auth\AuthorizeClass;
 use Mmb\Support\Caller\AuthorizationHandleBackException;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\StatusHandleBackException;
-use Mmb\Support\Db\ModelFinder;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 abstract class Action
@@ -55,49 +54,6 @@ abstract class Action
     }
 
 
-    private array $_valueCaches = [];
-
-    /**
-     * Make cache
-     *
-     * @param string $name
-     * @param Closure $value
-     * @return mixed
-     */
-    protected function cache(string $name, Closure $value)
-    {
-        return array_key_exists($name, $this->_valueCaches) ?
-            $this->_valueCaches[$name] :
-            $this->_valueCaches[$name] = $value();
-    }
-
-    /**
-     * Make cache of finding model by property
-     *
-     * @template T
-     * @param class-string<T> $model
-     * @param string $name
-     * @param string $findBy
-     * @return T
-     */
-    protected function modelOf(string $model, string $name, string $findBy = '')
-    {
-        return $this->cache(
-            $name . ':model',
-            function () use ($model, $name, $findBy) {
-                if ($value = @$this->$name) {
-                    if ($value instanceof $model) {
-                        return $value;
-                    }
-
-                    return ModelFinder::findByOrFail($model, $findBy, $value);
-                }
-
-                abort(404);
-            },
-        );
-    }
-
     /**
      * Invoke a method
      *
@@ -107,10 +63,11 @@ abstract class Action
      */
     public function invoke(string $method, ...$args)
     {
+        // todo: simplify here
         try {
             app(AreaRegister::class)->authorize(static::class);
 
-            return Caller::invoke([$this, $method], $args, $this->getInvokeDynamicParameters($method));
+            return Caller::invoke($this->context, [$this, $method], $args, $this->getInvokeDynamicParameters($method));
         } catch (AuthorizationException $exception) {
             if (!($exception instanceof AuthorizationHandleBackException)) {
                 if (
@@ -151,7 +108,7 @@ abstract class Action
             app(AreaRegister::class)->authorize(static::class);
 
             return Caller::invoke(
-                [$this, $method], $normalArgs, $dynamicArgs + $this->getInvokeDynamicParameters($method)
+                $this->context, [$this, $method], $normalArgs, $dynamicArgs + $this->getInvokeDynamicParameters($method)
             );
         } catch (AuthorizationException $exception) {
             if (!($exception instanceof AuthorizationHandleBackException)) {

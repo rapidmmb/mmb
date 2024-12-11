@@ -8,6 +8,7 @@ use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Road\Station;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Action\Section\Menu;
+use Mmb\Context;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
@@ -228,9 +229,10 @@ trait DefineStubs
                         $callback = function (...$args) use ($callback, $proxyMethod)
                         {
                             return Caller::invoke(
+                                Context::global(),
                                 $this->$proxyMethod(...),
                                 [
-                                    fn (...$args) => Caller::invoke($callback, $args, EventCaller::all()),
+                                    fn (...$args) => Caller::invoke(Context::global(), $args, EventCaller::all()),
                                     ...$args,
                                 ],
                                 EventCaller::all()

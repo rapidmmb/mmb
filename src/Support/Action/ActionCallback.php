@@ -109,7 +109,7 @@ class ActionCallback implements Arrayable
         if($this->action instanceof Closure)
         {
             $fn = $this->action;
-            return Caller::invoke($fn, $args, $dynamicArgs);
+            return Caller::invoke($context, $fn, $args, $dynamicArgs);
         }
 
         throw new \TypeError(sprintf("Invalid action type, given [%s]", smartTypeOf($this->action)));

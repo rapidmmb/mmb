@@ -14,7 +14,6 @@ use Mmb\Action\Section\Controllers\InlineControlHandler;
 use Mmb\Context;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
-use Mmb\Support\Db\ModelFinder;
 use Mmb\Support\Step\Contracts\ConvertableToStepper;
 use Mmb\Support\Step\Contracts\Stepper;
 
@@ -52,7 +51,7 @@ class HandlerFactory
         [$args, $dynamicArgs] = Caller::splitArguments($args);
         $dynamicArgs += $this->getEventDynamicArgs('*');
 
-        return Caller::invoke($callback, $args, $dynamicArgs);
+        return Caller::invoke($this->context, $callback, $args, $dynamicArgs);
     }
 
     /**
@@ -200,7 +199,7 @@ class HandlerFactory
         }
 
         if ($useCache) {
-            $record = ModelFinder::findBy($model, $key, $by);
+            $record = $this->context->finder->findBy($model, $key, $by);
         } else {
             $record = $model::query()->where($key ?: app($model)->getKey())->first();
         }
@@ -212,7 +211,7 @@ class HandlerFactory
             }
 
             if ($record && $useCache) {
-                ModelFinder::store($record);
+                $this->context->finder->store($record);
             }
         }
 
@@ -225,7 +224,7 @@ class HandlerFactory
         }
 
         if ($asCurrent) {
-            ModelFinder::storeCurrent($record);
+            $this->context->finder->storeCurrent($record);
         }
 
         if ($setUser) {

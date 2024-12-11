@@ -3,12 +3,8 @@
 namespace Mmb\Action\Section;
 
 use Closure;
-use Illuminate\Database\Eloquent\Model;
-use Mmb\Action\Form\Inline\InlineForm;
-use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Support\Behavior\Behavior;
-use Mmb\Support\Db\ModelFinder;
 
 class ResourceSection extends Section
 {

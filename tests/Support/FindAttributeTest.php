@@ -12,7 +12,7 @@ use Mmb\Support\Db\Attributes\FindById;
 use Mmb\Support\Db\Attributes\FindByRepo;
 use Mmb\Support\Db\Attributes\FindDynamic;
 use Mmb\Support\Db\FinderFactory;
-use Mmb\Support\Db\ModelFinder;
+use Mmb\Support\Db\ModelFinderDeprecated;
 use Mmb\Tests\TestCase;
 
 class FindAttributeTest extends TestCase

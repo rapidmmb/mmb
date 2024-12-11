@@ -7,6 +7,7 @@ use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\Attributes\InlineAttributeContract;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Menu;
+use Mmb\Context;
 use Mmb\Support\Behavior\Behavior;
 
 #[Attribute(Attribute::TARGET_METHOD)]
@@ -19,7 +20,7 @@ class WithBack implements InlineAttributeContract
     {
     }
 
-    public function registerInline(InlineRegister $register)
+    public function registerInline(Context $context, InlineRegister $register)
     {
         if ($register->inlineAction instanceof Menu) {
             $register->after(function () use ($register) {

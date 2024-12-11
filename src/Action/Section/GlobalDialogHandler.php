@@ -5,7 +5,6 @@ namespace Mmb\Action\Section;
 use Mmb\Action\Update\UpdateHandling;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
-use Mmb\Support\Db\ModelFinder;
 
 class GlobalDialogHandler implements UpdateHandling
 {
@@ -27,7 +26,7 @@ class GlobalDialogHandler implements UpdateHandling
 
     public Update $lastUpdate;
 
-    public function check(Update $update)
+    public function check(Context $context, Update $update)
     {
         $this->lastUpdate = $update;
 
@@ -48,7 +47,7 @@ class GlobalDialogHandler implements UpdateHandling
                 return false;
             }
 
-            if ($found = ModelFinder::find($target, $id))
+            if ($found = $context->finder->find($target, $id))
             {
                 $this->found = $found;
 
@@ -98,7 +97,7 @@ class GlobalDialogHandler implements UpdateHandling
             {
                 [$class, $method, $action] = $this->found;
 
-                $class::makeByContext($context)->dialog($method)->handle($update);
+                $class::makeByContext($context)->dialog($method)->handle($context, $update);
             }
         }
 

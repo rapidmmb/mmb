@@ -21,7 +21,7 @@ use ReflectionProperty;
 class CallerFactory
 {
 
-    public function invoke($callable, array $normalArgs, array $dynamicArgs = [])
+    public function invoke(Context $context, $callable, array $normalArgs, array $dynamicArgs = [])
     {
         $func = new ReflectionFunction(
             $callable instanceof Closure || is_string($callable) ?
@@ -69,17 +69,17 @@ class CallerFactory
             }
             elseif(array_key_exists($name, $normalArgs))
             {
-                $params[] = $this->getParameterValue($parameter, $normalArgs[$name]);
+                $params[] = $this->getParameterValue($context, $parameter, $normalArgs[$name]);
                 unset($normalArgs[$name]);
             }
             elseif(is_int($key = array_key_first($normalArgs)))
             {
-                $params[] = $this->getParameterValue($parameter, $normalArgs[$key]);
+                $params[] = $this->getParameterValue($context, $parameter, $normalArgs[$key]);
                 unset($normalArgs[$key]);
             }
             elseif(array_key_exists($name, $dynamicArgs))
             {
-                $params[] = $this->getParameterValue($parameter, value($dynamicArgs[$name]));
+                $params[] = $this->getParameterValue($context, $parameter, value($dynamicArgs[$name]));
             }
             elseif($parameter->isOptional())
             {
@@ -156,6 +156,7 @@ class CallerFactory
     }
 
     public function getParameterValue(
+        Context $context,
         ReflectionParameter|ReflectionProperty $parameter,
                                                $value
     )
@@ -175,7 +176,7 @@ class CallerFactory
                 }
                 if ($attribute instanceof CallingPassParameterInsteadContract)
                 {
-                    $value = $attribute->getPassParameterInstead($parameter, $value);
+                    $value = $attribute->getPassParameterInstead($context, $parameter, $value);
                 }
             }
         }
@@ -200,7 +201,7 @@ class CallerFactory
                 }
                 if ($attribute instanceof CallingPassParameterInsteadContract)
                 {
-                    $value = $attribute->getPassParameterInstead($parameter, $value);
+                    $value = $attribute->getPassParameterInstead($context, $parameter, $value);
                 }
             }
         }

@@ -216,7 +216,7 @@ trait InteractWithAttributes
         {
             foreach (AttributeLoader::getPropertyAttributesOf($this, $name, FormDynamicPropertyAttributeContract::class) as $attr)
             {
-                $value = $attr->getFormDynamicPropertyForLoad($this, $name, $value);
+                $value = $attr->getFormDynamicPropertyForLoad($this->context, $this, $name, $value);
             }
         }
 
@@ -255,7 +255,7 @@ trait InteractWithAttributes
 
             foreach (AttributeLoader::getPropertyAttributesOf($this, $name, FormDynamicPropertyAttributeContract::class) as $attr)
             {
-                $value = $attr->getFormDynamicPropertyForStore($this, $name, $value);
+                $value = $attr->getFormDynamicPropertyForStore($this->context, $this, $name, $value);
             }
 
             $data[$name] = $value;

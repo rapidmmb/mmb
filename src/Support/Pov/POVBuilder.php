@@ -144,7 +144,7 @@ class POVBuilder
         try {
             // Run the callback
             if ($callback instanceof Closure) {
-                $return = Caller::invoke($callback, [$this->context]);
+                $return = Caller::invoke($this->context, $callback, [$this->context]);
             } else {
                 $return = Caller::invokeAction($this->context, $callback, []);
             }

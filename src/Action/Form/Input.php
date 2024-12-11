@@ -279,6 +279,7 @@ class Input implements Menuable
                     else
                     {
                         Caller::invoke(
+                            $this->form->context,
                             $value,
                             [],
                             [
@@ -373,7 +374,7 @@ class Input implements Menuable
         $value = function ($callable) use (&$message)
         {
             return $callable instanceof Closure ?
-                Caller::invoke($callable, [], $this->getEventDynamicArgs('*') + ['text' => @$message['text']]) :
+                Caller::invoke($this->form->context, $callable, [], $this->getEventDynamicArgs('*') + ['text' => @$message['text']]) :
                 $callable;
         };
 

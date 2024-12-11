@@ -47,7 +47,7 @@ class ResourceModule extends Section
         if($action instanceof Closure)
         {
             $dynamicArgs += $this->getDynArgs();
-            Caller::invoke($action, $args, $dynamicArgs);
+            Caller::invoke($this->context, $action, $args, $dynamicArgs);
         }
         elseif(!$action)
         {
@@ -173,7 +173,7 @@ class ResourceModule extends Section
                     $dyn[$key] = $v;
             }
 
-            return Caller::invoke($value, $arr, $dyn);
+            return Caller::invoke($this->context, $value, $arr, $dyn);
         }
 
         return $value;

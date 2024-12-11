@@ -188,7 +188,7 @@ class Road extends Action
         }
 
         $sign = $this->loadedSigns[$name] = new $type($this);
-        Caller::invoke($callback, [$sign]);
+        Caller::invoke($this->context, $callback, [$sign]);
         return $sign;
     }
 

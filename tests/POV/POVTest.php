@@ -8,7 +8,7 @@ use Mmb\Action\Memory\StepHandler;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Db\HasFinder;
-use Mmb\Support\Db\ModelFinder;
+use Mmb\Support\Db\ModelFinderDeprecated;
 use Mmb\Support\Pov\POVFactory;
 use Mmb\Support\Step\Contracts\ConvertableToStepper;
 use Mmb\Support\Step\Contracts\Stepper;

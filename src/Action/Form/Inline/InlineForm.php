@@ -158,7 +158,7 @@ class InlineForm extends InlineAction
                 }
                 else
                 {
-                    Caller::invoke([$callback ?? $this->initializerClass, $method], [], compact('finished') + $this->form->getEventDynamicArgs('backDefault'));
+                    Caller::invoke($this->context, [$callback ?? $this->initializerClass, $method], [], compact('finished') + $this->form->getEventDynamicArgs('backDefault'));
                 }
             });
         }

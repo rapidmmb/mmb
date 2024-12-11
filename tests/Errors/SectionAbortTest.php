@@ -3,6 +3,7 @@
 namespace Mmb\Tests\Errors;
 
 use Mmb\Action\Section\Section;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
 use Mmb\Tests\TestCase;
@@ -23,7 +24,7 @@ class SectionAbortTest extends TestCase
         {
             if ($e instanceof CallableException)
             {
-                $e->invoke(new Update([]));
+                $e->invoke(Context::global());
             }
             else
             {
