@@ -184,7 +184,7 @@ class MiddleAction extends Section implements UpdateHandling
      * @param       ...$args
      * @return void
      */
-    public static function request(array $redirectTo, ...$args)
+    public static function request(array $redirectTo, ...$args) // todo: should change cause of new context base
     {
         if (count($redirectTo) != 2) {
             throw new \ValueError("\$redirectTo size should equals to 2");

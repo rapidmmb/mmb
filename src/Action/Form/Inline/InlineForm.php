@@ -154,7 +154,7 @@ class InlineForm extends InlineAction
             {
                 if (is_string($callback) && is_a($callback, Action::class, true))
                 {
-                    $callback::make()->invokeDynamic($method, [], compact('finished') + $this->form->getEventDynamicArgs('backDefault'));
+                    $callback::make($this->context)->invokeDynamic($method, [], compact('finished') + $this->form->getEventDynamicArgs('backDefault'));
                 }
                 else
                 {

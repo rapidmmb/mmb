@@ -592,7 +592,7 @@ class Menu extends InlineAction implements Menuable
         elseif (is_array($callable))
         {
             [$class, $method] = $callable;
-            $class = $class::make($update);
+            $class = $class::make($this->context);
 
             return [$class, $method, $args];
         }
