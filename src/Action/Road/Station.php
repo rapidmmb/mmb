@@ -35,24 +35,24 @@ abstract class Station extends Section
         parent::__construct($road->context);
     }
 
-    public function menu(string $name, ...$args)
+    public function menu(string $__name, ...$__args)
     {
-        $register = $this->createInlineRegister(Menu::class, $name, $args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
+        $register = $this->createInlineRegister(Menu::class, $__name, $__args);
+        $register->inlineAction->initializer($this->road, $this->name . '.' . $__name);
         return $register->register();
     }
 
-    public function inlineForm(string $name, ...$args)
+    public function inlineForm(string $__name, ...$__args)
     {
-        $register = $this->createInlineRegister(InlineForm::class, $name, $args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
+        $register = $this->createInlineRegister(InlineForm::class, $__name, $__args);
+        $register->inlineAction->initializer($this->road, $this->name . '.' . $__name);
         return $register->register();
     }
 
-    public function dialog(string $name, ...$args)
+    public function dialog(string $__name, ...$__args)
     {
-        $register = $this->createInlineRegister(Dialog::class, $name, $args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
+        $register = $this->createInlineRegister(Dialog::class, $__name, $__args);
+        $register->inlineAction->initializer($this->road, $this->name . '.' . $__name);
         return $register->register();
     }
 

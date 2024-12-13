@@ -209,14 +209,14 @@ class ResourceModule extends Section
 
 
 
-    public function menu(string $name, ...$args)
+    public function menu(string $__name, ...$__args)
     {
-        return $this->maker->section->menu($name, ...$args);
+        return $this->maker->section->menu($__name, ...$__args);
     }
 
-    public function inlineForm(string $name, ...$args)
+    public function inlineForm(string $__name, ...$__args)
     {
-        return $this->maker->section->inlineForm($name, ...$args);
+        return $this->maker->section->inlineForm($__name, ...$__args);
     }
 
 

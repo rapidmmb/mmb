@@ -17,6 +17,7 @@ use Mmb\Context;
 use Mmb\Core\Bot;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
+use Mmb\Exceptions\AbortException;
 use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\AttributeLoader\HasAttributeLoader;
 use Mmb\Support\Auth\AuthorizeClass;
@@ -25,6 +26,10 @@ use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\StatusHandleBackException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+/**
+ * @property-read HigherOrderSafeProxy|static $safe
+ * @property-read HigherOrderSafeProxy|static $unsafe
+ */
 abstract class Action
 {
     use HasAttributeLoader;
@@ -53,21 +58,50 @@ abstract class Action
     {
     }
 
+    public function getDeniedHandler(\Throwable $e): ?string
+    {
+        if ($e instanceof AuthorizationException) {
+            if (
+                method_exists($this, $fn = 'deniedAuthorize' . $e->status()) ||
+                method_exists($this, $fn = 'deniedAuthorize') ||
+                method_exists($this, $fn = 'denied403')
+            ) {
+                return $fn;
+            }
+        } elseif ($e instanceof AbortException) {
+            if (
+                method_exists($this, $fn = 'denied' . $e->errorType) ||
+                method_exists($this, $fn = 'denied')
+            ) {
+                return $fn;
+            }
+        } elseif ($e instanceof HttpException) {
+            if (
+                method_exists($this, $fn = 'denied' . $e->getStatusCode()) ||
+                method_exists($this, $fn = 'denied')
+            ) {
+                return $fn;
+            }
+        }
+
+        return null;
+    }
+
 
     /**
      * Invoke a method
      *
-     * @param string $method
-     * @param        ...$args
+     * @param string $__method
+     * @param        ...$__args
      * @return mixed
      */
-    public function invoke(string $method, ...$args)
+    public function invoke(string $__method, ...$__args)
     {
         // todo: simplify here
         try {
             app(AreaRegister::class)->authorize(static::class);
 
-            return Caller::invoke($this->context, [$this, $method], $args, $this->getInvokeDynamicParameters($method));
+            return Caller::invoke($this->context, [$this, $__method], $__args, $this->getInvokeDynamicParameters($__method));
         } catch (AuthorizationException $exception) {
             if (!($exception instanceof AuthorizationHandleBackException)) {
                 if (
@@ -139,13 +173,13 @@ abstract class Action
     /**
      * Create an instance and invoke the method
      *
-     * @param string $method
-     * @param        ...$args
+     * @param string $__method
+     * @param        ...$__args
      * @return mixed
      */
-    public static function invokes(Context $context, string $method, ...$args)
+    public static function invokes(Context $__context, string $__method, ...$__args)
     {
-        return static::makeByContext($context)->invoke($method, ...$args);
+        return static::makeByContext($__context)->invoke($__method, ...$__args);
     }
 
     /**
@@ -369,6 +403,19 @@ abstract class Action
     public function tell($message = null, array $args = [], ...$namedArgs)
     {
         return $this->update()->tell($message, $args, ...$namedArgs);
+    }
+
+    public function __get(string $name)
+    {
+        if ($name == 'safe') {
+            return new HigherOrderSafeProxy($this);
+        }
+
+        if ($name == 'unsafe') {
+            return new HigherOrderSafeProxy($this, false);
+        }
+
+        throw new \Exception(sprintf("Try to access undefined property [%s] on [%s]", $name, static::class));
     }
 
 }

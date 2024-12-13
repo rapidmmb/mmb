@@ -28,6 +28,7 @@ class Section extends Action
     /**
      * Create new proxy instance
      *
+     * @deprecated
      * @return EventProxy|static
      */
     public static function proxy()
@@ -38,37 +39,37 @@ class Section extends Action
     /**
      * Make menu from method
      *
-     * @param string $name
-     * @param mixed  ...$args
+     * @param string $__name
+     * @param mixed  ...$__args
      * @return Menu
      */
-    public function menu(string $name, ...$args)
+    public function menu(string $__name, ...$__args)
     {
-        return $this->createInlineRegister(Menu::class, $name, $args)->register();
+        return $this->createInlineRegister(Menu::class, $__name, $__args)->register();
     }
 
     /**
      * Make inline form from
      *
-     * @param string $name
-     * @param        ...$args
+     * @param string $__name
+     * @param        ...$__args
      * @return InlineForm
      */
-    public function inlineForm(string $name, ...$args)
+    public function inlineForm(string $__name, ...$__args)
     {
-        return $this->createInlineRegister(InlineForm::class, $name, $args)->register();
+        return $this->createInlineRegister(InlineForm::class, $__name, $__args)->register();
     }
 
     /**
      * Make dialog from method
      *
-     * @param string $name
-     * @param        ...$args
+     * @param string $__name
+     * @param        ...$__args
      * @return Dialog
      */
-    public function dialog(string $name, ...$args)
+    public function dialog(string $__name, ...$__args)
     {
-        return $this->createInlineRegister(Dialog::class, $name, $args)->register();
+        return $this->createInlineRegister(Dialog::class, $__name, $__args)->register();
     }
 
     /**
