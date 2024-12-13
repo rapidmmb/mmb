@@ -37,8 +37,7 @@ class HigherOrderSafeProxy
                 $this->__authorizeMethod($name);
             }
 
-            // todo refactor
-            return Caller::invoke($this->_base->context, [$this, $name], $arguments /*$this->_base->getInvokeDynamicParameters($__method)*/);
+            return $this->_base->$name(...$arguments);
         } catch (AuthorizationException $exception) {
             if (!($exception instanceof AuthorizationHandleBackException)) {
                 if ($fn = $this->_base->getDeniedHandler($exception)) {
