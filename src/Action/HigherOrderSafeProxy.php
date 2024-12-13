@@ -14,7 +14,9 @@ class HigherOrderSafeProxy
 
     public function __construct(
         protected Action $_base,
-        protected bool $withAuthorization = true,
+        protected bool   $withAuthorization = true,
+        protected bool   $callUsingCaller = false,
+        protected ?array  $dynamicArgs = null,
     )
     {
     }
@@ -35,6 +37,10 @@ class HigherOrderSafeProxy
             if ($this->withAuthorization) {
                 $this->__authorizeClass();
                 $this->__authorizeMethod($name);
+            }
+
+            if ($this->callUsingCaller) {
+                return Caller::invoke($this->_base->context, [$this->_base, $name], $arguments, $this->dynamicArgs ?? []);
             }
 
             return $this->_base->$name(...$arguments);

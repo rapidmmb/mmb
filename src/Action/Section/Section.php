@@ -4,6 +4,7 @@ namespace Mmb\Action\Section;
 
 use Mmb\Action\Action;
 use Mmb\Action\Form\Inline\InlineForm;
+use Mmb\Action\HigherOrderSafeProxy;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
@@ -18,29 +19,62 @@ class Section extends Action
      * @param Context $context
      * @return static
      */
-    public static function make(
-        Context $context,
-    )
+    public static function make(Context $context): static
     {
         return new static($context);
     }
 
     /**
-     * Create new proxy instance
+     * Create new instance with safe proxy
      *
-     * @deprecated
-     * @return EventProxy|static
+     * @param Context $context
+     * @return HigherOrderSafeProxy|static
      */
-    public static function proxy()
+    public static function makeSafe(Context $context)
     {
-        return EventProxy::make(static::make());
+        return static::make($context)->safe;
+    }
+
+    /**
+     * Create new instance with unsafe proxy
+     *
+     * @param Context $context
+     * @return HigherOrderSafeProxy|static
+     */
+    public static function makeUnsafe(Context $context)
+    {
+        return static::make($context)->unsafe;
+    }
+
+    /**
+     * Create new instance of a class with safe proxy
+     *
+     * @template T of Action
+     * @param class-string<T> $class
+     * @return HigherOrderSafeProxy|T
+     */
+    public function newSafe(string $class)
+    {
+        return $class::makeByContext($this->context)->safe;
+    }
+
+    /**
+     * Create new instance of a class with unsafe proxy
+     *
+     * @template T of Action
+     * @param class-string<T> $class
+     * @return HigherOrderSafeProxy|T
+     */
+    public function newUnsafe(string $class)
+    {
+        return $class::makeByContext($this->context)->unsafe;
     }
 
     /**
      * Make menu from method
      *
      * @param string $__name
-     * @param mixed  ...$__args
+     * @param mixed ...$__args
      * @return Menu
      */
     public function menu(string $__name, ...$__args)
@@ -76,9 +110,9 @@ class Section extends Action
      * Call the method in the next step
      *
      * todo: remove this section
-     * @deprecated
      * @param string $method
      * @return void
+     * @deprecated
      */
     public function nextStep(string $method)
     {

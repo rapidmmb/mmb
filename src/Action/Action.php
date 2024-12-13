@@ -58,6 +58,12 @@ abstract class Action
     {
     }
 
+    /**
+     * Get denied handler method name
+     *
+     * @param \Throwable $e
+     * @return string|null
+     */
     public function getDeniedHandler(\Throwable $e): ?string
     {
         if ($e instanceof AuthorizationException) {
@@ -97,35 +103,8 @@ abstract class Action
      */
     public function invoke(string $__method, ...$__args)
     {
-        // todo: simplify here
-        try {
-            app(AreaRegister::class)->authorize(static::class);
-
-            return Caller::invoke($this->context, [$this, $__method], $__args, $this->getInvokeDynamicParameters($__method));
-        } catch (AuthorizationException $exception) {
-            if (!($exception instanceof AuthorizationHandleBackException)) {
-                if (
-                    method_exists($this, $fn = 'errorAuthorize' . $exception->status()) ||
-                    method_exists($this, $fn = 'errorAuthorize') ||
-                    method_exists($this, $fn = 'error403')
-                ) {
-                    throw AuthorizationHandleBackException::from($exception, [$this, $fn]);
-                }
-            }
-
-            throw $exception;
-        } catch (HttpException $exception) {
-            if (!($exception instanceof StatusHandleBackException)) {
-                if (
-                    method_exists($this, $fn = 'error' . $exception->getStatusCode()) ||
-                    method_exists($this, $fn = 'error')
-                ) {
-                    throw StatusHandleBackException::from($exception, [$this, $fn]);
-                }
-            }
-
-            throw $exception;
-        }
+        return (new HigherOrderSafeProxy($this, true, true, $this->getInvokeDynamicParameters($__method)))
+            ->__call($__method, $__args);
     }
 
     /**
@@ -138,36 +117,8 @@ abstract class Action
      */
     public function invokeDynamic(string $method, array $normalArgs, array $dynamicArgs)
     {
-        try {
-            app(AreaRegister::class)->authorize(static::class);
-
-            return Caller::invoke(
-                $this->context, [$this, $method], $normalArgs, $dynamicArgs + $this->getInvokeDynamicParameters($method)
-            );
-        } catch (AuthorizationException $exception) {
-            if (!($exception instanceof AuthorizationHandleBackException)) {
-                if (
-                    method_exists($this, $fn = 'errorAuthorize' . $exception->status()) ||
-                    method_exists($this, $fn = 'errorAuthorize') ||
-                    method_exists($this, $fn = 'error403')
-                ) {
-                    throw AuthorizationHandleBackException::from($exception, [$this, $fn]);
-                }
-            }
-
-            throw $exception;
-        } catch (HttpException $exception) {
-            if (!($exception instanceof StatusHandleBackException)) {
-                if (
-                    method_exists($this, $fn = 'error' . $exception->getStatusCode()) ||
-                    method_exists($this, $fn = 'error')
-                ) {
-                    throw StatusHandleBackException::from($exception, [$this, $fn]);
-                }
-            }
-
-            throw $exception;
-        }
+        return (new HigherOrderSafeProxy($this, true, true, $dynamicArgs + $this->getInvokeDynamicParameters($method)))
+            ->__call($method, $normalArgs);
     }
 
     /**
