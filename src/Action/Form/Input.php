@@ -26,11 +26,14 @@ class Input implements Menuable
 
     public bool $isCreatingMode = false;
 
+    public Context $context;
+
     public function __construct(
         public Form   $form,
         public string $name,
     )
     {
+        $this->context = $form->context;
     }
 
     public function isCreating()
