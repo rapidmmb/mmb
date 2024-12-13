@@ -15,9 +15,9 @@ abstract class StartCommandAction extends CommandAction
      * @param ...$args
      * @return string
      */
-    public static function url(...$args)
+    public function url(...$args)
     {
-        return static::makeLink(...$args);
+        return $this->makeLink(...$args);
     }
 
     /**
@@ -28,10 +28,10 @@ abstract class StartCommandAction extends CommandAction
      * @param ...$args
      * @return string
      */
-    public static function makeLink(...$args)
+    public function makeLink(...$args)
     {
-        return static::makeLinkQuery(
-            static::makeCode(...$args)
+        return $this->makeLinkQuery(
+            $this->makeCode(...$args)
         );
     }
 
@@ -43,23 +43,13 @@ abstract class StartCommandAction extends CommandAction
      * @param string $query
      * @return string
      */
-    public static function makeLinkQuery(string $query)
+    public function makeLinkQuery(string $query)
     {
-        $username = bot()->info->username;
-
-        if (!$username)
-        {
+        if (!$username = bot()->info->username) {
             throw new \Exception("makeLinkQuery() method requires a username. Fill it in 'mmb...username' config");
         }
 
-        if ($query == '')
-        {
-            return "https://t.me/$username";
-        }
-        else
-        {
-            return "https://t.me/$username?start=$query";
-        }
+        return "https://t.me/$username" . ($query ? "?" . http_build_query(['start' => $query]) : '');
     }
 
     /**
@@ -68,21 +58,16 @@ abstract class StartCommandAction extends CommandAction
      * @param ...$args
      * @return string
      */
-    public static function makeCode(...$args)
+    public function makeCode(...$args): string
     {
-        $command = app(static::class)->getMatcher()->makeQuery(...$args);
+        $command = $this->getMatcher()->makeQuery(...$args);
         $lower = strtolower($command);
 
-        if($lower == '/start')
-        {
+        if ($lower == '/start') {
             return '';
-        }
-        elseif(str_starts_with($lower, '/start '))
-        {
+        } elseif (str_starts_with($lower, '/start ')) {
             return substr($command, 7);
-        }
-        else
-        {
+        } else {
             return '';
         }
     }

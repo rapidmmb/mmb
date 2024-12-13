@@ -9,8 +9,6 @@ use Mmb\Action\Section\Controllers\QueryMatcher;
 use Mmb\Action\Section\Section;
 use Mmb\Context;
 use Mmb\Support\Db\Attributes\FindById;
-use Mmb\Support\Db\FinderFactory;
-use Mmb\Support\Db\ModelFinderDeprecated;
 use Mmb\Tests\TestCase;
 
 class CallbackControlTest extends TestCase
@@ -209,8 +207,7 @@ class CallbackControlTest extends TestCase
             }
         };
 
-        app()->singleton(FinderFactory::class);
-        ModelFinderDeprecated::store(new _CallbackControlTestModel([
+        $this->context->finder->store(new _CallbackControlTestModel([
             'id' => 10,
         ]));
 

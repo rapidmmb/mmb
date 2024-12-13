@@ -6,7 +6,6 @@ use Illuminate\Support\Str;
 use Mmb\Action\Road\Road;
 use Mmb\Action\Road\Sign;
 use Mmb\Action\Road\Station;
-use Mmb\Core\Updates\Update;
 use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Text;
 use Mmb\Tests\TestCase;

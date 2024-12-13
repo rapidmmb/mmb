@@ -177,39 +177,45 @@ class MiddleAction extends Section implements UpdateHandling
         return (bool)$this->invoke('isRequired', ...$pass);
     }
 
+
     /**
-     * Request middle action
+     * Set pending query redirect action
      *
-     * @param array $redirectTo
-     * @param       ...$args
-     * @return void
+     * @return $this
      */
-    public static function request(array $redirectTo, ...$args) // todo: should change cause of new context base
+    public function redirectTo(string $class, string $method = 'main')
     {
-        if (count($redirectTo) != 2) {
-            throw new \ValueError("\$redirectTo size should equals to 2");
-        }
+        $this->redirectTo = [$class, $method];
 
-        $instance = static::make();
-        [$pass, $args] = $instance->getArgumentsAndWiths('main', ...$args);
+        return $this;
+    }
 
-        $instance->redirectTo = $redirectTo;
-        $instance->redirectWith = $args;
+    /**
+     * Detect callback point and set pending query redirect action
+     *
+     * @return $this
+     */
+    public function redirectHere()
+    {
+        $at = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
+        $this->redirectTo = [$at['class'], $at['function']];
 
-        $instance->invoke('main', ...$pass);
+        return $this;
     }
 
     /**
      * Request middle action
      *
-     * @param string $class
-     * @param string $method
-     * @param        ...$args
+     * @param       ...$args
      * @return void
      */
-    public static function requestTo(string $class, string $method, ...$args)
+    public function request(...$args)
     {
-        static::request([$class, $method], ...$args);
+        [$pass, $args] = $this->getArgumentsAndWiths('main', ...$args);
+
+        $this->redirectWith = $args;
+
+        $this->invoke('main', ...$pass);
     }
 
     /**
@@ -218,67 +224,40 @@ class MiddleAction extends Section implements UpdateHandling
      * @param ...$args
      * @return bool
      */
-    public static function check(...$args)
+    public function check(...$args)
     {
-        return static::make()->checksIsRequired(...$args);
+        return $this->checksIsRequired(...$args);
     }
 
     /**
      * Request the action, if is required.
      *
-     * @param Context $context
-     * @param array $backTo
      * @param       ...$args
      * @return void
      * @throws StopHandlingException
      */
-    public static function required(Context $context, array $backTo, ...$args)
+    public function required(...$args)
     {
-        if (count($backTo) != 2) {
-            throw new \ValueError("\$backTo size should equals to 2");
-        }
+        if ($this->checksIsRequired(...$args)) {
+            [$pass, $args] = $this->getArgumentsAndWiths('main', ...$args);
 
-        $instance = static::make($context);
-        if ($instance->checksIsRequired(...$args)) {
-            [$pass, $args] = $instance->getArgumentsAndWiths('main', ...$args);
+            $this->redirectWith = $args;
 
-            $instance->redirectTo = $backTo;
-            $instance->redirectWith = $args;
-
-            $instance->invoke('main', ...$pass);
-            $instance->update()->stopHandling();
+            $this->invoke('main', ...$pass);
+            $this->update()->stopHandling();
         }
     }
 
     /**
-     * Request the action, if is required.
+     * Request the action with redirecting at called point, if is required.
      *
-     * @param Context $context
-     * @param string $class
-     * @param string $method
-     * @param        ...$args
-     * @return void
-     * @throws StopHandlingException
-     */
-    public static function requiredAt(Context $context, string $class, string $method, ...$args)
-    {
-        static::required($context, [$class, $method], ...$args);
-    }
-
-    /**
-     * Required the action, if is required.
-     *
-     * This method fills class and method automatically by backtrace.
-     *
-     * @param Context $context
      * @param ...$args
      * @return void
      * @throws StopHandlingException
      */
-    public static function requiredHere(Context $context, ...$args)
+    public function requiredHere(...$args)
     {
-        $at = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
-        static::required($context, [$at['class'], $at['function']], ...$args);
+        $this->redirectHere()->required(...$args);
     }
 
 

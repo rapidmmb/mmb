@@ -6,6 +6,9 @@ use Closure;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Pov\POV;
 
+/**
+ * @deprecated
+ */
 class Service
 {
 

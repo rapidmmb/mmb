@@ -22,7 +22,7 @@ class ResourceModule extends Section
         public readonly string $name,
     )
     {
-        parent::__construct(null);
+        parent::__construct($maker->section->context);
 
         // Back key
         $this->addBackKey(

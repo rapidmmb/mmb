@@ -169,7 +169,7 @@ class TestForm extends Form
 
     public function onFinish()
     {
-        $this->response("Finished");
+        $this->response("Your amount is: {$this->amount}");
     }
 
     public function onCancel()
@@ -208,7 +208,7 @@ protected $previousKey = true;
 protected $skipKey = true;
 protected $mirrorKey = true;
 
-protected $previousKey = "<< Back <<";
+protected $previousKey = "<< Previous <<";
 ```
 
 #### Attributes
@@ -232,14 +232,14 @@ public function onFinish()
 
 #### Requests
 ```php
-TestForm::make()->request();
+TestForm::make($context)->request();
 // Or
-TestForm::make()->request([
+TestForm::make($context)->request([
     'customAttr' => 'Test',
     'user' => $user,
 ]);
 // Or
-TestForm::make([
+TestForm::make($context, [
     'customAttr' => 'Test',
     'user' => $user,
 ])->request();
@@ -266,13 +266,13 @@ protected $inputs = [
 
 #### Requests
 ```php
-TestForm::make()->requestChunk('bankChunk');
-TestForm::make()->requestChunk(['name', 'bankChunk']);
-TestForm::make(['user' => $user])->requestChunk('name');
-TestForm::make()->requestChunk('name', [
+TestForm::make($context)->requestChunk('bankChunk');
+TestForm::make($context)->requestChunk(['name', 'bankChunk']);
+TestForm::make($context['user' => $user])->requestChunk('name');
+TestForm::make($context)->requestChunk('name', [
     'user' => $user,
 ]);
-TestForm::make(['user' => $user])->withChunk('name')->request();
+TestForm::make($context, ['user' => $user])->withChunk('name')->request();
 ```
 
 ### Input
@@ -374,8 +374,7 @@ $input->keyAction('Click me', fn($pass) => $pass("Hello World"))
 
 #### Enabled Condition
 ```php
-$input->key('Some key')->when($id == 3)
-$input->key('Some key')->unless($id != 3)
+$input->key('Some key')->if($id == 3)
 ```
 
 ### Command
@@ -439,7 +438,7 @@ class StartCommand extends StartCommandAction
 
     public function handle()
     {
-        HomeSection::make()->main();
+        HomeSection::make($this->context)->main();
     }
     
     public function invite($code)
@@ -452,6 +451,16 @@ class StartCommand extends StartCommandAction
         $this->handle();
     }
 
+}
+```
+
+And use these methods for interacting with start command:
+
+```php
+public function main()
+{
+    $botUrl = StartCommand::make($this->context)->url();
+    $inviteUrl = StartCommand::make($this->context)->url('invite-code');
 }
 ```
 
@@ -622,7 +631,7 @@ Request runs anyway
 ```php
 public function enterAge()
 {
-    EnterAgeMiddleAction::request([static::class, 'ageEntered']);
+    EnterAgeMiddleAction::make($this->context)->redirectTo(static::class, 'ageEntered')->request();
 }
 
 public function ageEntered()
@@ -637,7 +646,7 @@ Required runs when class is required (and stop the code)
 ```php
 public function withdraw()
 {
-    EnterAgeMiddleAction::requiredHere();
+    EnterAgeMiddleAction::make($this->context)->requiredHere();
 
     if (BotUser::current()->age < 20)
     {
@@ -680,7 +689,7 @@ class AnotherClass extends Section
 {
     public function withdraw()
     {
-        TestAction::requiredHere($user);
+        TestAction::make($this->context)->requiredHere($user);
     }
 }
 ```
@@ -1436,7 +1445,7 @@ public function main()
 + 2- Property history
 ```php
 public int $number;
-#[FindById]
+#[Find]
 public Post $dbPost;
 public Post $serializedPost;
 
@@ -1470,7 +1479,7 @@ class PrivateHandler extends UpdateHandler
     public function handle(HandlerFactory $handler)
     {
         $handler
-            ->match($this->update->getChat()?->type == 'private')
+            ->match($this->update()->getChat()?->type == 'private')
             ->recordUser(
                 BotUser::class,
                 $this->update->getUser()?->id,
@@ -1488,7 +1497,7 @@ class PrivateHandler extends UpdateHandler
 
     public function createUser()
     {
-        $user = $this->update->getUser();
+        $user = $this->update()->getUser();
 
         return [
             'id' => $user->id,
@@ -1514,7 +1523,7 @@ class ChannelPostHandler extends UpdateHandler
     public function handle(HandlerFactory $handler)
     {
         $handler
-            ->match((bool) $this->update->channelPost)
+            ->match((bool) $this->update()->channelPost)
             ->handle([
                 PostHandling::class,
             ])
@@ -1528,7 +1537,7 @@ class ChannelPostHandler extends UpdateHandler
 ```php
 class PostHandling extends Section implements UpdateHandling
 {
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
         if ($update->channelPost->id != MY_CHANNEL)
         {
@@ -1784,7 +1793,7 @@ $pattern = $matcher->findPattern('My name is Mahdi');
 
 if ($pattern)
 {
-    $pattern->invoke();
+    $pattern->invoke($this);
 }
 ```
 
@@ -2041,9 +2050,9 @@ That's easy! But what about second user? That's should be hard.
 
 Don't worry! POV is here!
 ```php
-pov()->user($secondUser)->run(function ()
+pov()->user($secondUser)->run(function ($context)
 {
-    static::make()->menu('myMenu')->response();
+    static::make($context)->menu('myMenu')->response();
 });
 ```
 That's so easy!
@@ -2063,9 +2072,9 @@ class ChatQueueSection extends Section
             ]);
 
             pov()->user($queue->user)->run(
-                fn () => static::invokes('openedChat', $chat)
+                fn (Context $context) => static::make($context)->invoke('openedChat', $chat)
             );
-            static::invokes('openedChat', $chat);
+            $this->invoke('openedChat', $chat);
         }
         else
         {
@@ -2091,16 +2100,13 @@ class ChatQueueSection extends Section
 }
 ```
 
-Note: If you use POV, you should make new class and then use that methods.
+Note: POV creates a new `Context` object that you should use this instead of old context.
 
-That's because the current Section is using old user data like Update,
-`with` values, and ...
-
-So you can make new instance for new POV like this:
+So you should make new instance for new POV like this:
 ```php
-static::make()->myFunc(); // Instead of $this->myFunc()
+static::make($newContext)->myFunc(); // Instead of $this->myFunc()
 // Or
-static::invokes('myFunc');
+static::invokes($newContext, 'myFunc');
 ```
 
 

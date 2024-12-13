@@ -8,6 +8,9 @@ use Mmb\Action\Service\ServiceEvent;
 use Mmb\Action\Service\ServiceFailed;
 use Mmb\Tests\TestCase;
 
+/**
+ * @deprecated
+ */
 class ServiceTest extends TestCase
 {
 

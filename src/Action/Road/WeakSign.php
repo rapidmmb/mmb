@@ -4,6 +4,7 @@ namespace Mmb\Action\Road;
 
 use Illuminate\Support\Arr;
 use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
+use Mmb\Context;
 use Mmb\Support\Caller\HasEvents;
 use Closure;
 
@@ -12,10 +13,13 @@ abstract class WeakSign
     use HasEvents,
         Station\Concerns\DefineStubs;
 
+    public Context $context;
+
     public function __construct(
         public readonly Road $road,
     )
     {
+        $this->context = $road->context;
         $this->boot();
     }
 

@@ -97,10 +97,22 @@ class CommandAction extends Action implements UpdateHandling
      *
      * @param ...$args
      * @return string
+     * @deprecated use `make()->commandQuery()`
      */
-    public static function commandFor(...$args)
+    public static function commandFor(Context $context, ...$args)
     {
-        return (new static)->getMatcher()->makeQuery(...$args); // todo
+        return (new static($context))->getMatcher()->makeQuery(...$args);
+    }
+
+    /**
+     * Make command string for arguments match
+     *
+     * @param ...$args
+     * @return string
+     */
+    public function commandQuery(...$args)
+    {
+        return $this->getMatcher()->makeQuery(...$args);
     }
 
 }
