@@ -15,9 +15,4 @@ readonly class UploadFile
         $this->fileName = $fileName ?? basename($this->path);
     }
 
-    public function readContents(): string
-    {
-        return file_get_contents($this->path);
-    }
-
 }

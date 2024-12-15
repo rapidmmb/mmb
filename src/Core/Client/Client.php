@@ -67,6 +67,8 @@ abstract class Client
             foreach ($this->_jsonListArgs as $name => $value) {
                 if (is_array($value)) {
                     $this->_jsonListArgs[$name] = json_encode($value);
+                } elseif (is_bool($value)) {
+                    $this->_jsonListArgs[$name] = $value ? "1" : "0";
                 } elseif ($value instanceof Jsonable) {
                     $this->_jsonListArgs[$name] = $value->toJson();
                 }

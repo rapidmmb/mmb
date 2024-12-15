@@ -327,7 +327,7 @@ class Menu extends InlineAction implements Menuable
         // Else action
         if (isset($this->else))
         {
-            [$ok, $passed, $value] = $this->passFilter($this-> $update);
+            [$ok, $passed, $value] = $this->passFilter($this->context, $update);
             if (!$ok)
             {
                 return $passed;

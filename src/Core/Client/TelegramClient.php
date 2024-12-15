@@ -2,6 +2,7 @@
 
 namespace Mmb\Core\Client;
 
+use Amp\ByteStream\ReadableResourceStream;
 use Amp\Http\Client\Connection\DefaultConnectionFactory;
 use Amp\Http\Client\Connection\UnlimitedConnectionPool;
 use Amp\Http\Client\HttpClient;
@@ -13,6 +14,7 @@ use Mmb\Core\Client\Exceptions\TelegramResponseException;
 use Mmb\Core\Client\Exceptions\TelegramException;
 use Mmb\Core\Client\Extensions\Http1TunnelConnector;
 use Mmb\Core\Client\Query\UploadContents;
+use Mmb\Core\Client\Query\UploadFile;
 
 class TelegramClient extends Client
 {
@@ -52,7 +54,7 @@ class TelegramClient extends Client
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'proxy':
-                    $client->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(new Http1TunnelConnector($value))));
+                    $client = $client->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(new Http1TunnelConnector($value))));
                     break;
 
                 default:
@@ -132,8 +134,14 @@ class TelegramClient extends Client
             if ($value instanceof \CURLFile) {
                 $multipart[] = [
                     'name' => $key,
-                    'contents' => file_get_contents($value->getFilename()),
+                    'contents' => fopen($value->getFilename(), 'rb'),
                     'filename' => basename($value->getFilename()),
+                ];
+            } elseif ($value instanceof UploadFile) {
+                $multipart[] = [
+                    'name' => $key,
+                    'contents' => fopen($value->path, 'rb'),
+                    'filename' => $value->fileName,
                 ];
             } elseif ($value instanceof UploadContents) {
                 $multipart[] = [
@@ -146,7 +154,7 @@ class TelegramClient extends Client
 
                 $multipart[] = [
                     'name' => $key,
-                    'contents' => stream_get_contents($value),
+                    'contents' => $value,
                     'filename' => basename($metaData['uri']),
                 ];
             } else {
@@ -159,6 +167,7 @@ class TelegramClient extends Client
 
         $body = new MultipartStream($multipart);
         $ampRequest = new AmpRequest($request->uri, $request->method, $body);
+        $ampRequest->setHeader('Content-Type', 'multipart/form-data; boundary=' . $body->getBoundary());
 
         return $this->requestJsonResult($ampRequest);
     }
