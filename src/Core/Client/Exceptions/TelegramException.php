@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\Core\Requests\Exceptions;
+namespace Mmb\Core\Client\Exceptions;
 
 use Exception;
 

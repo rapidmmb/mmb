@@ -5,7 +5,7 @@ namespace Mmb\Tests;
 use Mmb\Context;
 use Mmb\Core\Bot;
 use Mmb\Core\InternalBotInfo;
-use Mmb\Core\Requests\TelegramRequest;
+use Mmb\Core\Client\TelegramClient;
 use Mmb\Core\Updates\Update;
 use Mmb\Providers\MmbServiceProvider;
 

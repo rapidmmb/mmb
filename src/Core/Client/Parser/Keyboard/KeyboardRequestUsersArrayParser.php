@@ -1,10 +1,10 @@
 <?php
 
-namespace Mmb\Core\Requests\Parser\Keyboard;
+namespace Mmb\Core\Client\Parser\Keyboard;
 
-use Mmb\Core\Requests\Parser\ArrayParser;
+use Mmb\Core\Client\Parser\ArrayParser;
 
-class KeyboardRequestUserArrayParser extends ArrayParser
+class KeyboardRequestUsersArrayParser extends ArrayParser
 {
 
     public function __construct()
@@ -17,6 +17,11 @@ class KeyboardRequestUserArrayParser extends ArrayParser
                 'isBot'         => 'userIsBot',
                 'userIsPremium' => 'userIsPremium',
                 'isPremium'     => 'userIsPremium',
+                'maxQuantity' => 'maxQuantity',
+                'max' => 'maxQuantity',
+                'requestName' => 'requestName',
+                'requestUsername' => 'requestUsername',
+                'requestPhoto' => 'requestPhoto',
             ],
             errorOnFail: true,
         );

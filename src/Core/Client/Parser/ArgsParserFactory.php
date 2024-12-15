@@ -1,10 +1,10 @@
 <?php
 
-namespace Mmb\Core\Requests\Parser;
+namespace Mmb\Core\Client\Parser;
 
 use Closure;
 use Illuminate\Support\Str;
-use Mmb\Core\Requests\RequestApi;
+use Mmb\Core\Client\Client;
 
 abstract class ArgsParserFactory
 {
@@ -203,10 +203,10 @@ abstract class ArgsParserFactory
     /**
      * Convert mmb arguments to api arguments
      *
-     * @param RequestApi $request
+     * @param Client $request
      * @return array
      */
-    public function normalize(RequestApi $request)
+    public function normalize(Client $request)
     {
         $this->readyArgs();
 

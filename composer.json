@@ -5,7 +5,8 @@
     "require": {
         "guzzlehttp/guzzle": "^7.0",
         "laravel/framework": "^11.0",
-        "php": "^8.2"
+        "php": "^8.2",
+        "amphp/http-client": "^5.2"
     },
     "autoload": {
         "psr-4": {

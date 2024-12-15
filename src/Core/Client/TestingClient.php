@@ -1,10 +1,10 @@
 <?php
 
-namespace Mmb\Core\Requests;
+namespace Mmb\Core\Client;
 
 use Illuminate\Support\Str;
 
-class TestingRequest extends RequestApi
+class TestingClient extends Client
 {
 
     protected function execute()

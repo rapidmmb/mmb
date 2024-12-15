@@ -1,15 +1,15 @@
 <?php
 
-namespace Mmb\Core\Requests;
+namespace Mmb\Core\Client;
 
 use Closure;
 
-trait HasRequest
+trait HasClient
 {
 
-    public function newRequest(string $method, array $args)
+    public function newClient(string $method, array $args)
     {
-        return new TelegramRequest($this, $this->info->token, $method, $args);
+        return new TelegramClient($this, $this->info->token, $method, $args);
     }
 
     /**
@@ -21,7 +21,7 @@ trait HasRequest
      */
     public function requestApi(string $method, array $args)
     {
-        return $this->newRequest($method, $args)->request();
+        return $this->newClient($method, $args)->request();
     }
 
     /**

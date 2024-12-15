@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Action;
 use Mmb\Action\Memory\StepMemory;
 use Mmb\Action\Section\Attributes\FixedDialog;
-use Mmb\Core\Requests\Exceptions\TelegramException;
+use Mmb\Core\Client\Exceptions\TelegramException;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\ActionCallback;

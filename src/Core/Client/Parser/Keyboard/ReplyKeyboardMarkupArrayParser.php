@@ -1,9 +1,9 @@
 <?php
 
-namespace Mmb\Core\Requests\Parser\Keyboard;
+namespace Mmb\Core\Client\Parser\Keyboard;
 
 use Illuminate\Support\Arr;
-use Mmb\Core\Requests\Parser\ArrayParser;
+use Mmb\Core\Client\Parser\ArrayParser;
 
 class ReplyKeyboardMarkupArrayParser extends ArrayParser
 {

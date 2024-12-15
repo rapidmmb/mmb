@@ -1,8 +1,8 @@
 <?php
 
-namespace Mmb\Core\Requests\Parser\Keyboard;
+namespace Mmb\Core\Client\Parser\Keyboard;
 
-use Mmb\Core\Requests\Parser\ArrayParser;
+use Mmb\Core\Client\Parser\ArrayParser;
 
 class KeyboardInlineChosenChatArrayParser extends ArrayParser
 {

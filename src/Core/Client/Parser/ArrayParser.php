@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\Core\Requests\Parser;
+namespace Mmb\Core\Client\Parser;
 
 use Illuminate\Support\Str;
 

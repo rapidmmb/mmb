@@ -1,10 +1,10 @@
 <?php
 
-namespace Mmb\Core\Requests\Parser;
+namespace Mmb\Core\Client\Parser;
 
 use Illuminate\Support\Str;
-use Mmb\Core\Requests\Parser\Keyboard\ReplyKeyboardMarkupArrayParser;
-use Mmb\Core\Requests\RequestApi;
+use Mmb\Core\Client\Parser\Keyboard\ReplyKeyboardMarkupArrayParser;
+use Mmb\Core\Client\Client;
 
 class DefaultArgsParser extends ArgsParserFactory
 {
@@ -82,7 +82,7 @@ class DefaultArgsParser extends ArgsParserFactory
         ];
     }
 
-    public function parseText(RequestApi $request, $key, $value)
+    public function parseText(Client $request, $key, $value)
     {
         if($key != 'text')
         {
@@ -129,19 +129,19 @@ class DefaultArgsParser extends ArgsParserFactory
         return [$key => $value];
     }
 
-    public function parseReplyMarkup(RequestApi $request, $key, $value)
+    public function parseReplyMarkup(Client $request, $key, $value)
     {
         return [
             'reply_markup' => app(ReplyKeyboardMarkupArrayParser::class)->normalize($value),
         ];
     }
 
-    public function parseIgnore(RequestApi $request, $key, $value)
+    public function parseIgnore(Client $request, $key, $value)
     {
         $request->ignore = (bool) $value;
     }
 
-    public function parseType(RequestApi $request, $key, $value)
+    public function parseType(Client $request, $key, $value)
     {
         if ($request->isMethod('sendmessage', true))
         {
@@ -155,7 +155,7 @@ class DefaultArgsParser extends ArgsParserFactory
         }
     }
 
-    public function parseMedia(RequestApi $request, $key, $value)
+    public function parseMedia(Client $request, $key, $value)
     {
         if ($request->isSendMethod() && $type = substr($request->lowerMethod(), 4))
         { }

@@ -1,9 +1,9 @@
 <?php
 
-namespace Mmb\Tests\Requests;
+namespace Mmb\Tests\Clients;
 
-use Mmb\Core\Requests\Parser\DefaultArgsParser;
-use Mmb\Core\Requests\TelegramRequest;
+use Mmb\Core\Client\Parser\DefaultArgsParser;
+use Mmb\Core\Client\TelegramClient;
 use Mmb\Tests\TestCase;
 
 class DefaultArgsParserTest extends TestCase
@@ -20,7 +20,7 @@ class DefaultArgsParserTest extends TestCase
 
     public function createRequest(string $method, array $args)
     {
-        return new TelegramRequest(bot(), '', $method, $args);
+        return new TelegramClient(bot(), '', $method, $args);
     }
 
     public function assertParsed(array $expected, array $args, string $method = '')

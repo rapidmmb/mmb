@@ -15,13 +15,13 @@ use Mmb\Action\Update\HandlerFactory;
 use Mmb\Action\Update\HandlerNotMatchedException;
 use Mmb\Action\Update\UpdateHandler;
 use Mmb\Context;
-use Mmb\Core\Requests\HasRequest;
+use Mmb\Core\Client\HasClient;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
 
 class Bot
 {
-    use HasRequest,
+    use HasClient,
         Macroable,
         Traits\ApiBotInfos,
         Traits\ApiBotMessages,

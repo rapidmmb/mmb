@@ -9,8 +9,8 @@ use Mmb\Auth\AreaRegister;
 use Mmb\Console;
 use Mmb\Core\Bot;
 use Mmb\Core\BotChanneling;
-use Mmb\Core\Requests\Parser\ArgsParserFactory;
-use Mmb\Core\Requests\Parser\DefaultArgsParser;
+use Mmb\Core\Client\Parser\ArgsParserFactory;
+use Mmb\Core\Client\Parser\DefaultArgsParser;
 use Mmb\Core\Updates\Update;
 
 class MmbServiceProvider extends ServiceProvider
