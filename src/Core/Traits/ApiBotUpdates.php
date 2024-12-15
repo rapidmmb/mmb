@@ -5,7 +5,7 @@ namespace Mmb\Core\Traits;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Mmb\Context;
+use Mmb\Core\UpdateLoopHandler;
 use Mmb\Core\Updates\Update;
 use Mmb\Core\Updates\Webhooks\WebhookInfo;
 
@@ -80,7 +80,7 @@ trait ApiBotUpdates
      * @param Closure|null $pass
      * @param int          $timeout
      * @param float        $delay
-     * @return never
+     * @return void
      */
     public function loopUpdates(
         Closure $callback = null,
@@ -90,59 +90,14 @@ trait ApiBotUpdates
         float   $delay = 0,
     )
     {
-        // Delete webhook
-        if (($web = $this->getWebhook()) && $web->url)
-        {
-            $this->deleteWebhook();
-        }
-
-        // Default callbacks
-        $callback ??= function (Update $update)
-        {
-            // Remove the cache before handling update
-//            ModelFinder::clear();
-//            Step::setModel(null);
-//            todo: this is now context based
-
-            $update->handle(new Context());
-        };
-
-        $offset = -1;
-        $limit = 10;
-        $allowedUpdates = null;
-
-        while (true)
-        {
-            // Try to get updates
-            $updates = retry(5, fn () => $this->getUpdates($offset, $limit, $allowedUpdates, 60), $delay);
-
-            // Loop and pass to callback
-            if ($updates->isNotEmpty())
-            {
-                foreach ($updates as $update)
-                {
-                    // TODO: try and catch to pass into the debugger
-                    if ($received)
-                    {
-                        $received($update);
-                    }
-
-                    $callback($update);
-                }
-
-                $offset = $updates->last()->id + 1;
-            }
-
-            if ($pass)
-            {
-                $pass();
-            }
-
-            if ($delay)
-            {
-                usleep($delay * 1000);
-            }
-        }
+        (new UpdateLoopHandler(
+            $this,
+            callback: $callback,
+            received: $received,
+            pass: $pass,
+            timeout: $timeout,
+            delay: $delay,
+        ))->run()->wait();
     }
 
     /**
