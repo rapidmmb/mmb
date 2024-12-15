@@ -112,6 +112,7 @@ class UpdateLoopHandler
             return;
         }
 
+        $this->running[$chatId] = true;
         async(fn () => $this->handleNowWithTag($update, $chatId));
     }
 
