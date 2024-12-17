@@ -4,7 +4,9 @@ namespace Mmb\Core;
 
 use Exception;
 use Illuminate\Http\Request;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
+use Revolt\EventLoop;
 
 abstract class BotChanneling
 {
@@ -32,10 +34,8 @@ abstract class BotChanneling
      */
     public function findByHookToken(string $hookToken)
     {
-        foreach($this->args as $name => $info)
-        {
-            if($hookToken == $info['hookToken'] ?? $name)
-            {
+        foreach ($this->args as $name => $info) {
+            if ($hookToken == $info['hookToken'] ?? $name) {
                 return $name;
             }
         }
@@ -53,8 +53,7 @@ abstract class BotChanneling
     {
         $name = $this->findByHookToken($hookToken);
 
-        if($name === null)
-        {
+        if ($name === null) {
             return null;
         }
 
@@ -71,8 +70,7 @@ abstract class BotChanneling
     {
         $bot = $this->findAndGet($hookToken);
 
-        if($bot === null)
-        {
+        if ($bot === null) {
             return null;
         }
 
@@ -100,8 +98,7 @@ abstract class BotChanneling
      */
     public function getBot(string $name, ?string $hookToken)
     {
-        if (array_key_exists($name, $this->args))
-        {
+        if (array_key_exists($name, $this->args)) {
             $data = $this->args[$name];
             $bot = new Bot(new InternalBotInfo(
                 token: $data['token'],
@@ -142,8 +139,7 @@ abstract class BotChanneling
      */
     public function getDefaultBot()
     {
-        if (isset($this->defaultBot))
-        {
+        if (isset($this->defaultBot)) {
             return $this->defaultBot;
         }
 
@@ -153,7 +149,7 @@ abstract class BotChanneling
     /**
      * Register the Bot object data, like handlers
      *
-     * @param Bot   $bot
+     * @param Bot $bot
      * @param array $data
      * @return void
      */
@@ -178,13 +174,15 @@ abstract class BotChanneling
      */
     protected function handleUpdate(Request $request)
     {
-        try
-        {
-            $this->makeUpdate($request)?->handle();
-            return '';
-        }
-        catch(\Throwable $e)
-        {
+        try {
+
+            $this->makeUpdate($request)?->handle(new Context());
+
+            EventLoop::run();
+
+            return response()->noContent();
+            
+        } catch (\Throwable $e) {
             return $this->handleException($e);
         }
     }

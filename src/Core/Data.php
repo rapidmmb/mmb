@@ -30,25 +30,24 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
 
     public static function make($data, Bot $bot = null, bool $trustedData = false)
     {
-        if(!is_array($data))
-        {
+        if (!is_array($data)) {
             return null;
         }
 
         return new static($data, $bot, $trustedData);
     }
 
-    protected function dataCasts() : array
+    protected function dataCasts(): array
     {
         return [];
     }
 
-    protected function dataRules() : array
+    protected function dataRules(): array
     {
         return [];
     }
 
-    protected function dataShortAccess() : array
+    protected function dataShortAccess(): array
     {
         return [];
     }
@@ -57,19 +56,15 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
 
     protected final function getDataShortAccess(string $name = null)
     {
-        if(!isset($this->_shortAccess))
-        {
+        if (!isset($this->_shortAccess)) {
             $this->_shortAccess = [];
-            foreach($this->dataShortAccess() as $alias => $to)
-            {
+            foreach ($this->dataShortAccess() as $alias => $to) {
                 $this->_shortAccess[strtolower($alias)] = $to;
             }
         }
 
-        if(isset($name))
-        {
-            if(array_key_exists($name, $this->allData))
-            {
+        if (isset($name)) {
+            if (array_key_exists($name, $this->allData)) {
                 return $name;
             }
 
@@ -82,8 +77,7 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
 
     protected function initialize(array $data, bool $trustedData)
     {
-        if(!$trustedData)
-        {
+        if (!$trustedData) {
             // $data = Validator::make($data, $this->dataRules())->validate();
         }
 
@@ -94,10 +88,8 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
 
     protected function castData(array $data, bool $trustedData = false)
     {
-        foreach($this->dataCasts() as $name => $cast)
-        {
-            if(!isset($data[$name]))
-            {
+        foreach ($this->dataCasts() as $name => $cast) {
+            if (!isset($data[$name])) {
                 $data[$name] = null;
                 continue;
             }
@@ -110,58 +102,45 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
 
     protected function castSingleData($value, $cast, bool $trustedData)
     {
-        if($value === null)
-        {
+        if ($value === null) {
             return null;
         }
-        elseif(is_array($cast))
-        {
+
+        if (is_array($cast)) {
             return collect($value)->map(fn($data) => $this->castSingleData($data, $cast[0], $trustedData));
         }
-        elseif(!is_string($cast))
-        {
+
+        if (!is_string($cast)) {
             throw new \TypeError("Invalid cast of type [" . smartTypeOf($cast) . "]");
         }
-        elseif(class_exists($cast))
-        {
-            if($value instanceof $cast)
-            {
+
+        if (class_exists($cast)) {
+            if ($value instanceof $cast) {
                 return $value;
-            }
-            elseif(is_object($value))
-            {
+            } elseif (is_object($value)) {
                 throw new \InvalidArgumentException("Expected [$cast] type casting, given [" . get_class($value) . "]");
-            }
-            elseif(method_exists($cast, 'make'))
-            {
+            } elseif (method_exists($cast, 'make')) {
                 return $cast::make($value, $this->targetBot, $trustedData);
-            }
-            else
-            {
+            } else {
                 return new $cast(is_array($value) ? $value : [], $this->targetBot, $trustedData);
             }
-        }
-        else
-        {
-            return match ($cast)
-            {
-                'int', 'long'     => (int) $value,
-                'double', 'float' => (double) $value,
-                'string'          => (string) $value,
-                'array'           => (array) $value,
-                'bool'            => (bool) $value,
-                'date'            => new Carbon($value),
-                default           => throw new \TypeError("Cast [$cast] is not found"),
+        } else {
+            return match ($cast) {
+                'int', 'long' => (int)$value,
+                'double', 'float' => (double)$value,
+                'string' => (string)$value,
+                'array' => (array)$value,
+                'bool' => (bool)$value,
+                'date' => new Carbon($value),
+                default => throw new \TypeError("Cast [$cast] is not found"),
             };
         }
     }
 
     protected function setCleanData(array $data)
     {
-        foreach($data as $name => $value)
-        {
-            if(property_exists($this, $name))
-            {
+        foreach ($data as $name => $value) {
+            if (property_exists($this, $name)) {
                 $this->$name = $value;
                 unset($data[$name]);
             }
@@ -174,10 +153,8 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
     {
         $data = $this->allData;
 
-        foreach($this->dataCasts() as $name => $value)
-        {
-            if(property_exists($this, $name))
-            {
+        foreach ($this->dataCasts() as $name => $value) {
+            if (property_exists($this, $name)) {
                 $data[$name] = $this->$name;
             }
         }
@@ -194,23 +171,17 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
     {
         $data = $this->getFullData();
 
-        foreach($this->dataCasts() as $name => $value)
-        {
-            if(!isset($data[$name]))
+        foreach ($this->dataCasts() as $name => $value) {
+            if (!isset($data[$name]))
                 continue;
 
             $value = &$data[$name];
 
-            if($value instanceof Data)
-            {
+            if ($value instanceof Data) {
                 $value = $value->toArray();
-            }
-            elseif($value instanceof Arrayable)
-            {
+            } elseif ($value instanceof Arrayable) {
                 $value = $value->toArray();
-            }
-            else
-            {
+            } else {
                 # Auto cast
             }
         }
@@ -225,14 +196,12 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
 
     public function __get(string $name)
     {
-        if(method_exists($this, $fn = "get{$name}Attribute"))
-        {
+        if (method_exists($this, $fn = "get{$name}Attribute")) {
             return $this->$fn();
         }
 
         $access = $this->getDataShortAccess($name) ?? $this->getDataShortAccess(Str::snake($name));
-        if($access === null)
-        {
+        if ($access === null) {
             error_log("Undefined property [$name] on [" . static::class . "]");
             return null;
         }
@@ -240,7 +209,7 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
         return $this->allData[$access];
     }
 
-    public function __set(string $name, $value) : void
+    public function __set(string $name, $value): void
     {
         $access = $this->getDataShortAccess($name) ?? $name;
 
@@ -250,14 +219,10 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
     protected function mergeMultiple(array $valueArgs, array $fixedArgs)
     {
         $args = [];
-        foreach($valueArgs as $key => $value)
-        {
-            if(is_array($value))
-            {
+        foreach ($valueArgs as $key => $value) {
+            if (is_array($value)) {
                 $args = $value + $args;
-            }
-            elseif($value !== null)
-            {
+            } elseif ($value !== null) {
                 $args[$key] = $value;
             }
         }
@@ -268,7 +233,7 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
     protected $_caches = [];
 
     /**
-     * @param string  $name
+     * @param string $name
      * @param Closure $maker
      * @return mixed
      */
@@ -280,32 +245,32 @@ abstract class Data implements Arrayable, Jsonable, ArrayAccess, Shortable
     }
 
 
-    public function offsetExists(mixed $offset) : bool
+    public function offsetExists(mixed $offset): bool
     {
         return @$this->__get($offset) !== null;
     }
 
-    public function offsetGet(mixed $offset) : mixed
+    public function offsetGet(mixed $offset): mixed
     {
         return $this->__get($offset);
     }
 
-    public function offsetSet(mixed $offset, mixed $value) : void
+    public function offsetSet(mixed $offset, mixed $value): void
     {
         $this->__set($offset, $value);
     }
 
-    public function offsetUnset(mixed $offset) : void
+    public function offsetUnset(mixed $offset): void
     {
         $this->__set($offset, null);
     }
 
-    public function shortSerialize() : array
+    public function shortSerialize(): array
     {
         return Arr::whereNotNull($this->realData);
     }
 
-    public function shortUnserialize(array $data) : void
+    public function shortUnserialize(array $data): void
     {
         $this->realData = $data;
         $this->initialize($data, true);

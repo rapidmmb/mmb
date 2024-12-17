@@ -185,7 +185,7 @@ class Input implements Menuable
     {
         if ($this->isCreating() && !value($condition))
         {
-            if (count(func_get_args()) > 1)
+            if (func_num_args() > 1)
             {
                 $this->value = value($value);
             }
@@ -208,7 +208,7 @@ class Input implements Menuable
     {
         if ($this->isCreating() && value($condition))
         {
-            if (count(func_get_args()) > 1)
+            if (func_num_args() > 1)
             {
                 $this->value = value($value);
             }
@@ -230,7 +230,7 @@ class Input implements Menuable
     {
         if ($this->isCreating() && $this->value !== null)
         {
-            if (count(func_get_args()) > 0)
+            if (func_num_args() > 0)
             {
                 $this->value = value($value);
             }

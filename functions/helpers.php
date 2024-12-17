@@ -1,13 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Lang;
 use Mmb\Core\Bot;
 use Mmb\Core\Updates\Callbacks\CallbackQuery;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
+use Mmb\Exceptions\AbortException;
 use Mmb\Support\Pov\POV;
-use Mmb\Support\Pov\POVBuilder;
 
 if (!function_exists('bot')) {
     /**
@@ -71,12 +70,17 @@ if (!function_exists('byLang')) {
             $values[$key] : (
             array_key_exists($key = Lang::getFallback(), $values) ?
                 $values[$key] :
-                null
+                @$values['default']
             );
     }
 }
 
 if (!function_exists('___')) {
+    /**
+     * @deprecated
+     * @param ...$values
+     * @return mixed
+     */
     function ___(...$values)
     {
         return value(byLang(...$values));
@@ -85,10 +89,10 @@ if (!function_exists('___')) {
 
 if (!function_exists('trim2')) {
     /**
-     * @deprecated 
-     *
      * @param string|array $value
      * @return string
+     *
+     * @deprecated
      */
     function trim2(string|array $value)
     {
@@ -103,5 +107,60 @@ if (!function_exists('pov')) {
     function pov()
     {
         return POV::make();
+    }
+}
+
+if (!function_exists('denied')) {
+    /**
+     * Abort the code
+     *
+     * @param int|string $errorType
+     * @param mixed|null $errorMessage
+     * @param Throwable|null $previous
+     * @return mixed
+     */
+    function denied(int|string $errorType, mixed $errorMessage = null, ?\Throwable $previous = null)
+    {
+        throw new AbortException($errorType, $errorMessage, $previous);
+    }
+}
+
+if (!function_exists('denied_if')) {
+    /**
+     * Abort the code when condition is true
+     *
+     * @param $condition
+     * @param int|string $errorType
+     * @param mixed|null $errorMessage
+     * @param Throwable|null $previous
+     * @return void
+     */
+    function denied_if($condition, int|string $errorType, mixed $errorMessage = null, ?\Throwable $previous = null)
+    {
+        if (!value($condition)) {
+            return;
+        }
+
+        throw new AbortException($errorType, $errorMessage, $previous);
+    }
+}
+
+if (!function_exists('denied_unless')) {
+    /**
+     * Abort the code when condition is not true
+     *
+     * @param $condition
+     * @param int|string $errorType
+     * @param mixed|null $errorMessage
+     * @param Throwable|null $previous
+     * @return void
+     */
+    function denied_unless($condition, int|string $errorType, mixed $errorMessage = null, ?\Throwable $previous = null)
+    {
+        if (value($condition)) {
+            return;
+        }
+
+        throw new AbortException($errorType, $errorMessage, $previous);
     }
 }

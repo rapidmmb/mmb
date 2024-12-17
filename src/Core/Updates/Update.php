@@ -17,62 +17,62 @@ use Mmb\Core\Updates\Poll\Poll;
 use Mmb\Core\Updates\Poll\PollAnswer;
 
 /**
- * @property int                 $id
- * @property ?Message            $message
- * @property ?Message            $editedMessage
- * @property ?Message            $channelPost
- * @property ?Message            $editedChannelPost
- * @property ?InlineQuery        $inlineQuery
+ * @property int $id
+ * @property ?Message $message
+ * @property ?Message $editedMessage
+ * @property ?Message $channelPost
+ * @property ?Message $editedChannelPost
+ * @property ?InlineQuery $inlineQuery
  * @property ?ChosenInlineResult $chosenInlineResult
- * @property ?CallbackQuery      $callbackQuery
- * @property ?Poll               $poll
- * @property ?PollAnswer         $pollAnswer
- * @property ?ChatMemberUpdated  $myChatMember
- * @property ?ChatMemberUpdated  $chatMember
- * @property ?ChatJoinRequest    $chatJoinRequest
+ * @property ?CallbackQuery $callbackQuery
+ * @property ?Poll $poll
+ * @property ?PollAnswer $pollAnswer
+ * @property ?ChatMemberUpdated $myChatMember
+ * @property ?ChatMemberUpdated $chatMember
+ * @property ?ChatJoinRequest $chatJoinRequest
  */
 class Update extends Data
 {
 
-    protected function dataRules() : array
+    protected function dataRules(): array
     {
         return [
-            'update_id'            => 'int',
-            'message'              => 'nullable|array',
-            'edited_message'       => 'nullable|array',
-            'channel_post'         => 'nullable|array',
-            'edited_channel_post'  => 'nullable|array',
-            'inline_query'         => 'nullable|array',
+            'update_id' => 'int',
+            'message' => 'nullable|array',
+            'edited_message' => 'nullable|array',
+            'channel_post' => 'nullable|array',
+            'edited_channel_post' => 'nullable|array',
+            'inline_query' => 'nullable|array',
             'chosen_inline_result' => 'nullable|array',
-            'callback_query'       => 'nullable|array',
-            'poll'                 => 'nullable|array',
-            'poll_answer'          => 'nullable|array',
-            'my_chat_member'       => 'nullable|array',
-            'chat_member'          => 'nullable|array',
-            'chat_join_request'    => 'nullable|array',
+            'callback_query' => 'nullable|array',
+            'poll' => 'nullable|array',
+            'poll_answer' => 'nullable|array',
+            'my_chat_member' => 'nullable|array',
+            'chat_member' => 'nullable|array',
+            'chat_join_request' => 'nullable|array',
         ];
     }
 
-    protected function dataCasts() : array
+    protected function dataCasts(): array
     {
         return [
-            'update_id'           => 'int',
-            'message'             => Message::class,
-            'edited_message'      => Message::class,
-            'channel_post'        => Message::class,
+            'update_id' => 'int',
+            'message' => Message::class,
+            'edited_message' => Message::class,
+            'channel_post' => Message::class,
             'edited_channel_post' => Message::class,
-            'inline_query'        => InlineQuery::class,
+            'inline_query' => InlineQuery::class,
             // 'chosen_inline_result' => Message::class,
-            'callback_query'      => CallbackQuery::class,
-            'poll'                => Poll::class,
-            'poll_answer'         => PollAnswer::class,
+            'callback_query' => CallbackQuery::class,
+            'poll' => Poll::class,
+            'poll_answer' => PollAnswer::class,
             // 'my_chat_member'       => Message::class,
             // 'chat_member'          => Message::class,
             // 'chat_join_request'    => Message::class,
         ];
     }
 
-    protected function dataShortAccess() : array
+    protected function dataShortAccess(): array
     {
         return [
             'id' => 'update_id',
@@ -88,14 +88,13 @@ class Update extends Data
     {
         return $this->makeCache(
             'Message',
-            fn () => match (true)
-            {
-                null !== $this->message           => $this->message,
-                null !== $this->editedMessage     => $this->editedMessage,
-                null !== $this->channelPost       => $this->channelPost,
+            fn() => match (true) {
+                null !== $this->message => $this->message,
+                null !== $this->editedMessage => $this->editedMessage,
+                null !== $this->channelPost => $this->channelPost,
                 null !== $this->editedChannelPost => $this->editedChannelPost,
-                null !== $this->callbackQuery     => $this->callbackQuery->message,
-                default                           => null,
+                null !== $this->callbackQuery => $this->callbackQuery->message,
+                default => null,
             }
         );
     }
@@ -107,8 +106,7 @@ class Update extends Data
      */
     public function getChat()
     {
-        if ($message = $this->getMessage())
-        {
+        if ($message = $this->getMessage()) {
             return $message->chat;
         }
 
@@ -122,12 +120,11 @@ class Update extends Data
      */
     public function getUser()
     {
-        return match (true)
-        {
-            null !== $this->callbackQuery             => $this->callbackQuery->from,
-            null !== $this->inlineQuery               => $this->inlineQuery->from,
+        return match (true) {
+            null !== $this->callbackQuery => $this->callbackQuery->from,
+            null !== $this->inlineQuery => $this->inlineQuery->from,
             null !== ($message = $this->getMessage()) => $message->from,
-            default                                   => null,
+            default => null,
         };
     }
 
@@ -256,15 +253,12 @@ class Update extends Data
      */
     public function response($message, array $args = [], ...$namedArgs)
     {
-        if ($this->isRespond)
-        {
+        if ($this->isRespond) {
             return $this->getMessage()->sendMessage($message, $args, ...$namedArgs);
-        }
-        else
-        {
+        } else {
             $args['ignoreReply'] = true;
             $result = $this->getMessage()->replyMessage($message, $args, ...$namedArgs);
-            $this->isRespond = (bool) $result;
+            $this->isRespond = (bool)$result;
             return $result;
         }
     }

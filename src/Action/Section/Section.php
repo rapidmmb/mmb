@@ -5,10 +5,12 @@ namespace Mmb\Action\Section;
 use Mmb\Action\Action;
 use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\HigherOrderSafeProxy;
+use Mmb\Action\Inline\DefferInlineProxy;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\EventProxy;
+use function Symfony\Component\String\s;
 
 class Section extends Action
 {
@@ -28,7 +30,7 @@ class Section extends Action
      * Create new instance with safe proxy
      *
      * @param Context $context
-     * @return HigherOrderSafeProxy|static
+     * @return HigherOrderSafeProxy<static>|static
      */
     public static function makeSafe(Context $context)
     {
@@ -39,7 +41,7 @@ class Section extends Action
      * Create new instance with unsafe proxy
      *
      * @param Context $context
-     * @return HigherOrderSafeProxy|static
+     * @return HigherOrderSafeProxy<static>|static
      */
     public static function makeUnsafe(Context $context)
     {
@@ -51,7 +53,7 @@ class Section extends Action
      *
      * @template T of Action
      * @param class-string<T> $class
-     * @return HigherOrderSafeProxy|T
+     * @return HigherOrderSafeProxy<T>|T
      */
     public function newSafe(string $class)
     {
@@ -63,7 +65,7 @@ class Section extends Action
      *
      * @template T of Action
      * @param class-string<T> $class
-     * @return HigherOrderSafeProxy|T
+     * @return HigherOrderSafeProxy<T>|T
      */
     public function newUnsafe(string $class)
     {
@@ -116,7 +118,22 @@ class Section extends Action
      */
     public function nextStep(string $method)
     {
-        NextStepHandler::make()->for(static::class, $method)->keep();
+        NextStepHandler::make()->for(static::class, $method)->keep($this->context);
+    }
+
+    public function __get(string $name)
+    {
+        if (method_exists($this, $name) &&
+            ($parameters = (new \ReflectionMethod($this, $name))->getParameters()) &&
+            ($type = array_shift($parameters)->getType()) instanceof \ReflectionNamedType) {
+
+            if (is_a($type->getName(), InlineAction::class, true)) {
+                return new DefferInlineProxy($this, $type->getName(), $name);
+            }
+
+        }
+
+        return parent::__get($name);
     }
 
 }

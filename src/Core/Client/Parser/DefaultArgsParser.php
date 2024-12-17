@@ -77,6 +77,7 @@ class DefaultArgsParser extends ArgsParserFactory
             'allowFailedReply'  => 'allowSendingWithoutReply',
             'ignoreReply'       => 'allowSendingWithoutReply',
             'ignore'            => '@parseIgnore',
+            'cancellation'      => '@parseCancellation',
             'spoiler'           => 'hasSpoiler',
             'protect'           => 'protectContent',
         ];
@@ -139,6 +140,11 @@ class DefaultArgsParser extends ArgsParserFactory
     public function parseIgnore(Client $request, $key, $value)
     {
         $request->ignore = (bool) $value;
+    }
+
+    public function parseCancellation(Client $request, $key, $value)
+    {
+        $request->cancellation = $value;
     }
 
     public function parseType(Client $request, $key, $value)

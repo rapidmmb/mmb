@@ -170,7 +170,7 @@ class ResourceMaker
      */
     public function getModuleOrFail(string $name)
     {
-        return $this->getModule($name, fn() => abort(404));
+        return $this->getModule($name, fn() => denied(404));
     }
 
 }

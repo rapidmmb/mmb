@@ -2,6 +2,7 @@
 
 namespace Mmb\Core\Client;
 
+use Amp\Cancellation;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Arr;
 use Mmb\Core\Bot;
@@ -13,6 +14,8 @@ abstract class Client
 {
 
     public bool $ignore = false;
+
+    public ?Cancellation $cancellation = null;
 
     public function __construct(
         public Bot       $bot,

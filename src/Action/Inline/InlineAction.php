@@ -336,7 +336,7 @@ abstract class InlineAction implements ConvertableToStep
     {
         if ($this->isCreating())
         {
-            if(count(func_get_args()) > 2)
+            if(func_num_args() > 2)
             {
                 $value = value($default);
             }
@@ -390,7 +390,7 @@ abstract class InlineAction implements ConvertableToStep
             $value,
             fn($model) => $this->context->finder->store($model),
             fn($key) => $this->context->finder->findOrFail($class, $key),
-            count(func_get_args()) > 3,
+            func_num_args() > 3,
             $default,
         );
     }
@@ -413,7 +413,7 @@ abstract class InlineAction implements ConvertableToStep
             $value,
             fn($model) => $this->context->finder->storeDynamic($model),
             fn($key) => $this->context->finder->findDynamicOrFail($classes, $key),
-            count(func_get_args()) > 3,
+            func_num_args() > 3,
             $default,
         );
     }
@@ -447,9 +447,9 @@ abstract class InlineAction implements ConvertableToStep
                         }
                     }
 
-                    abort(404); // TODO: test this methods
+                    denied(404);
                 },
-                count(func_get_args()) > 3,
+                func_num_args() > 3,
                 $default,
             );
         }
@@ -458,8 +458,8 @@ abstract class InlineAction implements ConvertableToStep
                 $name,
                 $value,
                 fn($enum) => $enum->value,
-                fn($key) => $class::tryFrom($key) ?? abort(404),
-                count(func_get_args()) > 3,
+                fn($key) => $class::tryFrom($key) ?? denied(404),
+                func_num_args() > 3,
                 $default,
             );
         }

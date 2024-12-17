@@ -27,8 +27,9 @@ use Mmb\Support\Caller\StatusHandleBackException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
- * @property-read HigherOrderSafeProxy|static $safe
- * @property-read HigherOrderSafeProxy|static $unsafe
+ * @property-read HigherOrderSafeProxy<static>|static $safe
+ * @property-read HigherOrderSafeProxy<static>|static $unsafe
+ * @property-read Update $update
  */
 abstract class Action
 {
@@ -331,6 +332,26 @@ abstract class Action
     }
 
     /**
+     * Get safe proxy or call a callback via safe proxy
+     *
+     * @param string|Closure|null $callback
+     * @param ...$args
+     * @return HigherOrderSafeProxy<static>|static
+     */
+    public function safe(string|Closure|null $callback = null, ...$args)
+    {
+        $safeProxy = new HigherOrderSafeProxy($this);
+
+        if (is_null($callback)) {
+            return $safeProxy;
+        }
+
+        return is_string($callback) ?
+            $safeProxy->$callback(...$args) :
+            $safeProxy->callSafety($callback);
+    }
+
+    /**
      * Response to update message
      *
      * @param       $message
@@ -364,6 +385,10 @@ abstract class Action
 
         if ($name == 'unsafe') {
             return new HigherOrderSafeProxy($this, false);
+        }
+
+        if ($name == 'update') {
+            return $this->context->update;
         }
 
         throw new \Exception(sprintf("Try to access undefined property [%s] on [%s]", $name, static::class));

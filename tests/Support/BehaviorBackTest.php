@@ -4,6 +4,7 @@ namespace Mmb\Tests\Support;
 
 use Mmb\Action\Action;
 use Mmb\Auth\AreaRegister;
+use Mmb\Context;
 use Mmb\Support\Behavior\BehaviorFactory;
 use Mmb\Support\Behavior\Contracts\BackSystem;
 use Mmb\Support\Behavior\Exceptions\BackActionNotDefinedException;
@@ -61,7 +62,7 @@ class _BehaviorBackTestCustomBackSystem implements BackSystem
 {
     public static bool $isCalled;
 
-    public function back(array $args, array $dynamicArgs) : void
+    public function back(Context $context, array $args, array $dynamicArgs) : void
     {
         static::$isCalled = true;
     }

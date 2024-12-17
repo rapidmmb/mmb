@@ -308,7 +308,7 @@ class FormKeyBuilder implements Arrayable
      */
     public function add(array|FormKey|string $key, $value = null)
     {
-        if(is_string($key) && count(func_get_args()) > 1)
+        if(is_string($key) && func_num_args() > 1)
         {
             $key = FormKey::make($key, $value);
         }
@@ -326,7 +326,7 @@ class FormKeyBuilder implements Arrayable
      */
     public function addHeader(array|FormKey|string $key, $value = null)
     {
-        if(is_string($key) && count(func_get_args()) > 1)
+        if(is_string($key) && func_num_args() > 1)
         {
             $key = FormKey::make($key, $value);
         }
@@ -344,7 +344,7 @@ class FormKeyBuilder implements Arrayable
      */
     public function addFooter(array|FormKey|string $key, $value = null)
     {
-        if(is_string($key) && count(func_get_args()) > 1)
+        if(is_string($key) && func_num_args() > 1)
         {
             $key = FormKey::make($key, $value);
         }
@@ -378,7 +378,7 @@ class FormKeyBuilder implements Arrayable
      */
     public function push(array|FormKey|string $key, $value = null)
     {
-        if(is_string($key) && count(func_get_args()) > 1)
+        if(is_string($key) && func_num_args() > 1)
         {
             $key = [FormKey::make($key, $value)];
         }
@@ -396,7 +396,7 @@ class FormKeyBuilder implements Arrayable
      */
     public function pushHeader(array|FormKey|string $key, $value = null)
     {
-        if(is_string($key) && count(func_get_args()) > 1)
+        if(is_string($key) && func_num_args() > 1)
         {
             $key = [FormKey::make($key, $value)];
         }
@@ -414,7 +414,7 @@ class FormKeyBuilder implements Arrayable
      */
     public function pushFooter(array|FormKey|string $key, $value = null)
     {
-        if(is_string($key) && count(func_get_args()) > 1)
+        if(is_string($key) && func_num_args() > 1)
         {
             $key = [FormKey::make($key, $value)];
         }

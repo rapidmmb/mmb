@@ -1,14 +1,15 @@
 <?php
 
-namespace Mmb\Tests\Errors;
+namespace Mmb\Tests\Action;
 
+use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\Section;
 use Mmb\Context;
-use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
+use Mmb\Tests\Errors\SectionAbortTest;
 use Mmb\Tests\TestCase;
 
-class SectionAbortTest extends TestCase
+class SectionsBehaviorTest extends TestCase
 {
 
     public static bool $isCalled;
@@ -28,24 +29,7 @@ class SectionAbortTest extends TestCase
         $this->assertTrue(static::$isCalled);
     }
 
-    public function test_abort()
-    {
-        $section = new class($this->context) extends Section {
-            public function main()
-            {
-                abort(404);
-            }
-
-            public function denied404()
-            {
-                SectionAbortTest::$isCalled = true;
-            }
-        };
-
-        $this->startTest(fn() => $section->invoke('main'));
-    }
-
-    public function test_denied_with_number()
+    public function test_safe_calling()
     {
         $section = new class($this->context) extends Section {
             public function main()
@@ -55,28 +39,36 @@ class SectionAbortTest extends TestCase
 
             public function denied404()
             {
-                SectionAbortTest::$isCalled = true;
+                SectionsBehaviorTest::$isCalled = true;
             }
         };
 
-        $this->startTest(fn() => $section->invoke('main'));
+        $this->startTest(fn() => $section->safe->main());
     }
 
-    public function test_denied_with_string_code()
+    public function test_shorter_magic_inline_objects()
     {
         $section = new class($this->context) extends Section {
-            public function main()
+            public int $x;
+
+            public function first(Menu $menu)
             {
-                denied('notFound');
+                $this->x = 100;
             }
 
-            public function deniedNotFound()
+            public function second(Menu $menu, int $i)
             {
-                SectionAbortTest::$isCalled = true;
+                $this->x = $i;
             }
         };
 
-        $this->startTest(fn() => $section->invoke('main'));
+        $menu = $section->first->make();
+        $this->assertInstanceOf(Menu::class, $menu);
+        $this->assertSame(100, $section->x);
+
+        $menu = $section->second->make(i: 500);
+        $this->assertInstanceOf(Menu::class, $menu);
+        $this->assertSame(500, $section->x);
     }
 
 }

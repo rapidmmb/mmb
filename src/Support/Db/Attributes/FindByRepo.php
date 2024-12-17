@@ -29,15 +29,15 @@ class FindByRepo extends Find
 
         if (method_exists($repo, 'findOr'))
         {
-            return $repo->findOr($value, isset($this->error) ? fn () => abort($this->error) : null);
+            return $repo->findOr($value, isset($this->error) ? fn () => denied($this->error) : null);
         }
         elseif (method_exists($repo, 'findById'))
         {
-            return $repo->findById($value) ?? (isset($this->error) ? abort($this->error) : null);
+            return $repo->findById($value) ?? (isset($this->error) ? denied($this->error) : null);
         }
         elseif (method_exists($repo, 'find'))
         {
-            return $repo->find($value) ?? (isset($this->error) ? abort($this->error) : null);
+            return $repo->find($value) ?? (isset($this->error) ? denied($this->error) : null);
         }
 
         throw new \BadMethodCallException(sprintf("FindByRepo required [findOr] or [findById] or [find] method in [%s]", get_class($repo)));

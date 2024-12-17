@@ -9,6 +9,9 @@ use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\StatusHandleBackException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+/**
+ * @template T of Action
+ */
 class HigherOrderSafeProxy
 {
 
@@ -23,12 +26,30 @@ class HigherOrderSafeProxy
 
     public function __get(string $name)
     {
-        if ($this->withAuthorization) {
-            $this->__authorizeClass();
-            $this->__authorizeProperty($name);
-        }
+        try {
+            if ($this->withAuthorization) {
+                $this->__authorizeClass();
+                $this->__authorizeProperty($name);
+            }
 
-        return $this->_base->$name;
+            return $this->_base->$name;
+        } catch (AuthorizationException $exception) {
+            if (!($exception instanceof AuthorizationHandleBackException)) {
+                if ($fn = $this->_base->getDeniedHandler($exception)) {
+                    throw AuthorizationHandleBackException::from($exception, [$this->_base, $fn]);
+                }
+            }
+
+            throw $exception;
+        } catch (HttpException $exception) {
+            if (!($exception instanceof StatusHandleBackException)) {
+                if ($fn = $this->_base->getDeniedHandler($exception)) {
+                    throw StatusHandleBackException::from($exception, [$this->_base, $fn]);
+                }
+            }
+
+            throw $exception;
+        }
     }
 
     public function __call(string $name, array $arguments)
@@ -44,6 +65,33 @@ class HigherOrderSafeProxy
             }
 
             return $this->_base->$name(...$arguments);
+        } catch (AuthorizationException $exception) {
+            if (!($exception instanceof AuthorizationHandleBackException)) {
+                if ($fn = $this->_base->getDeniedHandler($exception)) {
+                    throw AuthorizationHandleBackException::from($exception, [$this->_base, $fn]);
+                }
+            }
+
+            throw $exception;
+        } catch (HttpException $exception) {
+            if (!($exception instanceof StatusHandleBackException)) {
+                if ($fn = $this->_base->getDeniedHandler($exception)) {
+                    throw StatusHandleBackException::from($exception, [$this->_base, $fn]);
+                }
+            }
+
+            throw $exception;
+        }
+    }
+
+    public function callSafety(callable $callback)
+    {
+        try {
+            if ($this->withAuthorization) {
+                $this->__authorizeClass();
+            }
+
+            return $callback();
         } catch (AuthorizationException $exception) {
             if (!($exception instanceof AuthorizationHandleBackException)) {
                 if ($fn = $this->_base->getDeniedHandler($exception)) {

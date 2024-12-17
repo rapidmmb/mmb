@@ -18,9 +18,9 @@ class OperatorService
         return new static($context);
     }
 
-    public static function make(Context $context)
+    public static function make(Context $context): StatefulOrderProxy|static
     {
-        return new static($context);
+        return (new static($context))->stateful();
     }
 
 
@@ -32,11 +32,19 @@ class OperatorService
         return new StatefulOrderProxy($this);
     }
 
-    public function pov(): OperatorPov
+    /**
+     * @template U
+     * @param class-string<U> $class
+     * @return EventTriggerProxy<U>|U
+     */
+    protected function event(string $class)
     {
-        return new OperatorPov($this);
+        return new EventTriggerProxy($class, $this->context);
     }
 
-    // todo
+    protected function fail(mixed $tag, string|array $message)
+    {
+        throw new OperatorFailed($tag, $message);
+    }
 
 }

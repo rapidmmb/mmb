@@ -97,7 +97,7 @@ class TelegramClient extends Client
             $ampRequest = new AmpRequest($request->uri, $request->method);
             $ampRequest->setQueryParameters($request->parameters);
 
-            $response = $this->getClient()->request($ampRequest);
+            $response = $this->getClient()->request($ampRequest, $this->cancellation);
 
             if ($response->getStatus() < 200 || $response->getStatus() >= 300) {
                 // todo
@@ -188,7 +188,7 @@ class TelegramClient extends Client
 
     protected function requestJsonResult(AmpRequest $ampRequest): mixed
     {
-        $response = $this->getClient()->request($ampRequest);
+        $response = $this->getClient()->request($ampRequest, $this->cancellation);
 
         $json = @json_decode($response->getBody()->buffer(), true);
 

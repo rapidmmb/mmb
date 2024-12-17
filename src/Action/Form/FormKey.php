@@ -27,7 +27,7 @@ class FormKey
     {
         $key = new static($text);
 
-        if(count(func_get_args()) > 1)
+        if(func_num_args() > 1)
         {
             $key->value($value);
         }

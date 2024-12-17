@@ -75,7 +75,9 @@ class Form extends Action
      */
     public function request(array $attributes = [])
     {
-        $this->with($attributes)->startForm();
+        $this->safe(function () use ($attributes) {
+            $this->with($attributes)->startForm();
+        });
     }
 
     private $_isBooted = false;
