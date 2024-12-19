@@ -22,7 +22,7 @@ trait SchemaCustomizes
         return $this;
     }
 
-    public function insertRow(string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null
+    public function insertRow(string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null,
     )
     {
         @$this->schemas[$group][] = [1, $key, 0, $y, $name, $rtl];
@@ -30,7 +30,7 @@ trait SchemaCustomizes
     }
 
     public function insertSchema(
-        string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null
+        string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null,
     )
     {
         @$this->schemas[$group][] = [2, $key, 0, $y, $name, $rtl];
@@ -41,10 +41,9 @@ trait SchemaCustomizes
     {
         $this->schemas[$group] = array_filter(
             $this->schemas[$group] ?? [],
-            function ($key) use ($name)
-            {
+            function ($key) use ($name) {
                 return $key[4] != $name;
-            }
+            },
         );
         return $this;
     }
@@ -52,10 +51,8 @@ trait SchemaCustomizes
     public function moveKey(string $group, string $name, ?int $x, ?int $y)
     {
         $this->schemas[$group] = array_map(
-            function ($key) use ($name, $x, $y)
-            {
-                if ($key[4] == $name)
-                {
+            function ($key) use ($name, $x, $y) {
+                if ($key[4] == $name) {
                     if (isset($x))
                         $key[2] = $x;
 
@@ -98,20 +95,17 @@ trait SchemaCustomizes
     {
         $schema =
             collect($customizers)
-                ->map(fn ($cus) => $cus->getAllSchemas()[$group] ?? [])
+                ->map(fn($cus) => $cus->getAllSchemas()[$group] ?? [])
                 ->flatten(1)
                 ->sortBy([3, 2]) // Sort by y, x
                 ->groupBy(3);
 
         $key = [];
-        foreach ($schema as $rowSchema)
-        {
+        foreach ($schema as $rowSchema) {
             $row = [];
-            foreach ($rowSchema as [$type, $builder, $x, $y, , $rtl])
-            {
+            foreach ($rowSchema as [$type, $builder, $x, $y, , $rtl]) {
                 $schemaResult = $station->fireSignAs($this->sign, $builder, ...$args);
-                switch ($type)
-                {
+                switch ($type) {
                     // Single key
                     case 0:
                         $row[] = $schemaResult;
@@ -129,8 +123,7 @@ trait SchemaCustomizes
                 }
             }
 
-            if ($row)
-            {
+            if ($row) {
                 $key[] = $this->isRtl() ? array_reverse($row) : $row;
             }
         }

@@ -3,10 +3,7 @@
 namespace Mmb\Action\Road\Station\Concerns;
 
 use closure;
-use Mmb\Action\Contracts\Menuable;
-use Mmb\Action\Form\Input;
 use Mmb\Action\Road\Station;
-use Mmb\Action\Section\Menu;
 
 /**
  * @method $this backKey(Closure|false $callback, int $x = 50, int $y = 200)
@@ -20,27 +17,27 @@ use Mmb\Action\Section\Menu;
 trait SignWithBacks
 {
 
+    /**
+     * @var Station\Words\SignKey<static>
+     */
+    public Station\Words\SignKey $back;
+
     protected function bootSignWithBacks()
     {
-        $this->defineKey('backKey', 'footer', 50, 200);
+        $this->back = Station\Words\SignKey::make($this);
+        $this->back->in('footer', 50, 200);
+        $this->back->label(__('mmb::road.back'));
+        $this->back->action(function () {
+            $this->road->fireBack();
+        });
     }
 
-    protected function onDefaultBackKey(Menuable $menuable, Station $station)
-    {
-        return $menuable->createActionKey(
-            $this->getDefinedLabel($station, 'backKeyLabel'),
-            fn () => $this->fireBy($station, 'backKeyAction')
-        );
-    }
-
-    protected function onBackKeyLabel()
-    {
-        return __('mmb::road.back');
-    }
-
-    protected function onBackKeyAction()
-    {
-        $this->road->fireBack();
-    }
+//    protected function onDefaultBackKey(Menuable $menuable, Station $station)
+//    {
+//        return $menuable->createActionKey(
+//            $this->getDefinedLabel($station, 'backKeyLabel'),
+//            fn () => $this->fireBy($station, 'backKeyAction')
+//        );
+//    }
 
 }

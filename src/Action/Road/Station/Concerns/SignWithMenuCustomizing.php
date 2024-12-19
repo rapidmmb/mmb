@@ -8,13 +8,6 @@ use Mmb\Action\Road\Customize\MenuCustomizer;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\MenuKey;
 
-/**
- * @method $this insertBodyKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertBodyRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertBodySchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeBodyKey(string $name)
- * @method $this moveBodyKey(string $name, ?int $x, ?int $y)
- */
 trait SignWithMenuCustomizing
 {
 
@@ -143,56 +136,6 @@ trait SignWithMenuCustomizing
     {
         $this->getMenuCustomizer()->ltr();
         return $this;
-    }
-
-    /**
-     * Call a key manager method (use this method in the magic __call)
-     *
-     * @param string $method
-     * @param array  $args
-     * @return bool
-     */
-    protected function callKeyManager(string $method, array $args) : bool
-    {
-        if (str_starts_with($method, 'insert'))
-        {
-            $type = match (true)
-            {
-                str_ends_with($method, 'Key')    => 'Key',
-                str_ends_with($method, 'Row')    => 'Row',
-                str_ends_with($method, 'Schema') => 'Schema',
-            };
-
-            if ($type)
-            {
-                $this->{'insert' . $type}(Str::kebab(substr($method, 6, -strlen($type))), ...$args);
-                return true;
-            }
-        }
-
-        if (str_starts_with($method, 'remove') && str_ends_with($method, 'Key'))
-        {
-            $this->removeKey(Str::kebab(substr($method, 6, -3)), ...$args);
-            return true;
-        }
-
-        if (str_starts_with($method, 'move') && str_ends_with($method, 'Key'))
-        {
-            $this->moveKey(Str::kebab(substr($method, 4, -3)), ...$args);
-            return true;
-        }
-
-        return false;
-    }
-
-    public function __call(string $name, array $arguments)
-    {
-        if ($this->callKeyManager($name, $arguments))
-        {
-            return $this;
-        }
-
-        return parent::__call($name, $arguments);
     }
 
     /**

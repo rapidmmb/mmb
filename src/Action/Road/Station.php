@@ -4,6 +4,8 @@ namespace Mmb\Action\Road;
 
 use Closure;
 use Mmb\Action\Form\Inline\InlineForm;
+use Mmb\Action\Inline\InlineAction;
+use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
@@ -35,27 +37,6 @@ abstract class Station extends Section
         parent::__construct($road->context);
     }
 
-    public function menu(string $__name, ...$__args)
-    {
-        $register = $this->createInlineRegister(Menu::class, $__name, $__args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $__name);
-        return $register->register();
-    }
-
-    public function inlineForm(string $__name, ...$__args)
-    {
-        $register = $this->createInlineRegister(InlineForm::class, $__name, $__args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $__name);
-        return $register->register();
-    }
-
-    public function dialog(string $__name, ...$__args)
-    {
-        $register = $this->createInlineRegister(Dialog::class, $__name, $__args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $__name);
-        return $register->register();
-    }
-
     protected function onInitializeInlineRegister(InlineRegister $register)
     {
         $this->initializeInlineRegister($register);
@@ -65,6 +46,10 @@ abstract class Station extends Section
 
     public function initializeInlineRegister(InlineRegister $register)
     {
+        if ($register instanceof InlineCreateRegister) {
+            $register->inlineAction->initializer($this->road, $this->name . '.' . $register->method);
+        }
+
         $register->before(
             function () use ($register)
             {

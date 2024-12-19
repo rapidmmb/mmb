@@ -7,7 +7,6 @@ use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Traits\Macroable;
-use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Filter\Filter;
 use Mmb\Action\Filter\Filterable;
 use Mmb\Action\Filter\FilterRule;
@@ -16,9 +15,10 @@ use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
+use Mmb\KeySchema\KeyboardInterface;
 use Mmb\Support\Action\ActionCallback;
 
-class Menu extends InlineAction implements Menuable
+class Menu extends InlineAction implements KeyboardInterface
 {
     use Macroable, Filterable, HasEventFilter;
     use Traits\CustomizesKeyboard;

@@ -7,6 +7,7 @@ use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\Register\InlineRegister;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Behavior\Behavior;
 use Mmb\Support\Caller\Caller;
@@ -17,12 +18,12 @@ class Road extends Action
     /**
      * Make new instance
      *
-     * @param Update $update
+     * @param Context $context
      * @return static
      */
-    public static function make(Update $update)
+    public static function make(Context $context)
     {
-        return new static($update);
+        return new static($context);
     }
 
     /**

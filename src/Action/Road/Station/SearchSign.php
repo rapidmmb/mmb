@@ -5,13 +5,12 @@ namespace Mmb\Action\Road\Station;
 use Closure;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\Str;
-use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Form\Input;
 use Mmb\Action\Road\Customize\InputCustomizer;
 use Mmb\Action\Road\Road;
-use Mmb\Action\Road\Station;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Action\Section\Menu;
+use Mmb\KeySchema\KeyboardInterface;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Modes\StringContent;
@@ -98,7 +97,7 @@ class SearchSign extends WeakSign
         $input
             ->insertKey(
                 'body',
-                fn (Menuable $menu, ListStation $station) => $this->getDefinedDynamicKey($station, 'resetKey', $menu),
+                fn (KeyboardInterface $menu, ListStation $station) => $this->getDefinedDynamicKey($station, 'resetKey', $menu),
                 'resetKey',
                 50,
                 0,

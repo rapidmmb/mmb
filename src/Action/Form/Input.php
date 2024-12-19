@@ -4,7 +4,6 @@ namespace Mmb\Action\Form;
 
 use Closure;
 use Illuminate\Support\Traits\Conditionable;
-use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Filter\Filterable;
 use Mmb\Action\Filter\FilterableShort;
 use Mmb\Action\Filter\FilterFailException;
@@ -12,6 +11,7 @@ use Mmb\Action\Filter\HasEventFilter;
 use Mmb\Action\Filter\Rules\FilterFailAnyway;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
+use Mmb\KeySchema\KeyboardInterface;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Encoding\Text;
@@ -19,7 +19,7 @@ use Mmb\Support\Encoding\Text;
 /**
  * @property mixed $value
  */
-class Input implements Menuable
+class Input implements KeyboardInterface
 {
     use Filterable, FilterableShort, HasEventFilter, HasEvents;
     use Conditionable;

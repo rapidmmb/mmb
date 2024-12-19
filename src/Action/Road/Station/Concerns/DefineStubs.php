@@ -4,11 +4,10 @@ namespace Mmb\Action\Road\Station\Concerns;
 
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
-use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Road\Station;
 use Mmb\Action\Road\WeakSign;
-use Mmb\Action\Section\Menu;
 use Mmb\Context;
+use Mmb\KeySchema\KeyboardInterface;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
@@ -312,11 +311,11 @@ trait DefineStubs
      *
      * @param Station $station
      * @param string  $name
-     * @param Menuable    $menu
+     * @param KeyboardInterface    $menu
      * @param         ...$args
      * @return mixed
      */
-    protected function getDefinedDynamicKey(Station $station, string $name, Menuable $menu, ...$args)
+    protected function getDefinedDynamicKey(Station $station, string $name, KeyboardInterface $menu, ...$args)
     {
         return $this->fireBy($station, $name, $menu, ...$args);
     }
