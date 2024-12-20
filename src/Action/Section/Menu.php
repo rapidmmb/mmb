@@ -19,7 +19,6 @@ use Mmb\Support\Action\ActionCallback;
 use Mmb\Support\KeySchema\HasKeyboards;
 use Mmb\Support\KeySchema\KeyboardInterface;
 use Mmb\Support\KeySchema\KeyInterface;
-use Mmb\Support\KeySchema\KeyUniqueData;
 
 class Menu extends InlineAction implements KeyboardInterface
 {
@@ -27,7 +26,7 @@ class Menu extends InlineAction implements KeyboardInterface
     use HasKeyboards;
 
 
-    public function makeKey(string $text, Closure $callback, array $args): KeyInterface
+    public function makeKey(string $text, Closure $callback, array $args): MenuKey
     {
         return new MenuKey($this, $text, $callback, $args);
     }
@@ -40,7 +39,7 @@ class Menu extends InlineAction implements KeyboardInterface
      * @param mixed ...$args
      * @return MenuKey
      */
-    public function key($text, $action = null, ...$args)
+    public function key($text, $action = null, ...$args): MenuKey
     {
         return new MenuKey($this, $text, $action, $args);
     }
@@ -54,7 +53,7 @@ class Menu extends InlineAction implements KeyboardInterface
      * @param        ...$args
      * @return MenuKey
      */
-    public function keyFor($text, string $class, string $method = 'main', ...$args)
+    public function keyFor($text, string $class, string $method = 'main', ...$args): MenuKey
     {
         return $this->key($text)->invoke($class, $method, ...$args);
     }

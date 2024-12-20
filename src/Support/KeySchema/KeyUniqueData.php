@@ -15,6 +15,7 @@ class KeyUniqueData
     public const TAG_REQUEST_USERS = 'U';
     public const TAG_REQUEST_CHAT = 'C';
     public const TAG_POLL = 'p';
+    public const TAG_DIALOG = 'D';
 
     public static function makeText(string $text): string
     {
@@ -24,6 +25,11 @@ class KeyUniqueData
     public static function makeCallbackData(string $data): string
     {
         return self::TAG_CALLBACK_DATA . $data;
+    }
+
+    public static function makeDialog(string $data): string
+    {
+        return self::TAG_DIALOG . $data;
     }
 
     public static function makeContact(): string
@@ -74,12 +80,12 @@ class KeyUniqueData
             if (str_starts_with($update->callbackQuery->data, '~dialog:')) {
                 @[$target, $id, $action] = explode(':', substr($update->callbackQuery->data, 8), 3);
                 if ($target && $id) {
-                    return 'D' . $action;
+                    return self::TAG_DIALOG . $action;
                 }
             } elseif (str_starts_with($update->callbackQuery->data, '~df:')) {
                 @[$class, $method, $_, $action] = explode(':', substr($update->callbackQuery->data, 4), 3);
                 if ($class && $method) {
-                    return 'D' . $action;
+                    return self::TAG_DIALOG . $action;
                 }
             }
 

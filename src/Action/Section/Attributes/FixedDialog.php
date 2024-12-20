@@ -25,10 +25,7 @@ class FixedDialog extends OnCallback
 
     protected static $matchers = [];
 
-    /**
-     * @return QueryMatcher
-     */
-    public function getMatcher(string $class, string $method)
+    public function getMatcher(string $class, string $method): QueryMatcher
     {
         $pattern = ($this->full ? '' : QueryMatcher::getClassId($class) . ':') . $this->pattern;
 
@@ -52,13 +49,7 @@ class FixedDialog extends OnCallback
         $dialogLoad = $action->loadInlineRegister($dialog, $method);
         $dialogLoad->register();
 
-        $dialog->makeReady();
-        // Dialog::handleFrom();
-        $dialog->fireAction(
-            $dialog->findActionFromString('D' . $pattern->getMatch('_action')),
-            $context->update,
-            $args
-        );
+        $dialog->fireFixedClickedKey($pattern->getMatch('_action'), $args);
     }
 
 }

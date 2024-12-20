@@ -250,7 +250,6 @@ class Form extends Action
     public ?Input $currentInput = null;
 
     public array $loadedKeyMap;
-    public array $lastKeyMap;
 
     public function startForm()
     {
@@ -433,10 +432,11 @@ class Form extends Action
         $stepHandler->setForm($this);
         $stepHandler->attributes = $this->getOutAttributes() ?: null;
         $stepHandler->currentInput = $this->currentInput?->name;
-        $stepHandler->keyMap =
-            $this->currentInput?->isStoring() ?
-                $this->currentInput?->getKeyBuilder()->toStorableMap() :
-                null;
+        if ($this->currentInput?->isStoring()) {
+            $stepHandler->keyMap = $this->currentInput->toStorableKeyMap();
+        } else {
+            $stepHandler->keyMap = null;
+        }
         $stepHandler->class = static::class;
         if ($keep) $stepHandler->keep($this->context);
 
@@ -473,7 +473,7 @@ class Form extends Action
 
         $input->pass($update ?? $this->update());
         $this->fire('leave', $input);
-        $input->fire('leave');
+        $input->fire('leave'); // todo: move it to next() method
     }
 
     public function findInputIndex(string $name)
@@ -600,6 +600,8 @@ class Form extends Action
             $ineffectiveKey = $input->enableIneffectiveKey ?? $this->ineffectiveKey;
             $withoutChangesKey = $input->enableWithoutChangesKey ?? $this->withoutChangesKey;
 
+            $cancel = $skip = $prev = $ineffective = $withoutChanges = null;
+
             if ($cancelKey !== false) {
                 $cancel = $input->keyAction(
                     $cancelKey === true ? __('mmb::form.key.cancel') : $cancelKey,
@@ -641,14 +643,15 @@ class Form extends Action
                 );
             }
 
-            if ($mirrorKey)
-                $input->addHeader([@$cancel, @$prev]);
-            $input->addHeader([@$skip, @$ineffective, @$withoutChanges]);
+            if ($mirrorKey) {
+                $input->header([[$cancel, $prev]]);
+            }
+            $input->header([$skip, $ineffective, $withoutChanges]);
 
-            if ($mirrorKey)
-                $input->addFooter([@$skip, @$ineffective, @$withoutChanges]);
-
-            $input->addFooter([@$cancel, @$prev]);
+            if ($mirrorKey) {
+                $input->footer([$skip, $ineffective, $withoutChanges]);
+            }
+            $input->footer([$cancel, $prev]);
         }
     }
 

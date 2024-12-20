@@ -9,12 +9,16 @@ use Mmb\Action\Filter\FilterableShort;
 use Mmb\Action\Filter\FilterFailException;
 use Mmb\Action\Filter\HasEventFilter;
 use Mmb\Action\Filter\Rules\FilterFailAnyway;
+use Mmb\Action\Form\Actions\InputFillActionCallback;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
+use Mmb\Support\Action\ActionCallback;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Encoding\Text;
+use Mmb\Support\KeySchema\HasKeyboards;
 use Mmb\Support\KeySchema\KeyboardInterface;
+use Mmb\Support\KeySchema\KeyInterface;
 
 /**
  * @property mixed $value
@@ -23,6 +27,7 @@ class Input implements KeyboardInterface
 {
     use Filterable, FilterableShort, HasEventFilter, HasEvents;
     use Conditionable;
+    use HasKeyboards;
 
     public bool $isCreatingMode = false;
 
@@ -119,19 +124,15 @@ class Input implements KeyboardInterface
         // Skip if form is not used HasRecords
         // This is cause, maybe you want to define it, but use it in inherited classes.
         // Like EditForm extends RealForm.
-        if (!method_exists($this->form, 'getRecord'))
-        {
+        if (!method_exists($this->form, 'getRecord')) {
             return $this->mode($mode);
         }
 
         $recordValue = $this->form->getRecord()->getAttribute(is_string($name) ? $name : $this->name);
 
-        if ($name instanceof Closure)
-        {
+        if ($name instanceof Closure) {
             $value = value($name, $recordValue);
-        }
-        else
-        {
+        } else {
             $value = Text::userFriendly($recordValue);
         }
 
@@ -183,10 +184,8 @@ class Input implements KeyboardInterface
      */
     public function if($condition, mixed $value = null)
     {
-        if ($this->isCreating() && !value($condition))
-        {
-            if (func_num_args() > 1)
-            {
+        if ($this->isCreating() && !value($condition)) {
+            if (func_num_args() > 1) {
                 $this->value = value($value);
             }
 
@@ -206,10 +205,8 @@ class Input implements KeyboardInterface
      */
     public function jump($condition, mixed $value = null)
     {
-        if ($this->isCreating() && value($condition))
-        {
-            if (func_num_args() > 1)
-            {
+        if ($this->isCreating() && value($condition)) {
+            if (func_num_args() > 1) {
                 $this->value = value($value);
             }
 
@@ -228,10 +225,8 @@ class Input implements KeyboardInterface
      */
     public function jumpFilled(mixed $value = null)
     {
-        if ($this->isCreating() && $this->value !== null)
-        {
-            if (func_num_args() > 0)
-            {
+        if ($this->isCreating() && $this->value !== null) {
+            if (func_num_args() > 0) {
                 $this->value = value($value);
             }
 
@@ -241,6 +236,56 @@ class Input implements KeyboardInterface
         return $this;
     }
 
+    /**
+     * Fire action
+     *
+     * @param ActionCallback|string $name
+     * @param Update $update
+     * @param array $args
+     * @return void
+     */
+    public function fireAction(ActionCallback|string $name, Update $update, array $args = [])
+    {
+        if (is_string($name)) {
+            $name = new ActionCallback($name);
+        }
+
+        $name->invoke(
+            $this->form,
+            $this->context,
+            $args,
+            [
+                'sender' => $this,
+            ],
+        );
+    }
+
+    public function firePassAction(ActionCallback|string $name, Update $update, array $args = [])
+    {
+        if (is_string($name)) {
+            $name = new ActionCallback($name);
+        }
+
+        $isPassed = false;
+        $pass = function ($value) use (&$isPassed) {
+            $this->value = $value;
+            $isPassed = true;
+        };
+
+        $name->invoke(
+            $this->form,
+            $this->context,
+            $args,
+            [
+                'sender' => $this,
+                'pass' => fn() => $pass,
+            ],
+        );
+
+        if (!$isPassed) {
+            $this->form->stop();
+        }
+    }
 
 
     /**
@@ -253,59 +298,9 @@ class Input implements KeyboardInterface
     {
         $this->fire('passing', $update);
 
-        if($reaction = $this->getKeyBuilder()->getPressedAction($update))
-        {
-            [$type, $value] = $reaction;
-            switch($type)
-            {
-                case FormKey::ACTION_TYPE_NORMAL:
-                case FormKey::ACTION_TYPE_VALUE:
-                    $this->value = $value;
-                break;
-
-                case FormKey::ACTION_TYPE_ACTION:
-                    $isPassed = false;
-                    $pass = function($value) use(&$isPassed)
-                    {
-                        $this->value = $value;
-                        $isPassed = true;
-                    };
-
-                    if(is_string($value))
-                    {
-                        $this->fire(
-                            $value,
-                            update: $update,
-                            pass: fn() => $pass,
-                        );
-                    }
-                    else
-                    {
-                        Caller::invoke(
-                            $this->form->context,
-                            $value,
-                            [],
-                            [
-                                'input'  => $this,
-                                'update' => $update,
-                                'form'   => $this->form,
-                                'pass'   => fn() => $pass,
-                            ]
-                        );
-                    }
-
-                    if(!$isPassed)
-                    {
-                        $this->form->stop();
-                    }
-                break;
-
-                default:
-                    throw new \InvalidArgumentException("Unknown $type");
-            }
-        }
-        else
-        {
+        if ($action = $this->findClickedKeyAction($update)) {
+            $this->firePassAction($action, $update);
+        } else {
             $this->value = $this->passFilter($this->form->context, $update)[2];
             $this->fire('filled');
         }
@@ -366,16 +361,15 @@ class Input implements KeyboardInterface
     public function request($message = null)
     {
         $message = value($message ?? $this->askValue);
-        if(is_string($message))
-        {
+        if (is_string($message)) {
             $message = ['text' => $message];
         }
 
         // Add key
-        $message['key'] = $this->getKeyBuilder()->toArray();
+        $this->makeReadyKeyboards($this->isCreating(), $this->isStoring());
+        $message['key'] = $this->toKeyboardArray();
 
-        $value = function ($callable) use (&$message)
-        {
+        $value = function ($callable) use (&$message) {
             return $callable instanceof Closure ?
                 Caller::invoke($this->form->context, $callable, [], $this->getEventDynamicArgs('*') + ['text' => @$message['text']]) :
                 $callable;
@@ -426,8 +420,7 @@ class Input implements KeyboardInterface
      */
     public function __get(string $name)
     {
-        if($name == 'value')
-        {
+        if ($name == 'value') {
             return $this->form->get($this->name);
         }
 
@@ -441,10 +434,9 @@ class Input implements KeyboardInterface
      * @param        $value
      * @return void
      */
-    public function __set(string $name, $value) : void
+    public function __set(string $name, $value): void
     {
-        if($name == 'value')
-        {
+        if ($name == 'value') {
             $this->form->put($this->name, $value);
             return;
         }
@@ -477,6 +469,11 @@ class Input implements KeyboardInterface
     }
 
 
+    public function makeKey(string $text, Closure $callback, array $args): FormKey
+    {
+        return new FormKey($text, $callback, $args);
+    }
+
     /**
      * Make new form key
      *
@@ -484,9 +481,13 @@ class Input implements KeyboardInterface
      * @param        $value
      * @return FormKey
      */
-    public function key(string $text, $value = null)
+    public function key(string $text, $value = null): FormKey
     {
-        return FormKey::make(...func_get_args());
+        if (func_num_args() > 1) {
+            return (new FormKey($text))->value($value);
+        }
+
+        return new FormKey($text);
     }
 
     /**
@@ -494,62 +495,14 @@ class Input implements KeyboardInterface
      *
      * @param string $text
      * @param        $action
+     * @param mixed ...$args
      * @return FormKey
      */
-    public function keyAction(string $text, $action)
+    public function keyAction(string $text, $action, ...$args): FormKey
     {
-        return FormKey::makeAction($text, $action);
+        return new FormKey($text, $action, $args);
     }
 
-
-    private array $keyBuilderQueue = [];
-    private FormKeyBuilder $keyBuilder;
-
-    /**
-     * Add a job to key builder queue
-     *
-     * @param bool   $fixed
-     * @param string $method
-     * @param        ...$args
-     * @return void
-     */
-    protected function addKeyBuilderQueue(bool $fixed, string $method, ...$args)
-    {
-        if(isset($this->keyBuilder))
-        {
-            $this->keyBuilder->$method(...$args);
-        }
-        else
-        {
-            $this->keyBuilderQueue[] = [$fixed, $method, $args];
-        }
-    }
-
-    /**
-     * Get key builder
-     *
-     * @return FormKeyBuilder
-     */
-    public function getKeyBuilder()
-    {
-        if(!isset($this->keyBuilder))
-        {
-            $this->keyBuilder = new FormKeyBuilder($this->form, $this);
-
-            foreach($this->keyBuilderQueue as $queue)
-            {
-                [$fixed, $method, $args] = $queue;
-                if($fixed || !$this->isLoading() || !$this->isStoring())
-                {
-                    $this->keyBuilder->$method(...$args);
-                }
-            }
-
-            $this->keyBuilderQueue = [];
-        }
-
-        return $this->keyBuilder;
-    }
 
     /**
      * Load storable key map
@@ -559,19 +512,19 @@ class Input implements KeyboardInterface
      */
     public function mergeStorableMap(array $storableMap)
     {
-        $this->getKeyBuilder()->mergeKeyMap($storableMap);
+        $this->loadStoredKeyboards($storableMap);
     }
 
     /**
      * Add key options
      *
      * @param array|Closure $options
-     * @param bool          $fixed
+     * @param bool $fixed
      * @return $this
      */
     public function options(array|Closure $options, bool $fixed = false)
     {
-        $this->addKeyBuilderQueue($fixed, 'schema', $options, $fixed);
+        $this->schema($options, fixed: $fixed);
         return $this;
     }
 
@@ -586,144 +539,129 @@ class Input implements KeyboardInterface
         return $this->options($options, true);
     }
 
-    /**
-     * Add key header
-     *
-     * @param array|Closure $options
-     * @param bool          $fixed
-     * @return $this
-     */
-    public function header(array|Closure $options, bool $fixed = true)
+    public function restoreActionCallback(array $value): ?ActionCallback
     {
-        $this->addKeyBuilderQueue($fixed, 'header', $options, $fixed);
-        return $this;
+        if ($action = ActionCallback::fromArray($value)) {
+            return $action;
+        }
+
+        if ($action = InputFillActionCallback::fromArray($value)) {
+            return $action;
+        }
+
+        return null;
     }
 
-    /**
-     * Add key footer
-     *
-     * @param array|Closure $options
-     * @param bool          $fixed
-     * @return $this
-     */
-    public function footer(array|Closure $options, bool $fixed = true)
-    {
-        $this->addKeyBuilderQueue($fixed, 'footer', $options, $fixed);
-        return $this;
-    }
-
-    /**
-     * Add key row
-     *
-     * @param array|FormKey|string $key
-     * @param                      $value
-     * @return $this
-     */
-    public function add(array|FormKey|string $key, $value = null)
-    {
-        $this->addKeyBuilderQueue(true, 'add', ...func_get_args());
-        return $this;
-    }
-
-    /**
-     * Add key row
-     *
-     * @param array|FormKey|string $key
-     * @param                      $value
-     * @return $this
-     */
-    public function addHeader(array|FormKey|string $key, $value = null)
-    {
-        $this->addKeyBuilderQueue(true, 'addHeader', ...func_get_args());
-        return $this;
-    }
-
-    /**
-     * Add key row
-     *
-     * @param array|FormKey|string $key
-     * @param                      $value
-     * @return $this
-     */
-    public function addFooter(array|FormKey|string $key, $value = null)
-    {
-        $this->addKeyBuilderQueue(true, 'addFooter', ...func_get_args());
-        return $this;
-    }
-
-    /**
-     * Add key to last line
-     *
-     * @param array|FormKey|string $key
-     * @param                      $value
-     * @return $this
-     */
-    public function push(array|FormKey|string $key, $value = null)
-    {
-        $this->addKeyBuilderQueue(true, 'push', ...func_get_args());
-        return $this;
-    }
-
-    /**
-     * Add key to last line
-     *
-     * @param array|FormKey|string $key
-     * @param                      $value
-     * @return $this
-     */
-    public function pushHeader(array|FormKey|string $key, $value = null)
-    {
-        $this->addKeyBuilderQueue(true, 'pushHeader', ...func_get_args());
-        return $this;
-    }
-
-    /**
-     * Add key to last line
-     *
-     * @param array|FormKey|string $key
-     * @param                      $value
-     * @return $this
-     */
-    public function pushFooter(array|FormKey|string $key, $value = null)
-    {
-        $this->addKeyBuilderQueue(true, 'pushFooter', ...func_get_args());
-        return $this;
-    }
-
-    /**
-     * Add empty key row
-     *
-     * @return $this
-     */
-    public function break()
-    {
-        $this->addKeyBuilderQueue(true, 'break');
-        return $this;
-    }
-
-    /**
-     * Add empty key row
-     *
-     * @return $this
-     */
-    public function breakHeader()
-    {
-        $this->addKeyBuilderQueue(true, 'breakHeader');
-        return $this;
-    }
-
-    /**
-     * Add empty key row
-     *
-     * @return $this
-     */
-    public function breakFooter()
-    {
-        $this->addKeyBuilderQueue(true, 'breakFooter');
-        return $this;
-    }
-
-
+//    /**
+//     * Add key row
+//     *
+//     * @param array|FormKey|string $key
+//     * @param                      $value
+//     * @return $this
+//     */
+//    public function add(array|FormKey|string $key, $value = null)
+//    {
+//        $this->addKeyBuilderQueue(true, 'add', ...func_get_args());
+//        return $this;
+//    }
+//
+//    /**
+//     * Add key row
+//     *
+//     * @param array|FormKey|string $key
+//     * @param                      $value
+//     * @return $this
+//     */
+//    public function addHeader(array|FormKey|string $key, $value = null)
+//    {
+//        $this->addKeyBuilderQueue(true, 'addHeader', ...func_get_args());
+//        return $this;
+//    }
+//
+//    /**
+//     * Add key row
+//     *
+//     * @param array|FormKey|string $key
+//     * @param                      $value
+//     * @return $this
+//     */
+//    public function addFooter(array|FormKey|string $key, $value = null)
+//    {
+//        $this->addKeyBuilderQueue(true, 'addFooter', ...func_get_args());
+//        return $this;
+//    }
+//
+//    /**
+//     * Add key to last line
+//     *
+//     * @param array|FormKey|string $key
+//     * @param                      $value
+//     * @return $this
+//     */
+//    public function push(array|FormKey|string $key, $value = null)
+//    {
+//        $this->addKeyBuilderQueue(true, 'push', ...func_get_args());
+//        return $this;
+//    }
+//
+//    /**
+//     * Add key to last line
+//     *
+//     * @param array|FormKey|string $key
+//     * @param                      $value
+//     * @return $this
+//     */
+//    public function pushHeader(array|FormKey|string $key, $value = null)
+//    {
+//        $this->addKeyBuilderQueue(true, 'pushHeader', ...func_get_args());
+//        return $this;
+//    }
+//
+//    /**
+//     * Add key to last line
+//     *
+//     * @param array|FormKey|string $key
+//     * @param                      $value
+//     * @return $this
+//     */
+//    public function pushFooter(array|FormKey|string $key, $value = null)
+//    {
+//        $this->addKeyBuilderQueue(true, 'pushFooter', ...func_get_args());
+//        return $this;
+//    }
+//
+//    /**
+//     * Add empty key row
+//     *
+//     * @return $this
+//     */
+//    public function break()
+//    {
+//        $this->addKeyBuilderQueue(true, 'break');
+//        return $this;
+//    }
+//
+//    /**
+//     * Add empty key row
+//     *
+//     * @return $this
+//     */
+//    public function breakHeader()
+//    {
+//        $this->addKeyBuilderQueue(true, 'breakHeader');
+//        return $this;
+//    }
+//
+//    /**
+//     * Add empty key row
+//     *
+//     * @return $this
+//     */
+//    public function breakFooter()
+//    {
+//        $this->addKeyBuilderQueue(true, 'breakFooter');
+//        return $this;
+//    }
 
 
     /**
@@ -975,13 +913,4 @@ class Input implements KeyboardInterface
     {
     }
 
-    public function addMenuSchema(array $key) : void
-    {
-        $this->add($key);
-    }
-
-    public function createActionKey(string $text, Closure $callback)
-    {
-        return $this->keyAction($text, $callback);
-    }
 }

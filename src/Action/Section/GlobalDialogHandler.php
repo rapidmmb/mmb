@@ -32,44 +32,35 @@ class GlobalDialogHandler implements UpdateHandling
 
         if (
             ($data = $update->callbackQuery?->data) &&
-            str_starts_with($data, '#dialog:')
-        )
-        {
+            str_starts_with($data, '~dialog:')
+        ) {
             @[$target, $id, $action] = explode(':', substr($data, 8), 3);
 
-            if (!class_exists($target) || !$id)
-            {
+            if (!class_exists($target) || !$id) {
                 return false;
             }
 
-            if (isset($this->models) && (is_string($this->models) ? $target != $this->models : !in_array($target, $this->models)))
-            {
+            if (isset($this->models) && (is_string($this->models) ? $target != $this->models : !in_array($target, $this->models))) {
                 return false;
             }
 
-            if ($found = $context->finder->find($target, $id))
-            {
+            if ($found = $context->finder->find($target, $id)) {
                 $this->found = $found;
 
-                if (!$this->validate())
-                {
+                if (!$this->validate()) {
                     return false;
                 }
 
                 return true;
             }
-        }
-
-        elseif (
+        } elseif (
             $data &&
-            str_starts_with($data, '#df:')
-        )
-        {
+            str_starts_with($data, '~df:')
+        ) {
             @[$class, $method, $attrs, $action] = explode(':', substr($data, 4), 3);
             dump($attrs);
 
-            if (!class_exists($class) || !method_exists($class, $method))
-            {
+            if (!class_exists($class) || !method_exists($class, $method)) {
                 return false;
             }
 
@@ -87,17 +78,16 @@ class GlobalDialogHandler implements UpdateHandling
 
     public function handleUpdate(Context $context, Update $update)
     {
-        if ($this->check($update))
-        {
-            if (is_object($this->found))
-            {
+        if ($this->check($context, $update)) {
+            if (is_object($this->found)) {
                 $this->found->target?->handle($context, $update);
-            }
-            else
-            {
+            } else {
                 [$class, $method, $action] = $this->found;
 
-                $class::makeByContext($context)->dialog($method)->handle($context, $update);
+                /** @var Dialog $dialog */
+                $dialog = $class::makeByContext($context)->dialog($method);
+
+                $dialog->handle($update);
             }
         }
 
@@ -106,15 +96,7 @@ class GlobalDialogHandler implements UpdateHandling
 
     public static function makeQuery(string $model, $id, $action)
     {
-        return "#dialog:$model:$id:$action";
-    }
-
-    public static function makeFixedQuery(string $class, string $method, $action, array $within)
-    {
-        $with = json_encode($within);
-
-        dump("#df:$class:$method:$with:$action");
-        return "#df:$class:$method:$with:$action";
+        return "~dialog:$model:$id:$action";
     }
 
 }

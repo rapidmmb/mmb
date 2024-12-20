@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Section;
 
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Action;
 use Mmb\Action\Memory\StepMemory;
@@ -10,6 +11,8 @@ use Mmb\Core\Client\Exceptions\TelegramException;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\ActionCallback;
+use Mmb\Support\KeySchema\KeyInterface;
+use Mmb\Support\KeySchema\KeyUniqueData;
 
 class Dialog extends Menu
 {
@@ -33,7 +36,7 @@ class Dialog extends Menu
      *
      * @return ?string
      */
-    public function getUse()
+    public function getUse(): ?string
     {
         return $this->use;
     }
@@ -41,7 +44,7 @@ class Dialog extends Menu
     /**
      * @return bool
      */
-    public function isFixed()
+    public function isFixed(): bool
     {
         return !isset($this->use);
     }
@@ -55,17 +58,14 @@ class Dialog extends Menu
      */
     public function getFixedValue()
     {
-        if (!isset($this->fixedDialog))
-        {
-            if (!$this->isFixed())
-            {
+        if (!isset($this->fixedDialog)) {
+            if (!$this->isFixed()) {
                 return null;
             }
 
             $fixedDialog = $this->initializerClass::getMethodAttributeOf($this->initializerMethod, FixedDialog::class);
 
-            if (!$fixedDialog)
-            {
+            if (!$fixedDialog) {
                 throw new \TypeError("Fixed dialog required to define with #[FixedDialog] before the method.");
             }
 
@@ -76,19 +76,19 @@ class Dialog extends Menu
     }
 
 
-    protected Model $dialogModel;
+    protected Model $dialogRecord;
 
     /**
      * Get used model
      *
      * @return ?Model
      */
-    public function getUsed()
+    public function getUsed(): ?Model
     {
         if ($this->isFixed())
             return null;
 
-        return $this->dialogModel ??= $this->use::create([
+        return $this->dialogRecord ??= $this->use::create([
             'user_id' => $this->context->bot->guard()->user()->getKey(),
         ]);
     }
@@ -104,7 +104,7 @@ class Dialog extends Menu
         if ($this->isFixed())
             return;
 
-        $this->dialogModel->update([
+        $this->dialogRecord->update([
             'target' => $this->toStep(),
         ]);
     }
@@ -122,9 +122,14 @@ class Dialog extends Menu
         $memory = new StepMemory();
         $this->toStep()?->save($memory);
 
-        $this->dialogModel->update([
+        $this->dialogRecord->update([
             'target' => $memory->all(),
         ]);
+    }
+
+    public function makeKey(string $text, Closure $callback, array $args): DialogKey
+    {
+        return new DialogKey($this, $text, $callback, $args);
     }
 
     /**
@@ -135,7 +140,7 @@ class Dialog extends Menu
      * @param ...$args
      * @return DialogKey
      */
-    public function key($text, $action = null, ...$args)
+    public function key($text, $action = null, ...$args): DialogKey
     {
         return new DialogKey($this, $text, $action, $args);
     }
@@ -147,7 +152,7 @@ class Dialog extends Menu
      * @param string $action
      * @return DialogKey
      */
-    public function keyId($text, string $action)
+    public function keyId($text, string $action): DialogKey
     {
         return $this->key($text, $action)->id($action);
     }
@@ -168,23 +173,31 @@ class Dialog extends Menu
 
     /**
      * @param ActionCallback|string $name
-     * @param Update                $update
-     * @param array                 $args
+     * @param Update $update
+     * @param array $args
      * @return void
      */
     public function fireAction(ActionCallback|string $name, Update $update, array $args = [])
     {
-        if ($this->autoReload)
-        {
+        if ($this->autoReload) {
             $this->shouldReload = true;
         }
 
         parent::fireAction($name, $update, $args);
 
-        if ($this->autoReload && $this->shouldReload)
-        {
+        if ($this->autoReload && $this->shouldReload) {
             $this->reload();
         }
+    }
+
+    public function fireFixedClickedKey(string $action, array $args): bool
+    {
+        if ($clicked = $this->findKeyActionUsingData(KeyUniqueData::makeDialog($action))) {
+            $this->fireAction($clicked, $this->context->update, $args);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -207,9 +220,8 @@ class Dialog extends Menu
     {
         $dialogRegister = $this->initializerClass->reloadInlineRegister($this);
 
-        if (!$this->isFixed())
-        {
-            $dialogRegister->inlineAction->dialogModel = $this->dialogModel;
+        if (!$this->isFixed()) {
+            $dialogRegister->inlineAction->dialogModel = $this->dialogRecord;
         }
 
         return $dialogRegister->register()->editResponse($message, $args, ...$namedArgs);
@@ -229,23 +241,17 @@ class Dialog extends Menu
         $this->makeReady();
         $message ??= value($this->message);
 
-        try
-        {
+        try {
             return tap(
                 $this->context->message->editText($message, $args + $namedArgs + ['key' => $this->toKeyboardArray()]),
-                function($message)
-                {
-                    if($message)
-                    {
+                function ($message) {
+                    if ($message) {
                         $this->saveMenuAction($message);
                     }
-                }
+                },
             );
-        }
-        catch(TelegramException $exception)
-        {
-            if (str_contains($exception->getMessage(), 'Bad Request: message is not modified'))
-            {
+        } catch (TelegramException $exception) {
+            if (str_contains($exception->getMessage(), 'Bad Request: message is not modified')) {
                 return $this->context->message;
             }
 
@@ -264,8 +270,7 @@ class Dialog extends Menu
     {
         $this->context->update->tell($response);
 
-        foreach ($callbacks as $callback)
-        {
+        foreach ($callbacks as $callback) {
             $callback();
         }
 

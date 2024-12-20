@@ -178,17 +178,27 @@ trait HasKeyboards
         }
     }
 
-    public function findClickedKeyAction(Update $update): ?ActionCallback
+    protected function detectClickedKeyData(Update $update): ?string
     {
-        if (null === $uniqueData = KeyUniqueData::fromUpdate($update)) {
-            return null;
-        }
+        return KeyUniqueData::fromUpdate($update);
+    }
 
+    protected function findKeyActionUsingData(string $data): ?ActionCallback
+    {
         if (!isset($this->keyDataActionMap)) {
             $this->makeReadyKeyboards(false);
         }
 
-        return $this->keyDataActionMap[$uniqueData] ?? null;
+        return $this->keyDataActionMap[$data] ?? null;
+    }
+
+    public function findClickedKeyAction(Update $update): ?ActionCallback
+    {
+        if (null === $uniqueData = $this->detectClickedKeyData($update)) {
+            return null;
+        }
+
+        return $this->findKeyActionUsingData($uniqueData);
     }
 
     public function toKeyboardArray(): array
@@ -198,6 +208,15 @@ trait HasKeyboards
         }
 
         return $this->rawKey;
+    }
+
+    public function toStorableKeyMap(): array
+    {
+        if (!isset($this->storableKeyMap)) {
+            throw new \InvalidArgumentException("Try to get not ready keyboards");
+        }
+
+        return $this->storableKeyMap;
     }
 
 
