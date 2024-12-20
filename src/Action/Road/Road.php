@@ -204,7 +204,7 @@ class Road extends Action
         $sign = $this->getSignOf($name);
 
         $sign->fire('creatingStation');
-        $station = $sign->createStation($name);
+        $station = $sign->resetStation($name);
         $sign->fire('createdStation', station: $station);
 
         return $station;
@@ -262,7 +262,7 @@ class Road extends Action
         }
 
         if ($name != 'revert' && isset($this->head) && $station != $this->head) {
-            $this->wayStack[] = array_filter([$this->head->name, $this->head->keepData()]);
+            $this->wayStack[] = array_filter([$this->head->sign->name, $this->head->keepData()]);
         }
 
         if (!isset($this->head) || $this->head != $station) {

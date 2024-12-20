@@ -3,7 +3,6 @@
 namespace Mmb\Action\Road\Station\Words;
 
 use Closure;
-use Mmb\Action\Road\Station;
 use Mmb\Support\Caller\EventCaller;
 
 /**
@@ -37,12 +36,12 @@ class SignLabel extends SignWord
     public function prefix(string|Closure $string)
     {
         $this->using(
-            function ($text) use ($string) {
+            function (string $text) use ($string) {
                 if ($string instanceof Closure) {
                     $args = func_get_args();
                     array_shift($args);
 
-                    $string = EventCaller::get('station')->fireSignAs($this, $string, ...$args);
+                    $string = $this->call($string, ...$args);
                 }
 
                 return $string . $text;
@@ -62,12 +61,12 @@ class SignLabel extends SignWord
     public function suffix(string|Closure $string)
     {
         $this->using(
-            function ($text) use ($string) {
+            function (string $text) use ($string) {
                 if ($string instanceof Closure) {
                     $args = func_get_args();
                     array_shift($args);
 
-                    $string = EventCaller::get('station')->fire($this, $string, ...$args);
+                    $string = $this->call($string, ...$args);
                 }
 
                 return $text . $string;
@@ -85,20 +84,20 @@ class SignLabel extends SignWord
     }
 
 
-    public function getLabel(Station $station, ...$args): string
+    public function getLabel(...$args): string
     {
-        return $this->getLabelValue($station, false, ...$args);
+        return $this->getLabelValue(false);
     }
 
-    public function getNullableLabel(Station $station, ...$args): ?string
+    public function getNullableLabel(...$args): ?string
     {
-        return $this->getLabelValue($station, true, ...$args);
+        return $this->getLabelValue(true);
     }
 
-    protected function getLabelValue(Station $station, bool $nullable, ...$args): ?string
+    protected function getLabelValue(bool $nullable, ...$args): ?string
     {
         $label = $this->label instanceof Closure ?
-            $this->fire($this->label, station: $station) :
+            $this->call($this->label) :
             $this->label;
 
         $label = match (true) {
@@ -113,7 +112,7 @@ class SignLabel extends SignWord
             return null;
         }
 
-        return (string)$this->fire('using', (string)$label, ...$args, station: $station);
+        return (string)$this->call('using', (string)$label, ...$args);
     }
 
 }

@@ -3,7 +3,6 @@
 namespace Mmb\Action\Road\Station\Words;
 
 use Closure;
-use Mmb\Action\Road\Station;
 
 /**
  * @template T
@@ -26,12 +25,12 @@ class SignAction extends SignWord
         return $this->sign;
     }
 
-    public function callAction(Station $station, ...$args): mixed
+    public function callAction(...$args): mixed
     {
-        $this->fire('callback', ...$args, station: $station);
+        $this->call('callback', ...$args);
 
         if ($this->callback) {
-            return $this->fire($this->callback, ...$args, station: $station);
+            return $this->call($this->callback, ...$args);
         }
 
         return null;

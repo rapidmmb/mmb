@@ -16,18 +16,6 @@ use Mmb\Support\Encoding\Modes\StringContent;
 use Mmb\Support\KeySchema\KeyboardInterface;
 
 /**
- * @method $this insertHeaderKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertHeaderRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertHeaderSchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeHeaderKey(string $name)
- * @method $this moveHeaderKey(string $name, ?int $x, ?int $y)
- *
- * @method $this insertFooterKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertFooterRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertFooterSchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeFooterKey(string $name)
- * @method $this moveFooterKey(string $name, ?int $x, ?int $y)
- *
  * @method $this message(Closure|string|StringContent|array $message)
  * @method $this messageMode(Closure|string|Mode $mode)
  * @method $this messageUsing(Closure $callback)

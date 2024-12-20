@@ -5,12 +5,15 @@ namespace Mmb\Action\Road\Station;
 use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Form\Form;
 use Mmb\Action\Form\Inline\InlineForm;
+use Mmb\Action\Inline\DefferInlineProxy;
 use Mmb\Action\Road\Station;
 use Mmb\Action\Section\Menu;
 use Mmb\Support\Format\KeyFormatterBuilder;
 
 /**
  * @extends Station<ListSign>
+ *
+ * @property DefferInlineProxy<Menu> $listMenu
  */
 class ListStation extends Station
 {
@@ -31,8 +34,7 @@ class ListStation extends Station
 
     public function mainInit()
     {
-        foreach ($this->sign->getFilterables() as $filterable)
-        {
+        foreach ($this->sign->getFilterables() as $filterable) {
             $filterable->initializeFirst($this);
         }
 
@@ -41,7 +43,8 @@ class ListStation extends Station
 
     public function main()
     {
-        return $this->menu('listMenu')->response();
+        $this->page = 1;
+        $this->listMenu->response();
     }
 
     public int $page = 1;
@@ -51,18 +54,20 @@ class ListStation extends Station
         $menu->withOn('$', $this, ...$this->getWith());
 
         // Get needle variables
-        $viewer = $this->sign->getViewer()->use($this);
-        $customizer = clone $this->sign->getMenuCustomizer();
+        $viewer = $this->sign->getViewer();
+        $customizer = $this->sign->getMenuCustomizer();
 
         // Use the required properties
-        if ($viewer->needsPage)
+        if ($viewer->needsPage) {
             $menu->withOn('$', $this, 'page');
+        }
 
         // Create query
         $query = $this->sign->getQuery($this);
 
-        if (isset($this->search))
+        if (isset($this->search)) {
             $query = $this->sign->searchSign->getFilteredQuery($this, $query);
+        }
 
         // Boot pagination
         $isNotEmpty = $viewer->bootPagination($query);
@@ -71,8 +76,7 @@ class ListStation extends Station
         // Header
         $customizer->init($this, $menu, ['header', 'body']);
 
-        if ($isNotEmpty)
-        {
+        if ($isNotEmpty) {
             // List Body
             $list = $viewer->renderList($menu);
 
@@ -82,26 +86,21 @@ class ListStation extends Station
             $paginator = $viewer->renderPaginator($menu);
             $paginatorAt = $this->sign->getPaginatorAt();
 
-            if ($customizer->isRtl())
-            {
+            if ($customizer->isRtl()) {
                 $list = $list->rtl();
                 $paginator = $paginator->rtl();
             }
 
-            if ($paginatorAt & ListSign::PAGINATOR_AT_TOP)
-            {
+            if ($paginatorAt & ListSign::PAGINATOR_AT_TOP) {
                 $menu->schema($paginator->toArray());
             }
 
             $menu->schema($list->toArray());
 
-            if ($paginatorAt & ListSign::PAGINATOR_AT_BOTTOM)
-            {
+            if ($paginatorAt & ListSign::PAGINATOR_AT_BOTTOM) {
                 $menu->schema($paginator->toArray());
             }
-        }
-        else
-        {
+        } else {
             // Empty Body
             $customizer->init($this, $menu, ['empty']);
         }
@@ -110,8 +109,8 @@ class ListStation extends Station
         $customizer->init($this, $menu, ['footer']);
 
         // Set the response
-        $menu->responseUsing(fn ($args) => $this->fireSign('response', $args));
-        $menu->message(fn () => $this->sign->getMessage($this));
+        $menu->responseUsing(fn($args) => $this->fireSign('response', $args));
+        $menu->message(fn() => $this->sign->getMessage($this));
     }
 
     // - - - - - - - - - - - - Search Form - - - - - - - - - - - - \\
@@ -142,10 +141,9 @@ class ListStation extends Station
         $formCustomizer->init($this, $form);
 
         $form->finish(
-            function (Form $form)
-            {
+            function (Form $form) {
                 $this->searchFinished($form->search);
-            }
+            },
         );
 
         // Set the response
@@ -159,10 +157,8 @@ class ListStation extends Station
 
     public function applyFilters(Builder $query)
     {
-        foreach ($this->filters as $name => $value)
-        {
-            if (($value === null) || !($filterable = $this->sign->getFilterable($name)))
-            {
+        foreach ($this->filters as $name => $value) {
+            if (($value === null) || !($filterable = $this->sign->getFilterable($name))) {
                 unset($this->filters[$name]);
                 continue;
             }
@@ -174,32 +170,25 @@ class ListStation extends Station
 
     public function fireFilter(string $name)
     {
-        if ($filterable = $this->sign->getFilterable($name))
-        {
+        if ($filterable = $this->sign->getFilterable($name)) {
             $filterable->fireFilter($this);
-        }
-        else
-        {
+        } else {
             $this->main();
         }
     }
 
     public function filterRequest(Filterable $filterable)
     {
-        if ($name = $this->sign->getFilterableName($filterable))
-        {
+        if ($name = $this->sign->getFilterableName($filterable)) {
             $this->menu('filterMenu', fName: $name)->response();
-        }
-        else
-        {
+        } else {
             $this->main();
         }
     }
 
     public function filterMenu(Menu $menu, string $fName)
     {
-        if (!$filterable = $this->sign->getFilterable($fName))
-        {
+        if (!$filterable = $this->sign->getFilterable($fName)) {
             // TODO: Exception
             // $this->main();
             // return;

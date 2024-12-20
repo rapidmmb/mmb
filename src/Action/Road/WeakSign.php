@@ -25,10 +25,8 @@ abstract class WeakSign
 
     protected function boot()
     {
-        foreach (class_uses_recursive($this) as $trait)
-        {
-            if (method_exists($this, $method = 'boot' . class_basename($trait)))
-            {
+        foreach (class_uses_recursive($this) as $trait) {
+            if (method_exists($this, $method = 'boot' . class_basename($trait))) {
                 $this->$method();
             }
         }
@@ -36,10 +34,8 @@ abstract class WeakSign
 
     protected function shutdown()
     {
-        foreach (class_uses_recursive($this) as $trait)
-        {
-            if (method_exists($this, $method = 'shutdown' . class_basename($trait)))
-            {
+        foreach (class_uses_recursive($this) as $trait) {
+            if (method_exists($this, $method = 'shutdown' . class_basename($trait))) {
                 $this->$method();
             }
         }
@@ -51,6 +47,7 @@ abstract class WeakSign
     }
 
 
+    // todo remove
     private array $definedMethods = [];
 
     private array $definedEventOptions = [];
@@ -71,7 +68,7 @@ abstract class WeakSign
      * @param string $event
      * @return array
      */
-    protected function getEventDynamicArgs(string $event) : array
+    protected function getEventDynamicArgs(string $event): array
     {
         return [
             'road' => $this->road,
@@ -80,7 +77,7 @@ abstract class WeakSign
         ];
     }
 
-    protected function getEventOptions(string $event) : array
+    protected function getEventOptions(string $event): array
     {
         return array_key_exists($event, $this->definedEventOptions) ?
             $this->definedEventOptions[$event] :
@@ -89,8 +86,7 @@ abstract class WeakSign
 
     public function __call(string $name, array $arguments)
     {
-        if (array_key_exists($name, $this->definedMethods))
-        {
+        if (array_key_exists($name, $this->definedMethods)) {
             return ($this->definedMethods[$name])(...$arguments);
         }
 
@@ -100,7 +96,7 @@ abstract class WeakSign
     /**
      * Fire an event using station
      *
-     * @param Station              $station
+     * @param Station $station
      * @param string|array|Closure $event
      * @param                      ...$args
      * @return mixed
@@ -117,54 +113,45 @@ abstract class WeakSign
      * Add parameters when opening the station
      *
      * @param string|array|Closure|null $params
-     * @param string|array|null         $names
+     * @param string|array|null $names
      * @return $this
      */
     public function params(null|string|array|Closure $params, null|string|array $names = null)
     {
-        if (is_string($params) || is_array($params))
-        {
+        if (is_string($params) || is_array($params)) {
             $names = $params;
             $params = null;
         }
 
-        if (is_null($params) && is_null($names))
-        {
+        if (is_null($params) && is_null($names)) {
             return $this;
         }
 
         $resolvers = [];
 
-        if ($params)
-        {
+        if ($params) {
             $autoNames = is_null($names);
             $names ??= [];
 
             $ref = new \ReflectionFunction($params);
-            foreach ($ref->getParameters() as $parameter)
-            {
-                if ($autoNames || in_array($parameter->getName(), $names))
-                {
+            foreach ($ref->getParameters() as $parameter) {
+                if ($autoNames || in_array($parameter->getName(), $names)) {
                     if ($attribute = Arr::first(
                         $parameter->getAttributes(),
-                        fn (\ReflectionAttribute $attribute) => is_a(
-                            $attribute->getName(), StationParameterResolverAttributeContract::class, true
-                        )
-                    ))
-                    {
+                        fn(\ReflectionAttribute $attribute) => is_a(
+                            $attribute->getName(), StationParameterResolverAttributeContract::class, true,
+                        ),
+                    )) {
                         $resolvers[$parameter->getName()] = [$attribute->newInstance(), $parameter];
 
-                        if ($autoNames)
-                        {
+                        if ($autoNames) {
                             $names[] = $parameter->getName();
                         }
                     }
                 }
             }
-        }
-        else
-        {
-            $names = (array) $names;
+        } else {
+            $names = (array)$names;
         }
 
         $this->params[] = [$names, $params, $resolvers];

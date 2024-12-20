@@ -4,7 +4,6 @@ namespace Mmb\Action\Road\Station\Words;
 
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
-use Mmb\Action\Road\Station;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Modes\StringContent;
@@ -62,13 +61,13 @@ class SignMessage extends SignWord
     public function prefix(string|StringContent|Closure $string)
     {
         $this->textUsing(
-            function ($text, Mode $mode) use ($string) {
+            function (string $text, Mode $mode) use ($string) {
                 if ($string instanceof Closure) {
                     $args = func_get_args();
                     array_shift($args);
                     array_shift($args);
 
-                    $string = EventCaller::get('station')->fireSignAs($this, $string, ...$args, mode: $mode);
+                    $string = $this->call($string, ...$args, mode: $mode);
                 }
 
                 return $mode->string($string) . $text;
@@ -88,13 +87,13 @@ class SignMessage extends SignWord
     public function suffix(string|StringContent|Closure $string)
     {
         $this->textUsing(
-            function ($text, Mode $mode) use ($string) {
+            function (string $text, Mode $mode) use ($string) {
                 if ($string instanceof Closure) {
                     $args = func_get_args();
                     array_shift($args);
                     array_shift($args);
 
-                    $string = EventCaller::get('station')->fire($this, $string, ...$args, mode: $mode);
+                    $string = $this->call($string, ...$args, mode: $mode);
                 }
 
                 return $text . $mode->string($string);
@@ -112,10 +111,10 @@ class SignMessage extends SignWord
     }
 
 
-    public function getMessage(Station $station, ...$args): array
+    public function getMessage(...$args): array
     {
         $mode = $this->mode instanceof Closure ?
-            $this->fire($this->mode, ...$args, station: $station) :
+            $this->call($this->mode, ...$args) :
             $this->mode;
 
         $mode = match (true) {
@@ -128,7 +127,7 @@ class SignMessage extends SignWord
         };
 
         $message = $this->message instanceof Closure ?
-            $this->fire($this->message, station: $station) :
+            $this->call($this->message, ...$args) :
             $this->message;
 
         $message = match (true) {
@@ -142,13 +141,12 @@ class SignMessage extends SignWord
             ),
         };
 
-        $message = (array)$this->fire('using', $message, ...$args, station: $station, mode: $mode);
+        $message = (array)$this->call('using', $message, ...$args, mode: $mode);
 
-        $message['text'] = (string)$this->fire(
+        $message['text'] = (string)$this->call(
             'textUsing',
             $message['text'] ?? '',
             ...$args,
-            station: $station,
             mode: $mode,
         );
 

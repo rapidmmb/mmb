@@ -185,7 +185,7 @@ class ExtendsTestSignTest extends TestCase
 
 class _TestSign extends Sign
 {
-    public function createStation(string $name) : Station
+    public function resetStation(string $name) : Station
     {
         return value(null); // Just ignore errors
     }

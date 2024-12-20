@@ -20,19 +20,14 @@ class MenuCustomizer
 
     public function init(Station $station, Menu $menu, array $groups)
     {
-        foreach ($groups as $group)
-        {
-            $menu->schema($this->fetchSchema($station, $group, $menu));
-        }
+        $this->initKeyboards($menu, $groups);
 
-        foreach ($this->actions as $on => $actions)
-        {
+        foreach ($this->actions as $on => $actions) {
             $menu->on(
                 $on,
-                static function () use ($actions, $station, $menu)
-                {
+                function () use ($station, $actions, $menu) {
                     $station->fireSignAs($this->sign, $actions, menu: $menu);
-                }
+                },
             );
         }
     }

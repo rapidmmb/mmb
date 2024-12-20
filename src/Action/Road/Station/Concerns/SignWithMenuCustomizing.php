@@ -5,6 +5,8 @@ namespace Mmb\Action\Road\Station\Concerns;
 use Closure;
 use Illuminate\Support\Str;
 use Mmb\Action\Road\Customize\MenuCustomizer;
+use Mmb\Action\Road\Station\Words\SignAction;
+use Mmb\Action\Road\Station\Words\SignKey;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\MenuKey;
 
@@ -34,86 +36,15 @@ trait SignWithMenuCustomizing
      * @param Closure $callback
      * @return $this
      */
-    public function useMenu(Closure $callback)
+    public function tapMenu(Closure $callback)
     {
         $callback($this->getMenuCustomizer());
         return $this;
     }
 
-    /**
-     * Insert a key
-     *
-     * @param string                  $group
-     * @param Closure(Menu): ?MenuKey $key
-     * @param string|null             $name
-     * @param int                     $x
-     * @param int                     $y
-     * @return $this
-     */
-    public function insertKey(string $group, Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
+    public function addKey(SignKey $key)
     {
-        $this->getMenuCustomizer()->insertKey($group, $key, $name, $x, $y);
-        return $this;
-    }
-
-    /**
-     * Insert a key row
-     *
-     * @param string                         $group
-     * @param Closure(Menu): array<?MenuKey> $key
-     * @param string|null                    $name
-     * @param int                            $y
-     * @param bool|null                      $rtl
-     * @return $this
-     */
-    public function insertRow(string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null)
-    {
-        $this->getMenuCustomizer()->insertRow($group, $key, $name, $y, $rtl);
-        return $this;
-    }
-
-    /**
-     * Insert a key schema
-     *
-     * @param string                                $group
-     * @param Closure(Menu): array<array<?MenuKey>> $key
-     * @param string|null                           $name
-     * @param int                                   $y
-     * @param bool|null                             $rtl
-     * @return $this
-     */
-    public function insertSchema(string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null)
-    {
-        $this->getMenuCustomizer()->insertSchema($group, $key, $name, $y, $rtl);
-        return $this;
-    }
-
-    /**
-     * Remove key by name
-     *
-     * @param string $group
-     * @param string $name
-     * @return $this
-     */
-    public function removeKey(string $group, string $name)
-    {
-        $this->getMenuCustomizer()->removeKey($group, $name);
-        return $this;
-    }
-
-    /**
-     * Move key by name
-     *
-     * @param string   $group
-     * @param string   $name
-     * @param int|null $x
-     * @param int|null $y
-     * @return $this
-     */
-    public function moveKey(string $group, string $name, ?int $x, ?int $y)
-    {
-        $this->getMenuCustomizer()->moveKey($group, $name, $x, $y);
-        return $this;
+        $this->getMenuCustomizer()->addKey($key);
     }
 
     /**
@@ -141,14 +72,14 @@ trait SignWithMenuCustomizing
     /**
      * Insert an action
      *
-     * @param string               $on
-     * @param Closure(Menu): mixed $callback
-     * @param bool                 $merge
+     * @param string $on
+     * @param SignAction $action
+     * @param bool $merge
      * @return $this
      */
-    public function insertAction(string $on, Closure $callback, bool $merge = true)
+    public function insertAction(string $on, SignAction $action, bool $merge = true)
     {
-        $this->getMenuCustomizer()->insertAction($on, $callback, $merge);
+        $this->getMenuCustomizer()->addAction($on, $action, $merge);
         return $this;
     }
 
