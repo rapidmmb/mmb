@@ -468,7 +468,7 @@ class Form extends Action
         $input = $this->loadInput($name ?? $this->loadedInInput, true);
 
         if ($input->name == $this->loadedInInput) {
-            $input->mergeStorableMap($this->loadedKeyMap);
+            $input->loadInputKeyboardMap($this->loadedKeyMap);
         }
 
         $input->pass($update ?? $this->update());

@@ -372,7 +372,7 @@ class Menu extends InlineAction implements KeyboardInterface
     {
         parent::saveToStep($step);
 
-        $step->storableKeyMap = $this->storableKeyMap ?: null;
+        $step->storableKeyMap = isset($this->storableKeyMap) && $this->storableKeyMap ? $this->storableKeyMap : null;
     }
 
     /**
@@ -384,7 +384,7 @@ class Menu extends InlineAction implements KeyboardInterface
     {
         parent::loadFromStep($step, $update);
 
-        $this->loadStoredKeyboards($step->storableKeyMap ?: []);
+        $this->loadKeyboards($this->store, $step->storableKeyMap ?: []);
     }
 
     public function restoreActionCallback(array $value): ?ActionCallback

@@ -510,9 +510,9 @@ class Input implements KeyboardInterface
      * @param array $storableMap
      * @return void
      */
-    public function mergeStorableMap(array $storableMap)
+    public function loadInputKeyboardMap(array $storableMap)
     {
-        $this->loadStoredKeyboards($storableMap);
+        $this->loadKeyboards($this->isStoring(), $storableMap);
     }
 
     /**

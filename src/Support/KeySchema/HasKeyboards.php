@@ -147,14 +147,17 @@ trait HasKeyboards
         }
     }
 
-    protected function loadStoredKeyboards(array $storableKeyMap)
+    protected function loadKeyboards(bool $storable = false, array $storableKeyMap = [])
     {
         $this->keyDataActionMap = [];
-        $this->storableKeyMap = $storableKeyMap;
 
-        foreach ($this->storableKeyMap as $data => $action) {
-            if ($action = $this->restoreActionCallback($action)) {
-                $this->keyDataActionMap[$data] = $action;
+        if ($storable) {
+            $this->storableKeyMap = $storableKeyMap;
+
+            foreach ($this->storableKeyMap as $data => $action) {
+                if ($action = $this->restoreActionCallback($action)) {
+                    $this->keyDataActionMap[$data] = $action;
+                }
             }
         }
 
@@ -167,7 +170,7 @@ trait HasKeyboards
         /** @var KeyboardSchema $schema */
         foreach ($schemas as $schema) {
 
-            if ($schema->exclude || !$schema->fixed) {
+            if ($schema->exclude || ($storable && !$schema->fixed)) {
                 continue;
             }
 
