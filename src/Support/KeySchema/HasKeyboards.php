@@ -176,7 +176,7 @@ trait HasKeyboards
 
             [, $keyDataMap0] = $schema->normalizeKey();
 
-            $this->keyDataActionMap = array_merge($this->keyDataActionMap, ...$keyDataMap0);
+            $this->keyDataActionMap = array_merge($this->keyDataActionMap, $keyDataMap0);
 
         }
     }

@@ -47,11 +47,11 @@ class InputFillActionCallback extends ActionCallback
 
     public function invoke($object, Context $context, array $args, array $dynamicArgs)
     {
-        if ($pass = $dynamicArgs['pass'] ?? null) {
+        if ($pass = value($dynamicArgs['pass'] ?? null)) {
 
             $pass($this->getValue());
 
-        } elseif ($sender = $dynamicArgs['sender'] ?? null) {
+        } elseif ($sender = value($dynamicArgs['sender'] ?? null)) {
 
             $sender->value = $this->getValue();
 

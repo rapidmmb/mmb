@@ -646,12 +646,12 @@ class Form extends Action
             if ($mirrorKey) {
                 $input->header([[$cancel, $prev]]);
             }
-            $input->header([$skip, $ineffective, $withoutChanges]);
+            $input->header([[$skip, $ineffective, $withoutChanges]]);
 
             if ($mirrorKey) {
-                $input->footer([$skip, $ineffective, $withoutChanges]);
+                $input->footer([[$skip, $ineffective, $withoutChanges]]);
             }
-            $input->footer([$cancel, $prev]);
+            $input->footer([[$cancel, $prev]]);
         }
     }
 
