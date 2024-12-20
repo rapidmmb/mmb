@@ -232,7 +232,7 @@ class Dialog extends Menu
         try
         {
             return tap(
-                $this->context->message->editText($message, $args + $namedArgs + ['key' => $this->cachedKey]),
+                $this->context->message->editText($message, $args + $namedArgs + ['key' => $this->toKeyboardArray()]),
                 function($message)
                 {
                     if($message)

@@ -17,9 +17,9 @@ use Mmb\Core\Updates\Update;
 class MenuStepHandler extends InlineStepHandler
 {
 
-    #[Alias('a')]
+    #[Alias('m')]
     #[AsArray]
-    public $actionMap;
+    public $storableKeyMap;
 
     protected function makeInlineAction(Context $context, Update $update) : ?InlineAction
     {

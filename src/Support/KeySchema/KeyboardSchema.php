@@ -1,6 +1,6 @@
 <?php
 
-namespace Mmb\KeySchema;
+namespace Mmb\Support\KeySchema;
 
 class KeyboardSchema
 {
@@ -19,7 +19,7 @@ class KeyboardSchema
     {
         $map = value($this->key);
         $rawKey = [];
-        $keyDataMap = [];
+        $keyDataActionMap = [];
         $storableKeyMap = [];
 
         if (is_iterable($map)) {
@@ -77,16 +77,21 @@ class KeyboardSchema
                     );
                 }
 
-                if ($key && $key->isIncluded() && null !== $data = $key->getUniqueData($this->base)) {
-                    if ($storable && !$key->isStorable()) {
+                if (
+                    $key &&
+                    $key->isIncluded() &&
+                    (null !== $data = $key->getUniqueData($this->base)) &&
+                    $action = $key->toAction()
+                ) {
+                    if ($storable && !$action->isStorable()) {
                         throw new \TypeError("Keyboard action with Closure value is not available for storable keyboard");
                     }
 
                     if ($storable) {
-                        $storableKeyMap[$data] = $key->toStorable();
+                        $storableKeyMap[$data] = $action->toArray();
                     }
 
-                    $keyDataMap[$data] = $key;
+                    $keyDataActionMap[$data] = $action;
                 }
 
                 if (!$key || $key->isVisible()) {
@@ -99,7 +104,7 @@ class KeyboardSchema
             }
         }
 
-        return [$rawKey, $keyDataMap, $storableKeyMap];
+        return [$rawKey, $keyDataActionMap, $storableKeyMap];
     }
 
 }

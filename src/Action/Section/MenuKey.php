@@ -3,12 +3,18 @@
 namespace Mmb\Action\Section;
 
 use Closure;
+use Illuminate\Support\Traits\Conditionable;
 use Mmb\Action\Action;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\ActionCallback;
+use Mmb\Support\KeySchema\KeyboardInterface;
+use Mmb\Support\KeySchema\KeyInterface;
+use Mmb\Support\KeySchema\KeyUniqueData;
+use Mmb\Support\KeySchema\StaticIfScopes;
 
-class MenuKey
+class MenuKey implements KeyInterface
 {
+    use Conditionable;
 
     protected ?ActionCallback $action = null;
 
@@ -31,12 +37,9 @@ class MenuKey
      */
     public function isAllowed()
     {
-        if(is_array($this->action->action) && is_a($this->action->action[0], Action::class, true))
-        {
+        if (is_array($this->action->action) && is_a($this->action->action[0], Action::class, true)) {
             return $this->action->action[0]::allowed(@$this->action->action[1]);
-        }
-        elseif(is_string($this->action->action))
-        {
+        } elseif (is_string($this->action->action)) {
             return $this->menu->getInitializer()[0]::allowed($this->action->action);
         }
 
@@ -53,7 +56,7 @@ class MenuKey
      */
     public function visible($condition = true)
     {
-        $this->isVisible = (bool) value($condition);
+        $this->isVisible = (bool)value($condition);
         return $this;
     }
 
@@ -80,14 +83,11 @@ class MenuKey
     {
         $this->isVisible = false;
 
-        if(value($condition))
-        {
-            $this->menu->setIfScope($scope);
+        if (value($condition)) {
+            StaticIfScopes::setIfScope($scope);
             $this->isVisible = true;
-        }
-        else
-        {
-            $this->menu->removeIfScope($scope);
+        } else {
+            StaticIfScopes::removeIfScope($scope);
         }
 
         return $this;
@@ -104,11 +104,9 @@ class MenuKey
     {
         $this->isVisible = false;
 
-        if($this->menu->hasMoreIfScope($scope))
-        {
-            if(value($condition))
-            {
-                $this->menu->setIfScope($scope);
+        if (StaticIfScopes::isNotSetIfScope($scope)) {
+            if (value($condition)) {
+                StaticIfScopes::setIfScope($scope);
                 $this->isVisible = true;
             }
         }
@@ -126,9 +124,8 @@ class MenuKey
     {
         $this->isVisible = false;
 
-        if($this->menu->hasMoreIfScope($scope))
-        {
-            $this->menu->setIfScope($scope);
+        if (StaticIfScopes::isNotSetIfScope($scope)) {
+            StaticIfScopes::setIfScope($scope);
             $this->isVisible = true;
         }
 
@@ -160,64 +157,6 @@ class MenuKey
     protected bool $display = true;
 
     /**
-     * Display key / Invoke $then, when condition is true.
-     *
-     * @param              $condition
-     * @param Closure|null $then
-     * @param Closure|null $default
-     * @return $this
-     */
-    public function when($condition, Closure $then = null, Closure $default = null)
-    {
-        if($then === null)
-        {
-            $this->display = (bool) value($condition);
-        }
-        else
-        {
-            if(value($condition))
-            {
-                $then($this);
-            }
-            elseif($default !== null)
-            {
-                $default($this);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Display key / Invoke $then, when condition is false.
-     *
-     * @param              $condition
-     * @param Closure|null $then
-     * @param Closure|null $default
-     * @return $this
-     */
-    public function unless($condition, Closure $then = null, Closure $default = null)
-    {
-        if($then === null)
-        {
-            $this->display = !value($condition);
-        }
-        else
-        {
-            if(!value($condition))
-            {
-                $then($this);
-            }
-            elseif($default !== null)
-            {
-                $default($this);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * Display key if condition is true.
      *
      * @param        $condition
@@ -228,14 +167,11 @@ class MenuKey
     {
         $this->display = false;
 
-        if(value($condition))
-        {
-            $this->menu->setIfScope($scope);
+        if (value($condition)) {
+            StaticIfScopes::setIfScope($scope);
             $this->display = true;
-        }
-        else
-        {
-            $this->menu->removeIfScope($scope);
+        } else {
+            StaticIfScopes::removeIfScope($scope);
         }
 
         return $this;
@@ -252,11 +188,9 @@ class MenuKey
     {
         $this->display = false;
 
-        if($this->menu->hasMoreIfScope($scope))
-        {
-            if(value($condition))
-            {
-                $this->menu->setIfScope($scope);
+        if (StaticIfScopes::isNotSetIfScope($scope)) {
+            if (value($condition)) {
+                StaticIfScopes::setIfScope($scope);
                 $this->display = true;
             }
         }
@@ -274,9 +208,8 @@ class MenuKey
     {
         $this->display = false;
 
-        if($this->menu->hasMoreIfScope($scope))
-        {
-            $this->menu->setIfScope($scope);
+        if (StaticIfScopes::isNotSetIfScope($scope)) {
+            StaticIfScopes::setIfScope($scope);
             $this->display = true;
         }
 
@@ -310,7 +243,7 @@ class MenuKey
      *
      * @return bool
      */
-    public function isDisplayed()
+    public function isDisplayed(): bool
     {
         return $this->display;
     }
@@ -336,7 +269,7 @@ class MenuKey
      *
      * @return bool
      */
-    public function isIncluded()
+    public function isIncluded(): bool
     {
         return $this->isIncluded && $this->action !== null;
     }
@@ -350,9 +283,15 @@ class MenuKey
      */
     public function action($action, ...$args)
     {
-        $this->action = is_null($action) ? null : (
-            $action instanceof ActionCallback ? $action : new ActionCallback($action, $args)
-        );
+        if ($action instanceof ActionCallback && $args) {
+            $action = (clone $action)->addArgs($args);
+        }
+
+        $this->action = match (true) {
+            is_null($action)                  => null,
+            $action instanceof ActionCallback => $action,
+            default                           => new ActionCallback($action, $args),
+        };
         return $this;
     }
 
@@ -366,19 +305,7 @@ class MenuKey
      */
     public function invoke(string $class, string $method = 'main', ...$args)
     {
-        // return $this->action($class . '@' . $method, ...$args);
         return $this->action([$class, $method], ...$args);
-    }
-
-
-    /**
-     * Get action
-     *
-     * @return ?ActionCallback
-     */
-    public function getAction()
-    {
-        return $this->action;
     }
 
 
@@ -463,121 +390,18 @@ class MenuKey
         return $this;
     }
 
-    /**
-     * Get action key to find match
-     *
-     * @param bool $isInline
-     * @return string
-     */
-    public function getActionKey(bool $isInline = false)
+    public function getUniqueData(KeyboardInterface $base): ?string
     {
-        switch ($this->type)
-        {
-            case 'user':
-            case 'users':
-            case 'chat':
-                return static::actionKeyFor($this->type, $this->typeOptions['id'], $isInline);
-
-            default:
-                return static::actionKeyFor($this->type, $this->text, $isInline);
-        }
-    }
-
-    /**
-     * Get action key for key type
-     *
-     * @param string $type
-     * @param null   $value
-     * @param bool   $isInline
-     * @return string
-     */
-    public static function actionKeyFor(string $type, $value = null, bool $isInline = false)
-    {
-        if($isInline)
-        {
-            return match ($type)
-            {
-                'text'  => '#' . $value,
-                default => '',
-            };
-        }
-        else
-        {
-            return match ($type)
-            {
-                'text'     => '.' . $value,
-                'contact'  => 'c',
-                'location' => 'l',
-                'user' => 'u' . $value,
-                'users' => 'U' . $value,
-                'chat' => 'C' . $value,
-                'poll' => 'p',
-            };
-        }
-    }
-
-    /**
-     * Find action key from update
-     *
-     * @param Update $update
-     * @return ?string
-     */
-    public static function findActionKeyFrom(Update $update)
-    {
-        if($update->message)
-        {
-            if($update->message->contact)
-            {
-                return 'c';
-            }
-            elseif($update->message->location)
-            {
-                return 'l';
-            }
-            elseif ($update->message->userShared)
-            {
-                return 'u' . $update->message->userShared->requestId;
-            }
-            elseif ($update->message->usersShared)
-            {
-                return 'U' . $update->message->usersShared->requestId;
-            }
-            elseif ($update->message->chatShared)
-            {
-                return 'C' . $update->message->chatShared->requestId;
-            }
-            elseif ($update->message->poll)
-            {
-                return 'p';
-            }
-            elseif($update->message->globalType == 'text')
-            {
-                return '.' . $update->message->text;
-            }
-        }
-        elseif ($update->callbackQuery)
-        {
-            if (str_starts_with($update->callbackQuery->data, '#dialog:'))
-            {
-                @[$target, $id, $action] = explode(':', substr($update->callbackQuery->data, 8), 3);
-                if ($target && $id)
-                {
-                    return 'D' . $action;
-                }
-            }
-            elseif (str_starts_with($update->callbackQuery->data, '#df:'))
-            {
-                @[$class, $method, $_, $action] = explode(':', substr($update->callbackQuery->data, 4), 3);
-                if ($class && $method)
-                {
-                    return 'D' . $action;
-                }
-            }
-
-            return 'C' . $update->callbackQuery->data;
-        }
-
-        return null;
+        return match ($this->type) {
+            'text'     => KeyUniqueData::makeText($this->text),
+            'contact'  => KeyUniqueData::makeContact(),
+            'location' => KeyUniqueData::makeLocation(),
+            'user'     => KeyUniqueData::makeRequestUser($this->typeOptions['id']),
+            'users'    => KeyUniqueData::makeRequestUsers($this->typeOptions['id']),
+            'chat'     => KeyUniqueData::makeRequestChat($this->typeOptions['id']),
+            'poll'     => KeyUniqueData::makePoll(),
+            default    => null,
+        };
     }
 
     /**
@@ -585,7 +409,7 @@ class MenuKey
      *
      * @return bool
      */
-    public function isVisible()
+    public function isVisible(): bool
     {
         return $this->isVisible;
     }
@@ -595,7 +419,7 @@ class MenuKey
      *
      * @return string
      */
-    public function getText()
+    public function getText(): string
     {
         return $this->text;
     }
@@ -605,51 +429,47 @@ class MenuKey
      *
      * @return array
      */
-    public function getAttributes()
+    public function toArray(): array
     {
-        switch ($this->type)
-        {
-            case 'contact':
-                return [
-                    'text' => $this->getText(),
-                    'requestContact' => true,
-                ];
+        return match ($this->type) {
+            'contact'  => [
+                'text' => $this->getText(),
+                'requestContact' => true,
+            ],
+            'location' => [
+                'text' => $this->getText(),
+                'requestLocation' => true,
+            ],
+            'user'     => [
+                'text' => $this->getText(),
+                'requestUser' => $this->typeOptions,
+            ],
+            'users'    => [
+                'text' => $this->getText(),
+                'requestUsers' => $this->typeOptions,
+            ],
+            'chat'     => [
+                'text' => $this->getText(),
+                'requestChat' => $this->typeOptions,
+            ],
+            'poll'     => [
+                'text' => $this->getText(),
+                'requestPoll' => $this->typeOptions,
+            ],
+            default    => [
+                'text' => $this->getText(),
+            ],
+        };
+    }
 
-            case 'location':
-                return [
-                    'text' => $this->getText(),
-                    'requestLocation' => true,
-                ];
-
-            case 'user':
-                return [
-                    'text' => $this->getText(),
-                    'requestUser' => $this->typeOptions,
-                ];
-
-            case 'users':
-                return [
-                    'text' => $this->getText(),
-                    'requestUsers' => $this->typeOptions,
-                ];
-
-            case 'chat':
-                return [
-                    'text' => $this->getText(),
-                    'requestChat' => $this->typeOptions,
-                ];
-
-            case 'poll':
-                return [
-                    'text' => $this->getText(),
-                    'requestPoll' => $this->typeOptions,
-                ];
-
-            default:
-                return [
-                    'text' => $this->getText(),
-                ];
-        }
+    /**
+     * Get action
+     *
+     * @return ?ActionCallback
+     */
+    public function toAction(): ?ActionCallback
+    {
+        return $this->action;
     }
 
 }

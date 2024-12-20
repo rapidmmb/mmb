@@ -10,10 +10,10 @@ use Mmb\Action\Road\Customize\InputCustomizer;
 use Mmb\Action\Road\Road;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Action\Section\Menu;
-use Mmb\KeySchema\KeyboardInterface;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Modes\StringContent;
+use Mmb\Support\KeySchema\KeyboardInterface;
 
 /**
  * @method $this insertHeaderKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)

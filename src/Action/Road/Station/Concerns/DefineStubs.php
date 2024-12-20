@@ -7,12 +7,12 @@ use Illuminate\Contracts\Support\Arrayable;
 use Mmb\Action\Road\Station;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Context;
-use Mmb\KeySchema\KeyboardInterface;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Modes\StringContent;
 use Mmb\Support\Encoding\Text;
+use Mmb\Support\KeySchema\KeyboardInterface;
 
 trait DefineStubs
 {

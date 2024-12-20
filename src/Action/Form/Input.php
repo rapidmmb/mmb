@@ -11,10 +11,10 @@ use Mmb\Action\Filter\HasEventFilter;
 use Mmb\Action\Filter\Rules\FilterFailAnyway;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
-use Mmb\KeySchema\KeyboardInterface;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Encoding\Text;
+use Mmb\Support\KeySchema\KeyboardInterface;
 
 /**
  * @property mixed $value
