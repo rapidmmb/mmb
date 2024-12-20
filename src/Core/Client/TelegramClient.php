@@ -8,6 +8,7 @@ use Amp\Http\Client\Connection\UnlimitedConnectionPool;
 use Amp\Http\Client\HttpClient;
 use Amp\Http\Client\HttpClientBuilder;
 use Amp\Http\Client\Request as AmpRequest;
+use Amp\Socket\Socks5SocketConnector;
 use Closure;
 use GuzzleHttp\Psr7\MultipartStream;
 use Mmb\Core\Client\Exceptions\TelegramResponseException;
@@ -54,7 +55,19 @@ class TelegramClient extends Client
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'proxy':
+                    if (str_starts_with($value, 'socks://')) {
+                        $client = $client->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(new Socks5SocketConnector(substr($value, 8)))));
+                    } else {
+                        $client = $client->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(new Http1TunnelConnector($value))));
+                    }
+                    break;
+
+                case 'proxy:http':
                     $client = $client->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(new Http1TunnelConnector($value))));
+                    break;
+
+                case 'proxy:socks':
+                    $client = $client->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(new Socks5SocketConnector($value))));
                     break;
 
                 default:
