@@ -18,7 +18,7 @@ trait SignWithBacks
 {
 
     /**
-     * @var Station\Words\SignKey<static>
+     * @var Station\Words\SignKey<$this>
      */
     public Station\Words\SignKey $back;
 

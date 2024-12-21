@@ -19,6 +19,9 @@ use Mmb\Action\Section\MenuKey;
 trait SignWithItems
 {
 
+    /**
+     * @var Station\Words\SignKey<$this>
+     */
     public Station\Words\SignKey $itemKey;
 
     protected function bootSignWithItems()
