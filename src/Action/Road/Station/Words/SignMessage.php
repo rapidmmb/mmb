@@ -18,6 +18,10 @@ class SignMessage extends SignWord
 
     protected mixed $message = null;
 
+    /**
+     * @param Closure|string|StringContent|array $message
+     * @return T
+     */
     public function set(Closure|string|StringContent|array $message)
     {
         $this->message = $message;
@@ -26,12 +30,20 @@ class SignMessage extends SignWord
 
     protected mixed $mode = null;
 
+    /**
+     * @param Closure|string|Mode $mode
+     * @return T
+     */
     public function mode(Closure|string|Mode $mode)
     {
         $this->mode = $mode;
         return $this->sign;
     }
 
+    /**
+     * @param Closure $callback
+     * @return T
+     */
     public function using(Closure $callback)
     {
         $this->listen('using', $callback);
@@ -45,6 +57,10 @@ class SignMessage extends SignWord
         ];
     }
 
+    /**
+     * @param Closure $callback
+     * @return T
+     */
     public function textUsing(Closure $callback)
     {
         $this->listen('textUsing', $callback);
@@ -58,6 +74,10 @@ class SignMessage extends SignWord
         ];
     }
 
+    /**
+     * @param string|StringContent|Closure $string
+     * @return T
+     */
     public function prefix(string|StringContent|Closure $string)
     {
         $this->textUsing(
@@ -84,6 +104,10 @@ class SignMessage extends SignWord
         ];
     }
 
+    /**
+     * @param string|StringContent|Closure $string
+     * @return T
+     */
     public function suffix(string|StringContent|Closure $string)
     {
         $this->textUsing(

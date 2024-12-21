@@ -27,12 +27,12 @@ class ListPaginateViewer extends ListViewer
     {
         $perPage =
             $this->perPage instanceof Closure ?
-                fn ($total) => $this->station->fireSign($this->perPage, $total) :
+                fn ($total) => $this->station->call($this->perPage, $total) :
                 $this->perPage;
 
         $columns =
             $this->columns instanceof Closure ?
-                $this->station->fireSign($this->columns) :
+                $this->station->call($this->columns) :
                 $this->columns;
 
         $this->paginator = $query->paginate($perPage, $columns, page: $this->station->page);

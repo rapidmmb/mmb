@@ -43,24 +43,24 @@ class SignKey extends SignWord
      * Set the key using
      *
      * @param Closure(KeyboardInterface): ?KeyInterface $callback
-     * @return $this
+     * @return T
      */
     public function set(Closure $callback)
     {
         $this->key = $callback;
-        return $this;
+        return $this->sign;
     }
 
     /**
      * Modify the key using
      *
      * @param Closure(KeyInterface): KeyInterface $callback
-     * @return $this
+     * @return T
      */
     public function using(Closure $callback)
     {
         $this->listen('using', $callback);
-        return $this;
+        return $this->sign;
     }
 
     protected function getEventOptionsOnUsing()
@@ -70,6 +70,12 @@ class SignKey extends SignWord
         ];
     }
 
+    /**
+     * @param int $x
+     * @param int $y
+     * @param string|null $group
+     * @return T
+     */
     public function at(int $x, int $y, ?string $group = null)
     {
         $this->x = $x;
@@ -79,6 +85,12 @@ class SignKey extends SignWord
         return $this->sign;
     }
 
+    /**
+     * @param string $group
+     * @param int|null $x
+     * @param int|null $y
+     * @return T
+     */
     public function in(string $group, ?int $x = null, ?int $y = null)
     {
         if (isset($x)) $this->x = $x;
@@ -88,6 +100,10 @@ class SignKey extends SignWord
         return $this->sign;
     }
 
+    /**
+     * @param string|Closure $label
+     * @return T
+     */
     public function label(string|Closure $label)
     {
         $this->label->set($label);
@@ -95,6 +111,10 @@ class SignKey extends SignWord
         return $this->sign;
     }
 
+    /**
+     * @param Closure $callback
+     * @return T
+     */
     public function action(Closure $callback)
     {
         $this->action->set($callback);
@@ -102,12 +122,19 @@ class SignKey extends SignWord
         return $this->sign;
     }
 
+    /**
+     * @param Closure|null $when
+     * @return T
+     */
     public function enabled(?Closure $when = null)
     {
         $this->enabled = $when ?? true;
         return $this->sign;
     }
 
+    /**
+     * @return T
+     */
     public function disabled()
     {
         $this->enabled = false;

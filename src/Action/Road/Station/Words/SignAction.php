@@ -13,12 +13,20 @@ class SignAction extends SignWord
 
     protected ?Closure $callback = null;
 
+    /**
+     * @param Closure $callback
+     * @return T
+     */
     public function set(Closure $callback)
     {
         $this->callback = $callback;
         return $this->sign;
     }
 
+    /**
+     * @param Closure $callback
+     * @return T
+     */
     public function add(Closure $callback)
     {
         $this->listen('callback', $callback);

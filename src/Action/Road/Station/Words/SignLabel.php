@@ -14,12 +14,20 @@ class SignLabel extends SignWord
 
     protected mixed $label = null;
 
+    /**
+     * @param Closure|string $label
+     * @return T
+     */
     public function set(Closure|string $label)
     {
         $this->label = $label;
         return $this->sign;
     }
 
+    /**
+     * @param Closure $callback
+     * @return T
+     */
     public function using(Closure $callback)
     {
         $this->listen('using', $callback);
@@ -33,6 +41,10 @@ class SignLabel extends SignWord
         ];
     }
 
+    /**
+     * @param string|Closure $string
+     * @return T
+     */
     public function prefix(string|Closure $string)
     {
         $this->using(
@@ -58,6 +70,10 @@ class SignLabel extends SignWord
         ];
     }
 
+    /**
+     * @param string|Closure $string
+     * @return T
+     */
     public function suffix(string|Closure $string)
     {
         $this->using(

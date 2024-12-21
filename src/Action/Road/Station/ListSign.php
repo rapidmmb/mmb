@@ -20,10 +20,29 @@ class ListSign extends Sign
         Concerns\SignWithResponse,
         Concerns\SignWithBacks;
 
+    /**
+     * @var Words\SignMessage<$this>
+     */
     public Station\Words\SignMessage $message;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
     public Station\Words\SignKey $titleKey;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
     public Station\Words\SignKey $emptyKey;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
     public Station\Words\SignKey $searchKey;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
     public Station\Words\SignKey $searchingKey;
 
     /**
