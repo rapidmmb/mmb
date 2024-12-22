@@ -227,6 +227,21 @@ class Dialog extends Menu
         return $dialogRegister->register()->editResponse($message, $args, ...$namedArgs);
     }
 
+    /**
+     * Send or edit dialog
+     *
+     * @param       $message
+     * @param array $args
+     * @param       ...$namedArgs
+     * @return Message|null
+     */
+    public function response($message = null, array $args = [], ...$namedArgs)
+    {
+        return isset($this->responseUsing) || !$this->update->callbackQuery ?
+            parent::response($message, $args, $namedArgs) :
+            $this->editResponse($message, $args, ...$namedArgs);
+    }
+
 
     /**
      * Send menu as message
