@@ -237,7 +237,7 @@ class Dialog extends Menu
      */
     public function response($message = null, array $args = [], ...$namedArgs)
     {
-        return isset($this->responseUsing) || !$this->update->callbackQuery ?
+        return isset($this->responseUsing) || !$this->context->update->callbackQuery ?
             parent::response($message, $args, $namedArgs) :
             $this->editResponse($message, $args, ...$namedArgs);
     }
