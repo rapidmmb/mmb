@@ -142,11 +142,15 @@ class Context implements ArrayAccess
             return $this->{'get' . $key}($default);
         }
 
-        if (!array_key_exists($key, $this->data)) {
-            return value($default);
+        if (array_key_exists($key, $this->data)) {
+            return $this->data[$key];
         }
 
-        return $this->data[$key];
+        if ($key !== ModelFinder::class && $current = @$this->data[ModelFinder::class]?->current($key)) {
+            return $current;
+        }
+
+        return value($default);
     }
 
     /**

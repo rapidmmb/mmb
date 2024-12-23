@@ -188,7 +188,7 @@ class Road extends Action
             throw new \BadMethodCallException(sprintf("Station [%s] has not a valid sign as first parameter", $name));
         }
 
-        $sign = $this->loadedSigns[$name] = new $type($this);
+        $sign = $this->loadedSigns[$name] = new $type($this, $name);
         Caller::invoke($this->context, $callback, [$sign]);
         return $sign;
     }

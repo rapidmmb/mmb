@@ -82,7 +82,7 @@ abstract class StepHandlerAttribute
     /**
      * Save property data
      *
-     * @param array $attrs
+     * @param StepHandlerAttribute[] $attrs
      * @param string $name
      * @param StepMemory $memory
      * @param StepHandler $handler
@@ -117,7 +117,7 @@ abstract class StepHandlerAttribute
     /**
      * Load property data
      *
-     * @param array $attrs
+     * @param StepHandlerAttribute[] $attrs
      * @param string $name
      * @param StepMemory $memory
      * @param StepHandler $handler
