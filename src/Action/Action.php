@@ -98,14 +98,14 @@ abstract class Action
     /**
      * Invoke a method
      *
-     * @param string $__method
-     * @param        ...$__args
+     * @param string $_method
+     * @param        ...$_args
      * @return mixed
      */
-    public function invoke(string $__method, ...$__args)
+    public function invoke(string $_method, ...$_args)
     {
-        return (new HigherOrderSafeProxy($this, true, true, $this->getInvokeDynamicParameters($__method)))
-            ->__call($__method, $__args);
+        return (new HigherOrderSafeProxy($this, true, true, $this->getInvokeDynamicParameters($_method)))
+            ->__call($_method, $_args);
     }
 
     /**
@@ -125,13 +125,13 @@ abstract class Action
     /**
      * Create an instance and invoke the method
      *
-     * @param string $__method
-     * @param        ...$__args
+     * @param string $_method
+     * @param        ...$_args
      * @return mixed
      */
-    public static function invokes(Context $__context, string $__method, ...$__args)
+    public static function invokes(Context $_context, string $_method, ...$_args)
     {
-        return static::makeByContext($__context)->invoke($__method, ...$__args);
+        return static::makeByContext($_context)->invoke($_method, ...$_args);
     }
 
     /**
@@ -198,9 +198,8 @@ abstract class Action
             throw new BadMethodCallException(sprintf("Call to undefined inline method [%s] on [%s]", $register->method, static::class));
         }
 
-        return $this->{
-        $register->method
-        }(...);
+        $method = $register->method;
+        return $this->$method(...);
     }
 
     public static function getInlineUsingEvents(string $name): array

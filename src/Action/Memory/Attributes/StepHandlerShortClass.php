@@ -18,8 +18,7 @@ class StepHandlerShortClass extends StepHandlerAttribute
 
     public function onLoad($data)
     {
-        if(@$data[0] == $this->mark)
-        {
+        if (@$data[0] == $this->mark) {
             return $this->prefix . substr($data, 1);
         }
 
@@ -28,8 +27,7 @@ class StepHandlerShortClass extends StepHandlerAttribute
 
     public function onSave($data)
     {
-        if(Str::startsWith($data, $this->prefix))
-        {
+        if (Str::startsWith($data, $this->prefix)) {
             return $this->mark . substr($data, strlen($this->prefix));
         }
 

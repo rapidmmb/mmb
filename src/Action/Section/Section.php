@@ -116,9 +116,9 @@ class Section extends Action
      * @return void
      * @deprecated
      */
-    public function nextStep(string $method)
+    public function nextStep(string $method, ...$args)
     {
-        NextStepHandler::make()->for(static::class, $method)->keep($this->context);
+        NextStepHandler::make()->for(static::class, $method, $args)->keep($this->context);
     }
 
     public function __get(string $name)
