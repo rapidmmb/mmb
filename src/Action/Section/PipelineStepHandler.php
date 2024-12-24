@@ -44,7 +44,9 @@ class PipelineStepHandler extends StepHandler
 
     public function pushCurrent(Context $context)
     {
-        $this->push($context->stepFactory->get());
+        if ($current = $context->stepFactory->get()) {
+            $this->push($current);
+        }
     }
 
     public function keepFirst(Context $context)
@@ -79,7 +81,7 @@ class PipelineStepHandler extends StepHandler
             return;
         }
 
-        $update->isHandled = false;
+        $update->skipHandler();
     }
 
     public function onBegin(Context $context, Update $update): void

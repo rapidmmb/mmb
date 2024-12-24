@@ -6,11 +6,12 @@ use Mmb\Action\Memory\Attributes\StepHandlerAttribute;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\HasAttributeLoader;
+use Mmb\Support\Serialize\Shortable;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 
-class StepHandler
+class StepHandler implements Shortable
 {
     use HasAttributeLoader;
 
@@ -143,6 +144,20 @@ class StepHandler
         }
 
         return null;
+    }
+
+    public function shortSerialize(): array
+    {
+        $memory = new StepMemory();
+        $this->save($memory);
+
+        return $memory->all();
+    }
+
+    public function shortUnserialize(array $data): void
+    {
+        $memory = new StepMemory($data);
+        $this->load($memory);
     }
 
 }

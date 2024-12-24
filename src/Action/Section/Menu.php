@@ -18,7 +18,6 @@ use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\ActionCallback;
 use Mmb\Support\KeySchema\HasKeyboards;
 use Mmb\Support\KeySchema\KeyboardInterface;
-use Mmb\Support\KeySchema\KeyInterface;
 
 class Menu extends InlineAction implements KeyboardInterface
 {
