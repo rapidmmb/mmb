@@ -28,9 +28,33 @@ class PipelineStepHandler extends StepHandler
     public ?string $fallbackMethod = null;
 
 
+    public static function current(Context $context): ?PipelineStepHandler
+    {
+        if (($step = $context->stepFactory->get()) instanceof PipelineStepHandler) {
+            return $step;
+        }
+
+        return null;
+    }
+
     public function push(StepHandler $handler)
     {
         $this->steps[] = $handler;
+    }
+
+    public function pushCurrent(Context $context)
+    {
+        $this->push($context->stepFactory->get());
+    }
+
+    public function keepFirst(Context $context)
+    {
+        $context->stepFactory->set($this->steps ? reset($this->steps) : null);
+    }
+
+    public function keepLast(Context $context)
+    {
+        $context->stepFactory->set($this->steps ? end($this->steps) : null);
     }
 
     public function handle(Context $context, Update $update): void

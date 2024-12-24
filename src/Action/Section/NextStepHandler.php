@@ -26,7 +26,6 @@ class NextStepHandler extends StepHandler
 
     #[Alias('a')]
     #[Serialize]
-    #[AsArray]
     public ?array $arguments = null;
 
     public function for(string|array $action, string $method = null, array $arguments = [])
