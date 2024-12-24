@@ -2,7 +2,10 @@
 
 namespace Mmb\Action\Section;
 
+use Closure;
 use Mmb\Action\Action;
+use Mmb\Action\Memory\ConvertableToStep;
+use Mmb\Action\Memory\StepFactory;
 use Mmb\Action\Memory\StepHandler;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
@@ -56,6 +59,33 @@ class PipelineStepHandler extends StepHandler
     public function keepLast(Context $context)
     {
         $context->stepFactory->set($this->steps ? end($this->steps) : null);
+    }
+
+    public function listen(Context $context, Closure $callback)
+    {
+        $realFactory = $context->stepFactory;
+
+        $context->stepFactory = new class($context, $this) extends StepFactory
+        {
+            public function __construct(Context $context, public PipelineStepHandler $pipe)
+            {
+                parent::__construct($context);
+            }
+
+            public function set(ConvertableToStep|StepHandler|null $step)
+            {
+                $this->pipe->push($step);
+            }
+
+            public function get()
+            {
+                return $this->pipe->steps ? end($this->pipe->steps) : null;
+            }
+        };
+
+        $callback();
+
+        $context->stepFactory = $realFactory;
     }
 
     public function handle(Context $context, Update $update): void
