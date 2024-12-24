@@ -7,13 +7,12 @@ use Mmb\Action\Memory\StepHandler;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
 use Mmb\Action\Memory\Attributes\StepHandlerSerialize as Serialize;
-use Mmb\Action\Memory\Attributes\StepHandlerShortClass as ShortClass;
 use Mmb\Action\Memory\Attributes\StepHandlerArray as AsArray;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
-class HigherOrderStepHandler extends StepHandler
+class PipelineStepHandler extends StepHandler
 {
 
     #[Alias('s')]
@@ -57,6 +56,33 @@ class HigherOrderStepHandler extends StepHandler
         }
 
         $update->isHandled = false;
+    }
+
+    public function onBegin(Context $context, Update $update): void
+    {
+        foreach ($this->steps as $step) {
+            if ($step instanceof StepHandler) {
+                $step->onBegin($context, $update);
+            }
+        }
+    }
+
+    public function onEnd(Context $context, Update $update): void
+    {
+        foreach ($this->steps as $step) {
+            if ($step instanceof StepHandler) {
+                $step->onEnd($context, $update);
+            }
+        }
+    }
+
+    public function onLost(Context $context, Update $update)
+    {
+        foreach ($this->steps as $step) {
+            if ($step instanceof StepHandler) {
+                $step->onLost($context, $update);
+            }
+        }
     }
 
 }
