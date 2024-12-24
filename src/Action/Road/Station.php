@@ -34,6 +34,10 @@ abstract class Station extends Section
         parent::__construct($road->context);
     }
 
+    public function reset()
+    {
+    }
+
     protected function onInitializeInlineRegister(InlineRegister $register)
     {
         $this->initializeInlineRegister($register);
@@ -81,19 +85,6 @@ abstract class Station extends Section
     public function fireSign(string|array|Closure $event, ...$args)
     {
         return $this->sign->fire($event, ...array_merge($args, $this->getDynamicArgs()));
-    }
-
-    /**
-     * Fire a sign event
-     *
-     * @param WeakSign $sign
-     * @param string|array|Closure $event
-     * @param                      ...$args
-     * @return mixed
-     */
-    public function fireSignAs(WeakSign $sign, string|array|Closure $event, ...$args)
-    {
-        return $sign->fire($event, ...array_merge($args, $this->getDynamicArgs()));
     }
 
 
@@ -309,7 +300,6 @@ abstract class Station extends Section
                 }
             }
         }
-
     }
 
 }

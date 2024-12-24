@@ -4,11 +4,12 @@ namespace Mmb\Action\Road\Station\Words;
 
 use Closure;
 use Mmb\Action\Road\Sign;
+use Mmb\Action\Road\Station;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Support\Caller\HasEvents;
 
 /**
- * @template T of Sign
+ * @template T of WeakSign
  */
 abstract class SignWord extends WeakSign
 {
@@ -18,7 +19,7 @@ abstract class SignWord extends WeakSign
         /**
          * @var T $sign
          */
-        protected Sign $sign,
+        protected WeakSign $sign,
     )
     {
         parent::__construct($sign->road);
@@ -42,16 +43,18 @@ abstract class SignWord extends WeakSign
         return $this->sign;
     }
 
-    /**
-     * Call a callback
-     *
-     * @param Closure|string|array $event
-     * @param ...$args
-     * @return mixed
-     */
-    public function call(Closure|string|array $event, ...$args)
+    public function getRoot(): Sign
     {
-        return $this->sign->getStation()->fireSignAs($this, $event, ...$args);
+        return $this->sign->getRoot();
+    }
+
+    public function __clone(): void
+    {
+        foreach (get_object_vars($this) as $key => $value) {
+            if (isset($value) && $value instanceof SignWord) {
+                $this->$key = clone $value;
+            }
+        }
     }
 
 }

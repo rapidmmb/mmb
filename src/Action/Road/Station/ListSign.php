@@ -14,11 +14,12 @@ use Mmb\Support\Format\KeyFormatterBuilder;
 
 class ListSign extends Sign
 {
-    use SignWithMenuCustomizing,
-        Concerns\SignWithQuery,
-        Concerns\SignWithItems,
-        Concerns\SignWithResponse,
-        Concerns\SignWithBacks;
+    use SignWithMenuCustomizing;
+
+    /**
+     * @var Words\SignBackKey<$this>
+     */
+    public Station\Words\SignBackKey $back;
 
     /**
      * @var Words\SignMessage<$this>
@@ -46,6 +47,21 @@ class ListSign extends Sign
     public Station\Words\SignKey $searchingKey;
 
     /**
+     * @var Words\SignQuery<$this>
+     */
+    public Station\Words\SignQuery $query;
+
+    /**
+     * @var Words\SignResponse<$this>
+     */
+    public Station\Words\SignResponse $response;
+
+    /**
+     * @var Words\SignItems<$this>
+     */
+    public Station\Words\SignItems $items;
+
+    /**
      * Boot the default values
      *
      * @return void
@@ -53,6 +69,8 @@ class ListSign extends Sign
     protected function boot()
     {
         parent::boot();
+
+        $this->addKey($this->back = new Station\Words\SignBackKey($this));
 
         // Title key
         $this->addKey($this->titleKey = new Station\Words\SignKey($this));
@@ -84,11 +102,18 @@ class ListSign extends Sign
         $this->message->set(function () {
             return "List:"; // todo
         });
+
+        $this->query = new Station\Words\SignQuery($this);
+        $this->query->from($this->road->getQuery(...));
+
+        $this->response = new Station\Words\SignResponse($this);
+
+        $this->items = new Station\Words\SignItems($this);
     }
 
     // - - - - - - - - - - - - Search Section - - - - - - - - - - - - \\
 
-    public SearchSign $searchSign;
+    protected SearchSign $searchSign;
 
     /**
      * Searchable list
@@ -118,9 +143,7 @@ class ListSign extends Sign
 
     // - - - - - - - - - - - - Create Station - - - - - - - - - - - - \\
 
-    protected ListStation $_station;
-
-    public function getStation(): ListStation
+    public function createStation(): ListStation
     {
         return new ListStation($this->road, $this);
     }
@@ -132,8 +155,10 @@ class ListSign extends Sign
      */
     public function resetStation(): void
     {
-        $station = $this->getStation();
-        
+        $station = $this->createStation();
+
+        $station->searchSign = $this->searchSign ?? null;
+        $station->paginatorAt = $this->paginatorAt;
     }
 
 
@@ -165,7 +190,7 @@ class ListSign extends Sign
      */
     public function getViewer(): ListViewer
     {
-        return ($this->viewer ??= new Station\List\ListPaginateViewer())->use($this->getStation());
+        return $this->viewer ??= new Station\List\ListPaginateViewer();
     }
 
     /**
@@ -218,16 +243,6 @@ class ListSign extends Sign
     public function paginatorAtBoth()
     {
         return $this->paginatorAt(self::PAGINATOR_AT_BOTH);
-    }
-
-    /**
-     * Get paginator position
-     *
-     * @return int
-     */
-    public function getPaginatorAt()
-    {
-        return $this->paginatorAt;
     }
 
     // - - - - - - - - - - - - List Formatting - - - - - - - - - - - - \\

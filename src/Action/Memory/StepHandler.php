@@ -18,8 +18,7 @@ class StepHandler
         ?StepMemory $memory = null,
     )
     {
-        if($memory)
-        {
+        if ($memory) {
             $this->load($memory);
         }
     }
@@ -38,13 +37,12 @@ class StepHandler
     public function load(StepMemory $memory)
     {
         $ref = new ReflectionClass($this);
-        foreach($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property)
-        {
+        foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             StepHandlerAttribute::load(
                 static::getPropertyAttributesOf($property->getName(), StepHandlerAttribute::class),
                 $property->getName(),
                 $memory,
-                $this
+                $this,
             );
         }
     }
@@ -58,20 +56,17 @@ class StepHandler
     public function save(StepMemory $memory)
     {
         $ref = new ReflectionClass($this);
-        foreach($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property)
-        {
+        foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             StepHandlerAttribute::save(
                 static::getPropertyAttributesOf($property->getName(), StepHandlerAttribute::class),
                 $property->getName(),
                 $memory,
-                $this
+                $this,
             );
         }
 
-        foreach($memory as $key => $value)
-        {
-            if($value === null)
-            {
+        foreach ($memory as $key => $value) {
+            if ($value === null) {
                 $memory->forget($key);
             }
         }
@@ -95,7 +90,7 @@ class StepHandler
      * @param Update $update
      * @return void
      */
-    public function handle(Context $context, Update $update) : void
+    public function handle(Context $context, Update $update): void
     {
     }
 
@@ -108,7 +103,7 @@ class StepHandler
      * @param Update $update
      * @return void
      */
-    public function onBegin(Context $context, Update $update) : void
+    public function onBegin(Context $context, Update $update): void
     {
     }
 
@@ -119,7 +114,7 @@ class StepHandler
      * @param Update $update
      * @return void
      */
-    public function onEnd(Context $context, Update $update) : void
+    public function onEnd(Context $context, Update $update): void
     {
     }
 
@@ -143,8 +138,7 @@ class StepHandler
      */
     public function fire(string $event, ...$args)
     {
-        if (method_exists($this, $fn = 'on' . $event))
-        {
+        if (method_exists($this, $fn = 'on' . $event)) {
             return $this->$fn(...$args);
         }
 

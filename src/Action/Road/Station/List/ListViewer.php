@@ -2,35 +2,18 @@
 
 namespace Mmb\Action\Road\Station\List;
 
-use Closure;
 use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Road\Station\ListStation;
-use Mmb\Action\Section\Menu;
-use Mmb\Action\Section\MenuKey;
-use Mmb\Support\Format\KeyFormatter;
 use Mmb\Support\Format\KeyFormatterBuilder;
+use Mmb\Support\KeySchema\KeyboardInterface;
 
 abstract class ListViewer
 {
-
-    public ListStation $station;
 
     public bool $needsPage = false;
 
     public bool $needsCursor = false;
 
-
-    /**
-     * Use a station
-     *
-     * @param ListStation $station
-     * @return $this
-     */
-    public function use(ListStation $station)
-    {
-        $this->station = $station;
-        return $this;
-    }
 
     /**
      * Boot the pagination with query and return that the list is not empty.
@@ -43,18 +26,18 @@ abstract class ListViewer
     /**
      * Render the list
      *
-     * @param Menu $menu
+     * @param KeyboardInterface $keyboard
      * @return KeyFormatterBuilder
      */
-    public abstract function renderList(Menu $menu) : KeyFormatterBuilder;
+    public abstract function renderList(KeyboardInterface $keyboard) : KeyFormatterBuilder;
 
     /**
      * Render the paginator
      *
-     * @param Menu $menu
+     * @param KeyboardInterface $keyboard
      * @return KeyFormatterBuilder
      */
-    public abstract function renderPaginator(Menu $menu) : KeyFormatterBuilder;
+    public abstract function renderPaginator(KeyboardInterface $keyboard) : KeyFormatterBuilder;
 
 
     /**

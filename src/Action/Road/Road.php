@@ -16,6 +16,14 @@ class Road extends Action
 {
 
     /**
+     * todo
+     * getStation() -> createStation()
+     * $this->getStation()->call() -> $this->call()
+     * Doesn't need $station in anywhere...
+     * Station is just a user interface
+     */
+
+    /**
      * Make new instance
      *
      * @param Context $context
@@ -154,20 +162,14 @@ class Road extends Action
     }
 
 
-    private array $loadedSigns = [];
-
     /**
      * Get a sign
      *
      * @param string $name
      * @return Sign
      */
-    public function getSignOf(string $name): Sign
+    public function loadSign(string $name): Sign
     {
-        if (array_key_exists($name, $this->loadedSigns)) {
-            return $this->loadedSigns[$name];
-        }
-
         $stations = $this->getStations();
 
         if (array_key_exists($name, $stations)) {
@@ -188,7 +190,7 @@ class Road extends Action
             throw new \BadMethodCallException(sprintf("Station [%s] has not a valid sign as first parameter", $name));
         }
 
-        $sign = $this->loadedSigns[$name] = new $type($this, $name);
+        $sign = new $type($this, $name);
         Caller::invoke($this->context, $callback, [$sign]);
         return $sign;
     }
@@ -201,11 +203,11 @@ class Road extends Action
      */
     public function createStation(string $name): Station
     {
-        $sign = $this->getSignOf($name);
+        $sign = $this->loadSign($name);
 
         $sign->fire('creatingStation');
-        $station = $sign->resetStation($name);
-        $sign->fire('createdStation', station: $station);
+        $station = $sign->createStation();
+        $sign->fire('createdStation', $station);
 
         return $station;
     }
@@ -258,7 +260,7 @@ class Road extends Action
     public function fire(string|Station $station, string $name, ...$args)
     {
         if (is_string($station)) {
-            $station = $this->createStation($station);
+            $station = $this->createStation($station, true);
         }
 
         if ($name != 'revert' && isset($this->head) && $station != $this->head) {

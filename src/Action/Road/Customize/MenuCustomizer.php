@@ -18,15 +18,15 @@ class MenuCustomizer
     {
     }
 
-    public function init(Station $station, Menu $menu, array $groups)
+    public function init(Menu $menu, array $groups)
     {
         $this->initKeyboards($menu, $groups);
 
         foreach ($this->actions as $on => $actions) {
             $menu->on(
                 $on,
-                function () use ($station, $actions, $menu) {
-                    $station->fireSignAs($this->sign, $actions, menu: $menu);
+                function () use ($actions, $menu) {
+                    $this->sign->call($actions, menu: $menu);
                 },
             );
         }

@@ -116,47 +116,6 @@ trait SchemaCustomizes
         );
     }
 
-    // todo remove
-    protected function fetchMultipleSchema(Station $station, array $customizers, string $group, ...$args)
-    {
-        $schema =
-            collect($customizers)
-                ->map(fn($cus) => $cus->getAllSchemas()[$group] ?? [])
-                ->flatten(1)
-                ->sortBy([3, 2]) // Sort by y, x
-                ->groupBy(3);
-
-        $key = [];
-        foreach ($schema as $rowSchema) {
-            $row = [];
-            foreach ($rowSchema as [$type, $builder, $x, $y, , $rtl]) {
-                $schemaResult = $station->fireSignAs($this->sign, $builder, ...$args);
-                switch ($type) {
-                    // Single key
-                    case 0:
-                        $row[] = $schemaResult;
-                        break;
-
-                    // Row
-                    case 1:
-                        $key[] = $rtl ?? $this->isRtl() ? array_reverse($schemaResult) : $schemaResult;
-                        break;
-
-                    // Schema
-                    case 2:
-                        array_push($key, ...$rtl ?? $this->isRtl() ? KeyFormatter::rtl($schemaResult) : $schemaResult);
-                        break;
-                }
-            }
-
-            if ($row) {
-                $key[] = $this->isRtl() ? array_reverse($row) : $row;
-            }
-        }
-
-        return $key;
-    }
-
     /**
      * @var array<string, Station\Words\SignAction[]>
      */

@@ -18,11 +18,19 @@ use Mmb\Support\Format\KeyFormatterBuilder;
 class ListStation extends Station
 {
 
+    public ?SearchSign $searchSign;
+
+    public int $paginatorAt;
+
+    public function reset()
+    {
+    }
+
     // - - - - - - - - - - - - Properties - - - - - - - - - - - - \\
 
     protected function getWith()
     {
-        if (isset($this->sign->searchSign))
+        if (isset($this->searchSign))
             yield 'search';
         if ($this->sign->getFilterables())
             yield 'filters';
@@ -63,10 +71,10 @@ class ListStation extends Station
         }
 
         // Create query
-        $query = $this->sign->getQuery($this);
+        $query = $this->sign->query->getQuery();
 
-        if (isset($this->search)) {
-            $query = $this->sign->searchSign->getFilteredQuery($this, $query);
+        if (isset($this->searchSign)) {
+            $query = $this->searchSign->getFilteredQuery($this, $query); // todo
         }
 
         // Boot pagination
@@ -74,7 +82,7 @@ class ListStation extends Station
 
 
         // Header
-        $customizer->init($this, $menu, ['header', 'body']);
+        $customizer->init($menu, ['header', 'body']);
 
         if ($isNotEmpty) {
             // List Body
@@ -84,33 +92,34 @@ class ListStation extends Station
             $list = $this->fireSign('formatListUsing', $list);
 
             $paginator = $viewer->renderPaginator($menu);
-            $paginatorAt = $this->sign->getPaginatorAt();
 
             if ($customizer->isRtl()) {
                 $list = $list->rtl();
                 $paginator = $paginator->rtl();
             }
 
-            if ($paginatorAt & ListSign::PAGINATOR_AT_TOP) {
+            if ($this->paginatorAt & ListSign::PAGINATOR_AT_TOP) {
                 $menu->schema($paginator->toArray());
             }
 
             $menu->schema($list->toArray());
 
-            if ($paginatorAt & ListSign::PAGINATOR_AT_BOTTOM) {
+            if ($this->paginatorAt & ListSign::PAGINATOR_AT_BOTTOM) {
                 $menu->schema($paginator->toArray());
             }
         } else {
             // Empty Body
-            $customizer->init($this, $menu, ['empty']);
+            $customizer->init($menu, ['empty']);
         }
 
         // Footer
-        $customizer->init($this, $menu, ['footer']);
+        $customizer->init($menu, ['footer']);
 
         // Set the response
-        $menu->responseUsing(fn($args) => $this->fireSign('response', $args));
-        $menu->message(fn() => $this->sign->getMessage($this));
+        $menu->responseUsing($this->sign->response->response(...));
+        $menu->message(function () {
+            return $this->sign->message->getMessage();
+        });
     }
 
     // - - - - - - - - - - - - Search Form - - - - - - - - - - - - \\
@@ -137,8 +146,8 @@ class ListStation extends Station
     {
         $form->withOn('$', $this, ...$this->getWith());
 
-        $formCustomizer = $this->sign->searchSign->getFormCustomizer();
-        $formCustomizer->init($this, $form);
+        $formCustomizer = $this->searchSign->getFormCustomizer();
+        $formCustomizer->init($form);
 
         $form->finish(
             function (Form $form) {

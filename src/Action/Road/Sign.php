@@ -3,7 +3,6 @@
 namespace Mmb\Action\Road;
 
 use Closure;
-use Mmb\Core\Updates\Update;
 
 /**
  * @template T of Station
@@ -24,14 +23,25 @@ abstract class Sign extends WeakSign
      *
      * @return T
      */
-    public abstract function getStation(): Station;
+    abstract public function createStation(): Station;
+
+    /**
+     * Get the root sign
+     *
+     * @return Sign
+     */
+    public function getRoot(): Sign
+    {
+        return $this;
+    }
+
 
     /**
      * Reset the station
      *
      * @return void
      */
-    public abstract function resetStation(): void;
+    abstract public function resetStation(): void;
 
     /**
      * Call a callback
@@ -42,7 +52,20 @@ abstract class Sign extends WeakSign
      */
     public function call(Closure|string|array $event, ...$args)
     {
-        return $this->getStation()->fireSignAs($this, $event, ...$args);
+        return $this->callAs($this, $event, ...$args);
+    }
+
+    /**
+     * Call a callback in other sign
+     *
+     * @param WeakSign $sign
+     * @param Closure|string|array $event
+     * @param ...$args
+     * @return mixed
+     */
+    public function callAs(WeakSign $sign, Closure|string|array $event, ...$args)
+    {
+        return $sign->fire($event, ...$args);
     }
 
 }

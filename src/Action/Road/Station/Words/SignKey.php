@@ -3,7 +3,7 @@
 namespace Mmb\Action\Road\Station\Words;
 
 use Closure;
-use Mmb\Action\Road\Sign;
+use Mmb\Action\Road\WeakSign;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\KeySchema\KeyboardInterface;
 use Mmb\Support\KeySchema\KeyInterface;
@@ -25,7 +25,7 @@ class SignKey extends SignWord
      */
     public SignAction $action;
 
-    public function __construct(Sign $sign)
+    public function __construct(WeakSign $sign)
     {
         parent::__construct($sign);
         $this->label = new SignLabel($sign);
@@ -146,22 +146,22 @@ class SignKey extends SignWord
         return $this->enabled;
     }
 
-    public function makeKey(KeyboardInterface $base): ?KeyInterface
+    public function makeKey(KeyboardInterface $base, ...$args): ?KeyInterface
     {
         if (!$this->isEnabled()) {
             return null;
         }
 
         if (isset($this->key)) {
-            $key = $this->call($this->key, $base);
+            $key = $this->call($this->key, $base, ...$args);
         } else {
-            $text = $this->label->getNullableLabel();
+            $text = $this->label->getNullableLabel(...$args);
 
             if (is_null($text)) {
                 return null;
             }
 
-            $key = $base->makeKey($text, $this->action->callAction(...), []);
+            $key = $base->makeKey($text, $this->action->callAction(...), $args);
         }
 
         if ($key) {

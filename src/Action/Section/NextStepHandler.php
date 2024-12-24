@@ -5,6 +5,7 @@ namespace Mmb\Action\Section;
 use Mmb\Action\Action;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
+use Mmb\Action\Memory\Attributes\StepHandlerSerialize as Serialize;
 use Mmb\Action\Memory\Attributes\StepHandlerShortClass as ShortClass;
 use Mmb\Action\Memory\Attributes\StepHandlerArray as AsArray;
 use Mmb\Action\Memory\StepHandler;
@@ -24,6 +25,7 @@ class NextStepHandler extends StepHandler
     public string $method;
 
     #[Alias('a')]
+    #[Serialize]
     #[AsArray]
     public ?array $arguments = null;
 

@@ -10,8 +10,7 @@ use Closure;
 
 abstract class WeakSign
 {
-    use HasEvents,
-        Station\Concerns\DefineStubs;
+    use HasEvents;
 
     public Context $context;
 
@@ -46,21 +45,25 @@ abstract class WeakSign
         $this->shutdown();
     }
 
+    /**
+     * Get the root sign
+     *
+     * @return Sign
+     */
+    abstract public function getRoot(): Sign;
 
-    // todo remove
-    private array $definedMethods = [];
-
-    private array $definedEventOptions = [];
-
-    protected final function defineMethod(string $name, Closure $callback)
+    /**
+     * Call a callback with station scope
+     *
+     * @param Closure|string|array $event
+     * @param ...$args
+     * @return mixed
+     */
+    public function call(Closure|string|array $event, ...$args)
     {
-        $this->definedMethods[$name] = $callback;
+        return $this->getRoot()->callAs($this, $event, ...$args);
     }
 
-    protected final function defineEvent(string $name, array $options)
-    {
-        $this->definedEventOptions[$name] = $options;
-    }
 
     /**
      * Get event dynamic arguments for the sign
@@ -75,35 +78,6 @@ abstract class WeakSign
             'sign' => $this,
             ...$this->getEventDefaultDynamicArgs($event),
         ];
-    }
-
-    protected function getEventOptions(string $event): array
-    {
-        return array_key_exists($event, $this->definedEventOptions) ?
-            $this->definedEventOptions[$event] :
-            $this->getEventDefaultOptions($event);
-    }
-
-    public function __call(string $name, array $arguments)
-    {
-        if (array_key_exists($name, $this->definedMethods)) {
-            return ($this->definedMethods[$name])(...$arguments);
-        }
-
-        throw new \BadMethodCallException(sprintf("Call to undefined method [%s] on [%s]", $name, static::class));
-    }
-
-    /**
-     * Fire an event using station
-     *
-     * @param Station $station
-     * @param string|array|Closure $event
-     * @param                      ...$args
-     * @return mixed
-     */
-    protected function fireBy(Station $station, string|array|Closure $event, ...$args)
-    {
-        return $station->fireSignAs($this, $event, ...$args);
     }
 
 

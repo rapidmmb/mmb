@@ -8,6 +8,10 @@ use Illuminate\Support\Str;
 use Mmb\Action\Form\Input;
 use Mmb\Action\Road\Customize\InputCustomizer;
 use Mmb\Action\Road\Road;
+use Mmb\Action\Road\Sign;
+use Mmb\Action\Road\Station;
+use Mmb\Action\Road\Station\Words\SignBackKey;
+use Mmb\Action\Road\Station\Words\SignMessage;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Action\Section\Menu;
 use Mmb\Support\Caller\EventCaller;
@@ -48,19 +52,35 @@ use Mmb\Support\KeySchema\KeyboardInterface;
  */
 class SearchSign extends WeakSign
 {
-    use Concerns\SignWithFormCustomizing,
-        Concerns\SignWithQueryFilters,
-        Concerns\SignWithMessage,
-        Concerns\SignWithBacks;
+    use Concerns\SignWithFormCustomizing;
 
     public function __construct(Road $road, public readonly ListSign $listSign)
     {
         parent::__construct($road);
     }
 
+    /**
+     * @var SignBackKey<$this>
+     */
+    public SignBackKey $back;
+
+    /**
+     * @var SignMessage<$this>
+     */
+    public SignMessage $message;
+
+    /**
+     * @var Words\SignExtendedQuery<$this>
+     */
+    public Station\Words\SignExtendedQuery $query;
+
     protected function boot()
     {
         parent::boot();
+
+        $this->addKey($this->back = new SignBackKey($this));
+        $this->message = new SignMessage($this);
+        $this->query = new Station\Words\SignExtendedQuery($this);
 
         $this->insertInput('search', $this->searchInput(...), customize: $this->searchCustomizeInput(...));
 
@@ -76,6 +96,11 @@ class SearchSign extends WeakSign
 
         $this->shutdownProxyKey($this->listSign, 'searchKey', 'header');
         $this->shutdownProxyKey($this->listSign, 'searchingKey', 'header');
+    }
+
+    public function getRoot(): Sign
+    {
+        return $this->listSign;
     }
 
     // - - - - - - - - - - - - Search Input - - - - - - - - - - - - \\
