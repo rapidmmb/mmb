@@ -17,7 +17,6 @@ class PipelineStepHandler extends StepHandler
 
     #[Alias('s')]
     #[Serialize]
-    #[AsArray]
     public array $steps = [];
 
     #[Alias('f')]
