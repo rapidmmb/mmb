@@ -12,6 +12,8 @@ class Plain extends InlineAction
 {
     use HasEvents;
 
+    protected $stepHandlerClass = PlainStepHandler::class;
+
     public function invoking(Closure $callback)
     {
         $this->listen('invoking', $callback);
