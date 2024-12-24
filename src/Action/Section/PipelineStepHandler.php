@@ -121,7 +121,7 @@ class PipelineStepHandler extends StepHandler
             }
         }
 
-        return parent::fire($event, $args);
+        return parent::fire($event, ...$args);
     }
 
 }
