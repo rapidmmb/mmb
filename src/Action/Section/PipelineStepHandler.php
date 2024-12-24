@@ -113,31 +113,15 @@ class PipelineStepHandler extends StepHandler
         $update->skipHandler();
     }
 
-    public function onBegin(Context $context, Update $update): void
+    public function fire(string $event, ...$args)
     {
         foreach ($this->steps as $step) {
             if ($step instanceof StepHandler) {
-                $step->onBegin($context, $update);
+                $step->fire($event, ...$args);
             }
         }
-    }
 
-    public function onEnd(Context $context, Update $update): void
-    {
-        foreach ($this->steps as $step) {
-            if ($step instanceof StepHandler) {
-                $step->onEnd($context, $update);
-            }
-        }
-    }
-
-    public function onLost(Context $context, Update $update)
-    {
-        foreach ($this->steps as $step) {
-            if ($step instanceof StepHandler) {
-                $step->onLost($context, $update);
-            }
-        }
+        return parent::fire($event, $args);
     }
 
 }

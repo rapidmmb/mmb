@@ -47,6 +47,7 @@ class Plain extends InlineAction
     public function invoke()
     {
         $this->fire('invoking');
+        $this->toStep()?->keep($this->context);
     }
 
 }
