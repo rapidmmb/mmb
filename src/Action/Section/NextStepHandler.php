@@ -16,6 +16,12 @@ use Mmb\Support\Caller\Caller;
 class NextStepHandler extends StepHandler
 {
 
+    /**
+     * todo
+     *
+     * Add new inline action named NextStep or anything...
+     */
+
     #[Alias('c')]
     #[ShortClass('App\\Mmb\\Sections\\', '*')]
     #[SafeClass('')]

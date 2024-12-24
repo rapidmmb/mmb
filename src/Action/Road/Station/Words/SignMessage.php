@@ -53,7 +53,7 @@ class SignMessage extends SignWord
     protected function getEventOptionsOnUsing()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 
@@ -70,7 +70,7 @@ class SignMessage extends SignWord
     protected function getEventOptionsOnTextUsing()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 
@@ -100,7 +100,7 @@ class SignMessage extends SignWord
     protected function getEventOptionsOnPrefix()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 
@@ -130,7 +130,7 @@ class SignMessage extends SignWord
     protected function getEventOptionsOnSuffix()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 

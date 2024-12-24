@@ -37,7 +37,7 @@ class SignLabel extends SignWord
     protected function getEventOptionsOnUsing()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 
@@ -66,7 +66,7 @@ class SignLabel extends SignWord
     protected function getEventOptionsOnPrefix()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 
@@ -95,7 +95,7 @@ class SignLabel extends SignWord
     protected function getEventOptionsOnSuffix()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 

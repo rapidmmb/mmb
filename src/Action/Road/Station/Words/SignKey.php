@@ -66,7 +66,7 @@ class SignKey extends SignWord
     protected function getEventOptionsOnUsing()
     {
         return [
-            EventCaller::CALL_BUILDER,
+            'call' => EventCaller::CALL_BUILDER,
         ];
     }
 

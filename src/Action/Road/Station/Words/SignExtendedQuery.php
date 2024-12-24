@@ -27,7 +27,7 @@ class SignExtendedQuery extends SignWord
     protected function getEventOptionsOnUsing()
     {
         return [
-            EventCaller::CALL_LINEAR,
+            'call' => EventCaller::CALL_LINEAR,
         ];
     }
 
