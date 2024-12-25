@@ -29,7 +29,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 /**
  * @property-read HigherOrderSafeProxy<static>|static $safe
  * @property-read HigherOrderSafeProxy<static>|static $unsafe
- * @property-read Update $update
  */
 abstract class Action
 {
@@ -38,10 +37,13 @@ abstract class Action
         authorizeResource as private;
     }
 
+    public readonly Update $update;
+
     public function __construct(
         public Context $context,
     )
     {
+        $this->update = $this->context->update;
         $this->boot();
     }
 
@@ -323,6 +325,7 @@ abstract class Action
     /**
      * Get the current update
      *
+     * @deprecated
      * @return Update|null
      */
     public function update(): ?Update
@@ -384,10 +387,6 @@ abstract class Action
 
         if ($name == 'unsafe') {
             return new HigherOrderSafeProxy($this, false);
-        }
-
-        if ($name == 'update') {
-            return $this->context->update;
         }
 
         throw new \Exception(sprintf("Try to access undefined property [%s] on [%s]", $name, static::class));
