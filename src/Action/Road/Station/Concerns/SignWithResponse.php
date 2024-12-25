@@ -28,7 +28,7 @@ trait SignWithResponse
     public function responseBySend()
     {
         return $this->responseUsing(
-            fn ($args, Station $station) => $station->update()->getChat()->send($args)
+            fn ($args, Station $station) => $station->update->getChat()->send($args)
         );
     }
 
@@ -40,9 +40,9 @@ trait SignWithResponse
     public function responseByReply()
     {
         return $this->responseUsing(
-            fn ($args, Station $station) => $station->update()->getMessage() ?
-                $station->update()->getMessage()->reply($args) :
-                $station->update()->getChat()->send($args)
+            fn ($args, Station $station) => $station->update->getMessage() ?
+                $station->update->getMessage()->reply($args) :
+                $station->update->getChat()->send($args)
         );
     }
 

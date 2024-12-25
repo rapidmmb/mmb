@@ -363,7 +363,7 @@ abstract class Action
      */
     public function response($message, array $args = [], ...$namedArgs)
     {
-        return $this->update()->response($message, $args, ...$namedArgs);
+        return $this->update->response($message, $args, ...$namedArgs);
     }
 
     /**
@@ -376,7 +376,7 @@ abstract class Action
      */
     public function tell($message = null, array $args = [], ...$namedArgs)
     {
-        return $this->update()->tell($message, $args, ...$namedArgs);
+        return $this->update->tell($message, $args, ...$namedArgs);
     }
 
     public function __get(string $name)

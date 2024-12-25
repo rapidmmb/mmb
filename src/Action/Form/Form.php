@@ -281,7 +281,7 @@ class Form extends Action
      */
     public function beginUpdate()
     {
-        $this->fire('beginUpdate', $this->update());
+        $this->fire('beginUpdate', $this->update);
     }
 
     /**
@@ -291,7 +291,7 @@ class Form extends Action
      */
     public function endUpdate()
     {
-        $this->fire('endUpdate', $this->update());
+        $this->fire('endUpdate', $this->update);
     }
 
     /**
@@ -471,7 +471,7 @@ class Form extends Action
             $input->loadInputKeyboardMap($this->loadedKeyMap);
         }
 
-        $input->pass($update ?? $this->update());
+        $input->pass($update ?? $this->update);
         $this->fire('leave', $input);
         $input->fire('leave'); // todo: move it to next() method
     }
@@ -706,7 +706,7 @@ class Form extends Action
      */
     protected function onError(string $message)
     {
-        $this->update()->response($message);
+        $this->update->response($message);
     }
 
     /**

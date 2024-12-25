@@ -128,7 +128,7 @@ class MiddleAction extends Section implements UpdateHandling
 
             $this->context->stepFactory->set(null);
             $this->context->put('middle-action-handled', $this);
-            $this->update()->repeatHandling();
+            $this->update->repeatHandling();
 
         }
 
@@ -244,7 +244,7 @@ class MiddleAction extends Section implements UpdateHandling
             $this->redirectWith = $args;
 
             $this->invoke('main', ...$pass);
-            $this->update()->stopHandling();
+            $this->update->stopHandling();
         }
     }
 
