@@ -11,6 +11,7 @@ use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
 use Mmb\Action\Memory\Attributes\StepHandlerSerialize as Serialize;
 use Mmb\Action\Memory\Attributes\StepHandlerArray as AsArray;
+use Mmb\Action\Memory\StepListenerFactory;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
@@ -61,31 +62,21 @@ class PipelineStepHandler extends StepHandler
         $context->stepFactory->set($this->steps ? end($this->steps) : null);
     }
 
-    public function listen(Context $context, Closure $callback)
+    public function listen(Context $context, Closure $callback): void
     {
-        $realFactory = $context->stepFactory;
+        StepListenerFactory::listen(
+            $context,
+            $callback,
+            function (StepHandler|ConvertableToStep|null $step) {
+                if ($step instanceof ConvertableToStep) {
+                    $step = $step->toStep();
+                }
 
-        $context->stepFactory = new class($context, $this) extends StepFactory
-        {
-            public function __construct(Context $context, public PipelineStepHandler $pipe)
-            {
-                parent::__construct($context);
-            }
-
-            public function set(ConvertableToStep|StepHandler|null $step)
-            {
-                $this->pipe->push($step);
-            }
-
-            public function get()
-            {
-                return $this->pipe->steps ? end($this->pipe->steps) : null;
-            }
-        };
-
-        $callback();
-
-        $context->stepFactory = $realFactory;
+                if ($step) {
+                    $this->push($step);
+                }
+            },
+        );
     }
 
     public function handle(Context $context, Update $update): void

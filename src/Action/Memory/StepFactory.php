@@ -26,8 +26,7 @@ class StepFactory
      */
     public function setModel(Stepper|ConvertableToStepper|null $model)
     {
-        if ($model instanceof ConvertableToStepper)
-        {
+        if ($model instanceof ConvertableToStepper) {
             $model = $model->toStepper();
         }
 
@@ -52,13 +51,11 @@ class StepFactory
      */
     public function set(StepHandler|ConvertableToStep|null $step)
     {
-        if ($step instanceof ConvertableToStep)
-        {
+        if ($step instanceof ConvertableToStep) {
             $step = $step->toStep();
         }
 
-        if (!$this->model)
-        {
+        if (!$this->model) {
             throw new ModelNotFoundException("Related model not found");
         }
 
@@ -76,8 +73,7 @@ class StepFactory
      */
     public function get()
     {
-        if (!$this->model)
-        {
+        if (!$this->model) {
             throw new ModelNotFoundException("Related model not found");
         }
 
