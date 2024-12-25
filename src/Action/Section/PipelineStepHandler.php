@@ -5,7 +5,6 @@ namespace Mmb\Action\Section;
 use Closure;
 use Mmb\Action\Action;
 use Mmb\Action\Memory\ConvertableToStep;
-use Mmb\Action\Memory\StepFactory;
 use Mmb\Action\Memory\StepHandler;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
@@ -78,6 +77,35 @@ class PipelineStepHandler extends StepHandler
             },
         );
     }
+
+    public function flatten()
+    {
+        $steps = [];
+        foreach ($this->steps as $step) {
+            if ($step instanceof PipelineStepHandler) {
+                array_push($steps, ...$step->steps);
+            } else {
+                $steps[] = $step;
+            }
+        }
+
+        $this->steps = $steps;
+        return $this;
+    }
+
+    public function removeRecursive()
+    {
+        $steps = [];
+        foreach ($this->steps as $step) {
+            if (!($step instanceof PipelineStepHandler)) {
+                $steps[] = $step;
+            }
+        }
+
+        $this->steps = $steps;
+        return $this;
+    }
+
 
     public function handle(Context $context, Update $update): void
     {
