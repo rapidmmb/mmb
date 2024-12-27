@@ -18,7 +18,7 @@ class OperatorFailed extends \Exception implements CallableException
 
     public function invoke(Context $context)
     {
-        $context->update->response($this->failMessage);
+        $context->update->response($this->failMessage ?? __('mmb::operator.failed'));
     }
 
 }
