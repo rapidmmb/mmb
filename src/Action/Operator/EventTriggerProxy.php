@@ -30,6 +30,10 @@ class EventTriggerProxy
                 return ($this->catch)($exception);
             }
 
+            if ($this->catch === false) {
+                return null;
+            }
+
             throw $exception;
 
         }
