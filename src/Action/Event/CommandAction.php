@@ -92,6 +92,11 @@ class CommandAction extends Action implements UpdateHandling
     }
 
 
+    public static function make(Context $context): static
+    {
+        return new static($context);
+    }
+
     /**
      * Make command string for arguments match
      *
