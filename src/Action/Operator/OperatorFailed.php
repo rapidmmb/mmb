@@ -10,7 +10,7 @@ class OperatorFailed extends \Exception implements CallableException
 
     public function __construct(
         public mixed $tag,
-        public string|array $failMessage,
+        public ?string $failMessage,
     )
     {
         parent::__construct("Operator failed");

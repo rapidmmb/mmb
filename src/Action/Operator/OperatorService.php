@@ -42,7 +42,7 @@ class OperatorService
         return new EventTriggerProxy($class, $this->context);
     }
 
-    protected function fail(mixed $tag, string|array $message)
+    protected function fail(mixed $tag, ?string $message = null)
     {
         throw new OperatorFailed($tag, $message);
     }
