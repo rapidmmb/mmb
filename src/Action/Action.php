@@ -37,7 +37,7 @@ abstract class Action
         authorizeResource as private;
     }
 
-    public readonly Update $update;
+    public readonly ?Update $update;
 
     public function __construct(
         public Context $context,
