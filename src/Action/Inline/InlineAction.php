@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\Attributes\InlineWithPropertyAttributeContract;
+use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Memory\ConvertableToStep;
 use Mmb\Action\Memory\StepHandler;
 use Mmb\Context;
@@ -72,6 +73,16 @@ abstract class InlineAction implements ConvertableToStep
     public function getInitName()
     {
         return $this->initializerMethod;
+    }
+
+    /**
+     * Register the inline action
+     *
+     * @param InlineRegister $register
+     * @return void
+     */
+    public function register(InlineRegister $register)
+    {
     }
 
 

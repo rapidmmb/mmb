@@ -30,6 +30,7 @@ abstract class InlineRegister
     {
         $this->inlineAction = is_string($inlineAction) ? new $inlineAction($this->context) : $inlineAction;
         $this->inlineAction->initializer($this->target, $this->method);
+        $this->inlineAction->register($this);
     }
 
     protected array $before = [];
