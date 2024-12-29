@@ -19,7 +19,7 @@ class BehaviorBackTest extends TestCase
         app()->singleton(BehaviorFactory::class);
 
         $this->expectException(BackActionNotDefinedException::class);
-        app(BehaviorFactory::class)->back();
+        app(BehaviorFactory::class)->back($this->context);
     }
 
     public function test_fixed_back()
@@ -30,7 +30,7 @@ class BehaviorBackTest extends TestCase
         app(AreaRegister::class)->putForClass('Test', 'back', _BehaviorBackTestAction::class);
 
         _BehaviorBackTestAction::$isCalled = false;
-        app(BehaviorFactory::class)->back('Test');
+        app(BehaviorFactory::class)->back($this->context, 'Test');
         $this->assertTrue(_BehaviorBackTestAction::$isCalled);
     }
 
@@ -42,7 +42,7 @@ class BehaviorBackTest extends TestCase
         app(AreaRegister::class)->putForClass('Test', 'back-system', new _BehaviorBackTestCustomBackSystem());
 
         _BehaviorBackTestCustomBackSystem::$isCalled = false;
-        app(BehaviorFactory::class)->back('Test');
+        app(BehaviorFactory::class)->back($this->context, 'Test');
         $this->assertTrue(_BehaviorBackTestCustomBackSystem::$isCalled);
     }
 
