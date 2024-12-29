@@ -3,6 +3,7 @@
 namespace Mmb\Action\Memory;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Mmb\Action\Inline\InlineStepHandler;
 use Mmb\Context;
 use Mmb\Support\Step\Contracts\ConvertableToStepper;
 use Mmb\Support\Step\Contracts\Stepper;
@@ -90,6 +91,51 @@ class StepFactory
     public function fire(string $event, ...$args)
     {
         return $this->get()?->fire($event, ...$args);
+    }
+
+    /**
+     * Check the handler is a class type
+     *
+     * @param StepHandler $step
+     * @param string $class
+     * @return bool
+     */
+    public function isTypeOf(StepHandler $step, string $class): bool
+    {
+        return $step instanceof $class;
+    }
+
+    /**
+     * Check the inline handler is for a class
+     *
+     * @param StepHandler $step
+     * @param string $class
+     * @param string|null $method
+     * @return bool
+     */
+    public function isInlineOf(StepHandler $step, string $class, ?string $method = null): bool
+    {
+        if (!($step instanceof InlineStepHandler)) {
+            return false;
+        }
+
+        return $step->initalizeClass == $class && (!isset($method) || $step->initalizeMethod == $method);
+    }
+
+    /**
+     * Check the handle is type of the class
+     *
+     * @param StepHandler $step
+     * @param string $class
+     * @return bool
+     */
+    public function is(StepHandler $step, string $class): bool
+    {
+        if (is_a($class, StepHandler::class, true)) {
+            return $this->isTypeOf($step, $class);
+        }
+
+        return $this->isInlineOf($step, $class);
     }
 
 }

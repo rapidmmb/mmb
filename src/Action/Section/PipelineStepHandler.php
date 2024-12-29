@@ -5,6 +5,8 @@ namespace Mmb\Action\Section;
 use Closure;
 use Mmb\Action\Action;
 use Mmb\Action\Memory\ConvertableToStep;
+use Mmb\Action\Memory\Factories\PipelineFactory;
+use Mmb\Action\Memory\StepCollectionHandler;
 use Mmb\Action\Memory\StepHandler;
 use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
@@ -15,7 +17,7 @@ use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
-class PipelineStepHandler extends StepHandler
+class PipelineStepHandler extends StepCollectionHandler
 {
 
     #[Alias('s')]
@@ -29,14 +31,9 @@ class PipelineStepHandler extends StepHandler
     #[Alias('F')]
     public ?string $fallbackMethod = null;
 
-
-    public static function current(Context $context): ?PipelineStepHandler
+    public function add(StepHandler $step)
     {
-        if (($step = $context->stepFactory->get()) instanceof PipelineStepHandler) {
-            return $step;
-        }
-
-        return null;
+        $this->push($step);
     }
 
     public function push(StepHandler $handler)
@@ -49,16 +46,6 @@ class PipelineStepHandler extends StepHandler
         if ($current = $context->stepFactory->get()) {
             $this->push($current);
         }
-    }
-
-    public function keepFirst(Context $context)
-    {
-        $context->stepFactory->set($this->steps ? reset($this->steps) : null);
-    }
-
-    public function keepLast(Context $context)
-    {
-        $context->stepFactory->set($this->steps ? end($this->steps) : null);
     }
 
     public function listen(Context $context, Closure $callback): void
@@ -78,32 +65,9 @@ class PipelineStepHandler extends StepHandler
         );
     }
 
-    public function flatten()
+    public function toFactory(Context $context): PipelineFactory
     {
-        $steps = [];
-        foreach ($this->steps as $step) {
-            if ($step instanceof PipelineStepHandler) {
-                array_push($steps, ...$step->steps);
-            } else {
-                $steps[] = $step;
-            }
-        }
-
-        $this->steps = $steps;
-        return $this;
-    }
-
-    public function removeRecursive()
-    {
-        $steps = [];
-        foreach ($this->steps as $step) {
-            if (!($step instanceof PipelineStepHandler)) {
-                $steps[] = $step;
-            }
-        }
-
-        $this->steps = $steps;
-        return $this;
+        return new PipelineFactory($context, $this);
     }
 
 
@@ -130,17 +94,6 @@ class PipelineStepHandler extends StepHandler
         }
 
         $update->skipHandler();
-    }
-
-    public function fire(string $event, ...$args)
-    {
-        foreach ($this->steps as $step) {
-            if ($step instanceof StepHandler) {
-                $step->fire($event, ...$args);
-            }
-        }
-
-        return parent::fire($event, ...$args);
     }
 
 }
