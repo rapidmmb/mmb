@@ -76,8 +76,23 @@ class Form extends Action
     public function request(array $attributes = [])
     {
         $this->safe(function () use ($attributes) {
-            $this->with($attributes)->startForm();
+            $this->with($attributes);
+            $this->bootForm();
+
+            $this->fire('requesting');
+            $this->startForm();
         });
+    }
+
+    /**
+     * Listen to requesting form
+     *
+     * @param Closure $callback
+     * @return void
+     */
+    public function requesting(Closure $callback)
+    {
+        $this->listen('requesting', $callback);
     }
 
     private $_isBooted = false;
@@ -116,26 +131,6 @@ class Form extends Action
 
             $this->_isBooted = true;
         }
-    }
-
-    /**
-     * Required attribute
-     *
-     * @param string $name
-     * @return void
-     */
-    protected function attrRequired(string $name)
-    {
-        if (!$this->has($name)) {
-            throw new \InvalidArgumentException(
-                sprintf("%s::request() required attribute [%s]", static::class, $name)
-            );
-        }
-    }
-
-    protected function attrModel(string $name)
-    {
-        // TODO
     }
 
 
