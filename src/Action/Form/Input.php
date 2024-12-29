@@ -18,7 +18,6 @@ use Mmb\Support\Caller\HasEvents;
 use Mmb\Support\Encoding\Text;
 use Mmb\Support\KeySchema\HasKeyboards;
 use Mmb\Support\KeySchema\KeyboardInterface;
-use Mmb\Support\KeySchema\KeyInterface;
 
 /**
  * @property mixed $value
@@ -161,6 +160,30 @@ class Input implements KeyboardInterface
     public function modeMarkdown2()
     {
         return $this->mode('MarkDown2');
+    }
+
+    protected bool $remember = true;
+
+    /**
+     * Remember the input value after leaving
+     *
+     * @return $this
+     */
+    public function remember()
+    {
+        $this->remember = true;
+        return $this;
+    }
+
+    /**
+     * Don't remember the input value after leaving
+     *
+     * @return $this
+     */
+    public function dontRemember()
+    {
+        $this->remember = false;
+        return $this;
     }
 
     /**
@@ -911,6 +934,9 @@ class Input implements KeyboardInterface
      */
     protected function onLeave()
     {
+        if (!$this->remember) {
+            $this->form->forget($this->name);
+        }
     }
 
 }

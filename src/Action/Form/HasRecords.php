@@ -13,17 +13,17 @@ trait HasRecords
      *
      * @return Model
      */
-    protected abstract function record() : Model;
+    abstract protected function record(): Model;
 
 
-    protected $__record;
+    protected Model $__record;
 
     /**
      * Get current record
      *
      * @return Model
      */
-    public final function getRecord() : Model
+    final public function getRecord(): Model
     {
         return $this->__record ??= $this->record();
     }
@@ -35,46 +35,33 @@ trait HasRecords
      * @param array $extra
      * @return bool
      */
-    public function updateRecord(array $inputs, array $extra = []) : bool
+    public function updateRecord(array $inputs, array $extra = []): bool
     {
         $attributes = $extra;
 
-        foreach ($inputs as $key => $value)
-        {
-            if (is_int($key))
-            {
+        foreach ($inputs as $key => $value) {
+            if (is_int($key)) {
                 $attributes[$value] = $this->get($value, ValueChanges::NoChanges);
-            }
-            elseif (is_array($value))
-            {
-                if (ValueChanges::NoChanges != $val = $this->get($key, ValueChanges::NoChanges))
-                {
-                    foreach ($value as $key2 => $value2)
-                    {
+            } elseif (is_array($value)) {
+                if (ValueChanges::NoChanges != $val = $this->get($key, ValueChanges::NoChanges)) {
+                    foreach ($value as $key2 => $value2) {
                         $attributes[$key2] = $value2($val);
                     }
                 }
-            }
-            elseif (is_string($value))
-            {
+            } elseif (is_string($value)) {
                 $attributes[$value] = $this->get($key, ValueChanges::NoChanges);
-            }
-            elseif ($value instanceof \Closure)
-            {
-                if (ValueChanges::NoChanges != $val = $this->get($key, ValueChanges::NoChanges))
-                {
+            } elseif ($value instanceof \Closure) {
+                if (ValueChanges::NoChanges != $val = $this->get($key, ValueChanges::NoChanges)) {
                     $attributes[$key] = $value($val);
                 }
-            }
-            else
-            {
+            } else {
                 throw new \TypeError(
-                    sprintf("Expected array or closure, given [%s] in key [%s]", smartTypeOf($value), $key)
+                    sprintf("Expected array or closure, given [%s] in key [%s]", smartTypeOf($value), $key),
                 );
             }
         }
 
-        $attributes = array_filter($attributes, fn ($value) => $value !== ValueChanges::NoChanges);
+        $attributes = array_filter($attributes, fn($value) => $value !== ValueChanges::NoChanges);
 
         return $this->getRecord()->update($attributes);
     }
