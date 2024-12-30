@@ -16,8 +16,7 @@ class StepHandlerSafeClass extends StepHandlerAttribute
 
     public function onLoad($data)
     {
-        if(!class_exists($data))
-        {
+        if (!class_exists($data)) {
             return $this->default;
         }
 

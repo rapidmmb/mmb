@@ -3,6 +3,7 @@
 namespace Mmb\Action\Section\Controllers;
 
 use Mmb\Action\Update\UpdateHandling;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class InlineControlHandler implements UpdateHandling
@@ -14,11 +15,11 @@ class InlineControlHandler implements UpdateHandling
     {
     }
 
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
         if($update->inlineQuery)
         {
-            $object = $this->class::make($update);
+            $object = $this->class::makeByContext($context);
             /** @var ?QueryMatchPattern $pattern */
             if($pattern = $object->getInlineMatcher()->findPattern($update->inlineQuery->query))
             {

@@ -7,6 +7,7 @@ use Mmb\Action\Action;
 use Mmb\Action\Inline\Attributes\InlineAttributeContract;
 use Mmb\Action\Inline\Attributes\InlineParameterAttributeContract;
 use Mmb\Action\Inline\InlineAction;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
@@ -16,7 +17,7 @@ abstract class InlineRegister
     public InlineAction $inlineAction;
 
     public function __construct(
-        public Update $update,
+        public Context $context,
         string|InlineAction $inlineAction,
 
         public Action $target,
@@ -27,8 +28,9 @@ abstract class InlineRegister
         public array $haveItems = [],
     )
     {
-        $this->inlineAction = is_string($inlineAction) ? new $inlineAction($this->update) : $inlineAction;
+        $this->inlineAction = is_string($inlineAction) ? new $inlineAction($this->context) : $inlineAction;
         $this->inlineAction->initializer($this->target, $this->method);
+        $this->inlineAction->register($this);
     }
 
     protected array $before = [];
@@ -100,7 +102,7 @@ abstract class InlineRegister
                 /** @var InlineAttributeContract $attribute */
                 $attribute = $attribute->newInstance();
 
-                $attribute->registerInline($this);
+                $attribute->registerInline($this->context, $this);
             }
         }
 
@@ -117,7 +119,7 @@ abstract class InlineRegister
                         /** @var InlineParameterAttributeContract $attribute */
                         $attribute = $attribute->newInstance();
 
-                        $attribute->registerInlineParameter($this, $parameter->name);
+                        $attribute->registerInlineParameter($this->context, $this, $parameter->name);
                     }
                 }
 
@@ -163,6 +165,7 @@ abstract class InlineRegister
     protected function registerByCall()
     {
         Caller::invoke(
+            $this->context,
             $this->init,
             [$this->inlineAction, ...$this->callArgs]
         );

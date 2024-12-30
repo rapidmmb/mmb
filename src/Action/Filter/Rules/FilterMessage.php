@@ -3,6 +3,7 @@
 namespace Mmb\Action\Filter\Rules;
 
 use Mmb\Action\Filter\Concerns\AdvancedRule;
+use Mmb\Context;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 
@@ -68,9 +69,9 @@ class FilterMessage extends BeMessage
         return $this->should('media', 'is not', null, $error ?? __('mmb::filter.media'));
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
-        parent::pass($update, $value);
+        parent::pass($context, $update, $value);
 
         $this->passAdvanced($update->message->forwa);
     }

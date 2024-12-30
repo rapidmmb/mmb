@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Section\Section;
+use Mmb\Context;
 use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Caller\Attributes\CallingPassParameterInsteadContract;
 use ReflectionFunction;
@@ -20,7 +21,7 @@ use ReflectionProperty;
 class CallerFactory
 {
 
-    public function invoke($callable, array $normalArgs, array $dynamicArgs = [])
+    public function invoke(Context $context, $callable, array $normalArgs, array $dynamicArgs = [])
     {
         $func = new ReflectionFunction(
             $callable instanceof Closure || is_string($callable) ?
@@ -68,17 +69,17 @@ class CallerFactory
             }
             elseif(array_key_exists($name, $normalArgs))
             {
-                $params[] = $this->getParameterValue($parameter, $normalArgs[$name]);
+                $params[] = $this->getParameterValue($context, $parameter, $normalArgs[$name]);
                 unset($normalArgs[$name]);
             }
             elseif(is_int($key = array_key_first($normalArgs)))
             {
-                $params[] = $this->getParameterValue($parameter, $normalArgs[$key]);
+                $params[] = $this->getParameterValue($context, $parameter, $normalArgs[$key]);
                 unset($normalArgs[$key]);
             }
             elseif(array_key_exists($name, $dynamicArgs))
             {
-                $params[] = $this->getParameterValue($parameter, value($dynamicArgs[$name]));
+                $params[] = $this->getParameterValue($context, $parameter, value($dynamicArgs[$name]));
             }
             elseif($parameter->isOptional())
             {
@@ -108,12 +109,12 @@ class CallerFactory
         return $func->invokeArgs($params);
     }
 
-    public function invokeAction(array|string|Action $callable, array $normalArgs, array $dynamicArgs = [])
+    public function invokeAction(Context $context, array|string|Action $callable, array $normalArgs, array $dynamicArgs = [])
     {
         // String callable -> invoke main() method
         if (is_string($callable))
         {
-            return (new $callable)->invokeDynamic('main', $normalArgs, $dynamicArgs);
+            return $callable::makeByContext($context)->invokeDynamic('main', $normalArgs, $dynamicArgs);
         }
 
         // Action callable -> invoke main() method
@@ -135,7 +136,7 @@ class CallerFactory
         {
             if (is_string($callable[0]))
             {
-                return (new $callable[0])->invokeDynamic('main', $normalArgs, $dynamicArgs);
+                return $callable[0]::makeByContext($context)->invokeDynamic('main', $normalArgs, $dynamicArgs);
             }
             else
             {
@@ -145,7 +146,7 @@ class CallerFactory
 
         // More values -> invoke the second index method
         $action = $callable[0];
-        if (is_string($action)) $action = new $action;
+        if (is_string($action)) $action = $action::makeByContext($context);
 
         return $action->invokeDynamic(
             $callable[1],
@@ -155,6 +156,7 @@ class CallerFactory
     }
 
     public function getParameterValue(
+        Context $context,
         ReflectionParameter|ReflectionProperty $parameter,
                                                $value
     )
@@ -174,7 +176,7 @@ class CallerFactory
                 }
                 if ($attribute instanceof CallingPassParameterInsteadContract)
                 {
-                    $value = $attribute->getPassParameterInstead($parameter, $value);
+                    $value = $attribute->getPassParameterInstead($context, $parameter, $value);
                 }
             }
         }
@@ -199,7 +201,7 @@ class CallerFactory
                 }
                 if ($attribute instanceof CallingPassParameterInsteadContract)
                 {
-                    $value = $attribute->getPassParameterInstead($parameter, $value);
+                    $value = $attribute->getPassParameterInstead($context, $parameter, $value);
                 }
             }
         }

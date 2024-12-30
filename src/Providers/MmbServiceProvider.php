@@ -9,9 +9,10 @@ use Mmb\Auth\AreaRegister;
 use Mmb\Console;
 use Mmb\Core\Bot;
 use Mmb\Core\BotChanneling;
-use Mmb\Core\Requests\Parser\ArgsParserFactory;
-use Mmb\Core\Requests\Parser\DefaultArgsParser;
+use Mmb\Core\Client\Parser\ArgsParserFactory;
+use Mmb\Core\Client\Parser\DefaultArgsParser;
 use Mmb\Core\Updates\Update;
+use Revolt\EventLoop;
 
 class MmbServiceProvider extends ServiceProvider
 {
@@ -35,6 +36,8 @@ class MmbServiceProvider extends ServiceProvider
         $this->registerAreas();
         $this->registerCommands();
         $this->registerLang();
+
+        $this->registerEventLoop();
     }
 
     /**
@@ -44,16 +47,14 @@ class MmbServiceProvider extends ServiceProvider
      */
     public function registerBot()
     {
-        $this->app->singleton(BotChanneling::class, function()
-        {
+        $this->app->singleton(BotChanneling::class, function () {
             $driver = config('mmb.channeling');
             return new $driver(config('mmb.channels'));
         });
 
         $this->app->singleton(Bot::class, fn() => app(BotChanneling::class)->getDefaultBot());
 
-        if(!($this->app instanceof CachesRoutes && $this->app->routesAreCached()))
-        {
+        if (!($this->app instanceof CachesRoutes && $this->app->routesAreCached())) {
             app(BotChanneling::class)->defineRoutes();
         }
     }
@@ -75,10 +76,8 @@ class MmbServiceProvider extends ServiceProvider
      */
     public function registerAreas()
     {
-        $this->callAfterResolving(AreaRegister::class, function ()
-        {
-            foreach (config('mmb.areas', []) as $area)
-            {
+        $this->callAfterResolving(AreaRegister::class, function () {
+            foreach (config('mmb.areas', []) as $area) {
                 $this->app->make($area)->boot();
             }
         });
@@ -99,10 +98,8 @@ class MmbServiceProvider extends ServiceProvider
      */
     public function registerCommands()
     {
-        Artisan::starting(function($artisan)
-        {
-            foreach($this->commands as $command)
-            {
+        Artisan::starting(function ($artisan) {
+            foreach ($this->commands as $command) {
                 $artisan->resolveCommands(app($command));
             }
         });
@@ -111,10 +108,25 @@ class MmbServiceProvider extends ServiceProvider
     public function registerLang()
     {
         $this->publishes([
-            __DIR__.'/../../lang' => $this->app->langPath('vendor/mmb'),
+            __DIR__ . '/../../lang' => $this->app->langPath('vendor/mmb'),
         ], ['mmb:lang', 'lang']);
 
-        $this->loadTranslationsFrom(__DIR__.'/../../lang', 'mmb');
+        $this->loadTranslationsFrom(__DIR__ . '/../../lang', 'mmb');
+    }
+
+    public function registerEventLoop()
+    {
+        $previousErrorHandler = EventLoop::getErrorHandler();
+        
+        EventLoop::setErrorHandler(function (\Throwable $exception) use ($previousErrorHandler) {
+            report($exception);
+
+            if ($previousErrorHandler) {
+                $previousErrorHandler($exception);
+            } else {
+                throw $exception;
+            }
+        });
     }
 
 }

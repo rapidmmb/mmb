@@ -3,13 +3,12 @@
 namespace Mmb\Action\Middle;
 
 use Mmb\Action\Action;
-use Mmb\Action\Inline\InlineAction;
 use Mmb\Action\Inline\InlineStepHandler;
 use Mmb\Action\Inline\Register\InlineRegister;
-use Mmb\Action\Memory\Step;
 use Mmb\Action\Section\Section;
 use Mmb\Action\Update\StopHandlingException;
 use Mmb\Action\Update\UpdateHandling;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class MiddleAction extends Section implements UpdateHandling
@@ -20,12 +19,10 @@ class MiddleAction extends Section implements UpdateHandling
         parent::onInitializeInlineRegister($register);
 
         $register->before(
-            function () use ($register)
-            {
+            function () use ($register) {
                 $register->inlineAction->with('redirectTo');
 
-                if ($register->inlineAction->isCreating() && !$this->redirectWith)
-                {
+                if ($register->inlineAction->isCreating() && !$this->redirectWith) {
                     return;
                 }
 
@@ -113,26 +110,29 @@ class MiddleAction extends Section implements UpdateHandling
      */
     public function redirect(...$args)
     {
-        $this->update->put(static::class . '::ran', true);
+        $this->context->put(static::class . '::ran', true);
 
-        if(is_array($this->redirectTo) && count($this->redirectTo) == 2)
-        {
+        if (is_array($this->redirectTo) && count($this->redirectTo) == 2) {
+
             [$class, $method] = $this->redirectTo;
-            if(class_exists($class) && is_a($class, Action::class, true))
-            {
-                $class::invokes($method, ...$this->redirectWith, ...$args);
-                $this->update->forget(static::class . '::ran');
+
+            if (class_exists($class) && is_a($class, Action::class, true)) {
+
+                $class::makeByContext($this->context)->invoke($method, ...$this->redirectWith, ...$args);
+                $this->context->forget(static::class . '::ran');
                 return true;
+
             }
-        }
-        elseif($this->redirectTo === '@step')
-        {
-            Step::set(null);
-            $this->update->put('middle-action-handled', $this);
+
+        } elseif ($this->redirectTo === '@step') {
+
+            $this->context->stepFactory->set(null);
+            $this->context->put('middle-action-handled', $this);
             $this->update->repeatHandling();
+
         }
 
-        $this->update->forget(static::class . '::ran');
+        $this->context->forget(static::class . '::ran');
 
         return false;
     }
@@ -147,18 +147,14 @@ class MiddleAction extends Section implements UpdateHandling
     private function getArgumentsAndWiths(string $method, ...$args)
     {
         $pass = [];
-        foreach($args as $i => $arg)
-        {
-            if(is_int($i))
-            {
+        foreach ($args as $i => $arg) {
+            if (is_int($i)) {
                 $pass[] = $arg;
                 unset($args[$i]);
             }
         }
-        foreach((new \ReflectionMethod($this, $method))->getParameters() as $parameter)
-        {
-            if(array_key_exists($name = $parameter->getName(), $args))
-            {
+        foreach ((new \ReflectionMethod($this, $method))->getParameters() as $parameter) {
+            if (array_key_exists($name = $parameter->getName(), $args)) {
                 $pass[$name] = $args[$name];
                 unset($args[$name]);
             }
@@ -173,49 +169,53 @@ class MiddleAction extends Section implements UpdateHandling
      */
     private function checksIsRequired(...$args)
     {
-        if($this->ignoreLoop && $this->update->get(static::class . '::ran'))
-        {
+        if ($this->ignoreLoop && $this->context->get(static::class . '::ran')) {
             return false;
         }
 
         [$pass, $args] = $this->getArgumentsAndWiths('isRequired', ...$args);
-        return (bool) $this->invoke('isRequired', ...$pass);
+        return (bool)$this->invoke('isRequired', ...$pass);
+    }
+
+
+    /**
+     * Set pending query redirect action
+     *
+     * @return $this
+     */
+    public function redirectTo(string $class, string $method = 'main')
+    {
+        $this->redirectTo = [$class, $method];
+
+        return $this;
+    }
+
+    /**
+     * Detect callback point and set pending query redirect action
+     *
+     * @return $this
+     */
+    public function redirectHere()
+    {
+        $at = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
+        $this->redirectTo = [$at['class'], $at['function']];
+
+        return $this;
     }
 
     /**
      * Request middle action
      *
-     * @param array $redirectTo
      * @param       ...$args
      * @return void
      */
-    public static function request(array $redirectTo, ...$args)
+    public function request(...$args)
     {
-        if(count($redirectTo) != 2)
-        {
-            throw new \ValueError("\$redirectTo size should equals to 2");
-        }
+        [$pass, $args] = $this->getArgumentsAndWiths('main', ...$args);
 
-        $instance = static::make();
-        [$pass, $args] = $instance->getArgumentsAndWiths('main', ...$args);
+        $this->redirectWith = $args;
 
-        $instance->redirectTo = $redirectTo;
-        $instance->redirectWith = $args;
-
-        $instance->invoke('main', ...$pass);
-    }
-
-    /**
-     * Request middle action
-     *
-     * @param string $class
-     * @param string $method
-     * @param        ...$args
-     * @return void
-     */
-    public static function requestTo(string $class, string $method, ...$args)
-    {
-        static::request([$class, $method], ...$args);
+        $this->invoke('main', ...$pass);
     }
 
     /**
@@ -224,87 +224,59 @@ class MiddleAction extends Section implements UpdateHandling
      * @param ...$args
      * @return bool
      */
-    public static function check(...$args)
+    public function check(...$args)
     {
-        return static::make()->checksIsRequired(...$args);
+        return $this->checksIsRequired(...$args);
     }
 
     /**
      * Request the action, if is required.
      *
-     * @param array $backTo
      * @param       ...$args
      * @return void
      * @throws StopHandlingException
      */
-    public static function required(array $backTo, ...$args)
+    public function required(...$args)
     {
-        if(count($backTo) != 2)
-        {
-            throw new \ValueError("\$backTo size should equals to 2");
-        }
+        if ($this->checksIsRequired(...$args)) {
+            [$pass, $args] = $this->getArgumentsAndWiths('main', ...$args);
 
-        $instance = static::make();
-        if($instance->checksIsRequired(...$args))
-        {
-            [$pass, $args] = $instance->getArgumentsAndWiths('main', ...$args);
+            $this->redirectWith = $args;
 
-            $instance->redirectTo = $backTo;
-            $instance->redirectWith = $args;
-
-            $instance->invoke('main', ...$pass);
-            $instance->update->stopHandling();
+            $this->invoke('main', ...$pass);
+            $this->update->stopHandling();
         }
     }
 
     /**
-     * Request the action, if is required.
-     *
-     * @param string $class
-     * @param string $method
-     * @param        ...$args
-     * @return void
-     * @throws StopHandlingException
-     */
-    public static function requiredAt(string $class, string $method, ...$args)
-    {
-        static::required([$class, $method], ...$args);
-    }
-
-    /**
-     * Required the action, if is required.
-     *
-     * This method fills class and method automatically by backtrace.
+     * Request the action with redirecting at called point, if is required.
      *
      * @param ...$args
      * @return void
      * @throws StopHandlingException
      */
-    public static function requiredHere(...$args)
+    public function requiredHere(...$args)
     {
-        $at = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
-        static::required([$at['class'], $at['function']], ...$args);
+        $this->redirectHere()->required(...$args);
     }
 
 
     /**
      * Handle update for step handler
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
-        if($this->isMiddleActionStep())
-        {
+        if ($this->isMiddleActionStep()) {
             $update->skipHandler();
             return;
         }
 
-        if($this->checksIsRequired(...$this->params ?? []))
-        {
-            if(is_null($this->redirectTo))
-            {
+        if ($this->checksIsRequired(...$this->params ?? [])) {
+            if (is_null($this->redirectTo)) {
                 $this->redirectTo = '@step';
                 $this->redirectWith = [];
             }
@@ -318,9 +290,8 @@ class MiddleAction extends Section implements UpdateHandling
 
     private function isMiddleActionStep()
     {
-        $step = Step::get();
-        if($step instanceof InlineStepHandler)
-        {
+        $step = $this->context->stepFactory->get();
+        if ($step instanceof InlineStepHandler) {
             return $step->initalizeClass &&
                 class_exists($step->initalizeClass) &&
                 is_a($step->initalizeClass, MiddleAction::class, true);

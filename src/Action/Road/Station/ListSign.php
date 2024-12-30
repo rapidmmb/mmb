@@ -3,60 +3,63 @@
 namespace Mmb\Action\Road\Station;
 
 use Closure;
-use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Road\Sign;
 use Mmb\Action\Road\Station;
 use Mmb\Action\Road\Station\Concerns\SignWithMenuCustomizing;
 use Mmb\Action\Road\Station\List\ListViewer;
 use Mmb\Action\Section\Menu;
 use Mmb\Action\Section\MenuKey;
-use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Format\KeyFormatterBuilder;
 
-/**
- * @method $this insertHeaderKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertHeaderRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertHeaderSchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeHeaderKey(string $name)
- * @method $this moveHeaderKey(string $name, ?int $x, ?int $y)
- *
- * @method $this insertFooterKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertFooterRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertFooterSchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeFooterKey(string $name)
- * @method $this moveFooterKey(string $name, ?int $x, ?int $y)
- *
- * @method $this insertEmptyKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertEmptyRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertEmptySchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeEmptyKey(string $name)
- * @method $this moveEmptyKey(string $name, ?int $x, ?int $y)
- *
- * @method $this titleKey(Closure|false $callback, int $x = 50, int $y = 0)
- * @method $this titleKeyDefault(int $x = 50, int $y = 0)
- * @method $this titleKeyAction(Closure $action)
- * @method $this titleKeyLabel(Closure $callback)
- * @method $this titleKeyLabelUsing(Closure $callback)
- * @method $this titleKeyLabelPrefix(string|Closure $string)
- * @method $this titleKeyLabelSuffix(string|Closure $string)
- *
- * @method $this emptyKey(Closure|false $callback, int $x = 50, int $y = 50)
- * @method $this emptyKeyDefault(int $x = 50, int $y = 50)
- * @method $this emptyKeyAction(Closure $action)
- * @method $this emptyKeyLabel(Closure $callback)
- * @method $this emptyKeyLabelUsing(Closure $callback)
- * @method $this emptyKeyLabelPrefix(string|Closure $string)
- * @method $this emptyKeyLabelSuffix(string|Closure $string)
- */
 class ListSign extends Sign
 {
-    use SignWithMenuCustomizing,
-        Concerns\SignWithQuery,
-        Concerns\SignWithItems,
-        Concerns\SignWithResponse,
-        Concerns\SignWithMessage,
-        Concerns\SignWithBacks;
+    use SignWithMenuCustomizing;
+
+    /**
+     * @var Words\SignBackKey<$this>
+     */
+    public Station\Words\SignBackKey $back;
+
+    /**
+     * @var Words\SignMessage<$this>
+     */
+    public Station\Words\SignMessage $message;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
+    public Station\Words\SignKey $titleKey;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
+    public Station\Words\SignKey $emptyKey;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
+    public Station\Words\SignKey $searchKey;
+
+    /**
+     * @var Words\SignKey<$this>
+     */
+    public Station\Words\SignKey $searchingKey;
+
+    /**
+     * @var Words\SignQuery<$this>
+     */
+    public Station\Words\SignQuery $query;
+
+    /**
+     * @var Words\SignResponse<$this>
+     */
+    public Station\Words\SignResponse $response;
+
+    /**
+     * @var Words\SignItems<$this>
+     */
+    public Station\Words\SignItems $items;
 
     /**
      * Boot the default values
@@ -66,65 +69,51 @@ class ListSign extends Sign
     protected function boot()
     {
         parent::boot();
-        $this->defineKey('titleKey', 'header', 50, 0);
-        $this->defineKey('emptyKey', 'empty', 50, 50);
-        $this->defineKey('searchKey', 'header', 0, 100);
-        $this->defineKey('searchingKey', 'header', 0, 100);
-    }
 
-    // - - - - - - - - - - - - Title Key - - - - - - - - - - - - \\
+        $this->addKey($this->back = new Station\Words\SignBackKey($this));
 
-    protected function onDefaultTitleKey(Menu $menu, ListStation $station) : ?MenuKey
-    {
-        $label = $this->getDefinedNullableLabel($station, 'titleKeyLabel');
+        // Title key
+        $this->addKey($this->titleKey = new Station\Words\SignKey($this));
+        $this->titleKey->at(50, 0, 'header');
+        $this->titleKey->label(function () {
+            return $this->getViewer()->renderTitleKeyLabel();
+        });
+        $this->titleKey->action(function () {
+            $this->getViewer()->onTitleKeyAction();
+        });
 
-        if ($label === null)
-            return null;
+        // Empty key
+        $this->addKey($this->emptyKey = new Station\Words\SignKey($this));
+        $this->emptyKey->at(50, 50, 'empty');
+        $this->emptyKey->label(function () {
+            return $this->getViewer()->renderEmptyKeyLabel();
+        });
+        $this->emptyKey->action(function () {
+            $this->getViewer()->onEmptyKeyAction();
+        });
 
-        return $menu->key(
-            $label,
-            fn () => $this->fireBy($station, 'titleKeyAction'),
-        );
-    }
+        $this->addKey($this->searchKey = new Station\Words\SignKey($this));
+        $this->searchKey->at(0, 100, 'header');
 
-    protected function onTitleKeyLabel(ListStation $station) : ?string
-    {
-        return $this->getViewer()->use($station)->renderTitleKeyLabel();
-    }
+        $this->addKey($this->searchingKey = new Station\Words\SignKey($this));
+        $this->searchingKey->at(0, 100, 'header');
 
-    protected function onTitleKeyAction(ListStation $station) : void
-    {
-        $this->getViewer()->use($station)->onTitleKeyAction();
-    }
+        $this->message = new Station\Words\SignMessage($this);
+        $this->message->set(function () {
+            return "List:"; // todo
+        });
 
-    // - - - - - - - - - - - - Empty Key - - - - - - - - - - - - \\
+        $this->query = new Station\Words\SignQuery($this);
+        $this->query->from($this->road->getQuery(...));
 
-    protected function onDefaultEmptyKey(Menu $menu, ListStation $station) : ?MenuKey
-    {
-        $label = $this->getDefinedNullableLabel($station, 'emptyKeyLabel');
+        $this->response = new Station\Words\SignResponse($this);
 
-        if ($label === null)
-            return null;
-
-        return $menu->key(
-            $label,
-            fn () => $this->fireBy($station, 'emptyKeyAction'),
-        );
-    }
-
-    protected function onEmptyKeyLabel(ListStation $station) : ?string
-    {
-        return $this->getViewer()->use($station)->renderEmptyKeyLabel();
-    }
-
-    protected function onEmptyKeyAction(ListStation $station) : void
-    {
-        $this->getViewer()->use($station)->onEmptyKeyAction();
+        $this->items = new Station\Words\SignItems($this);
     }
 
     // - - - - - - - - - - - - Search Section - - - - - - - - - - - - \\
 
-    public SearchSign $searchSign;
+    protected SearchSign $searchSign;
 
     /**
      * Searchable list
@@ -134,21 +123,18 @@ class ListSign extends Sign
      */
     public function searchable(Closure|null|false $callback = null)
     {
-        if ($callback === false)
-        {
-            if (isset($this->searchSign))
-            {
-                $this->searchSign->die();
-            }
+        if (isset($this->searchSign)) {
+            $this->searchSign->die();
+        }
 
+        if ($callback === false) {
             unset($this->searchSign);
             return $this;
         }
 
         $search = $this->searchSign ??= new SearchSign($this->road, $this);
 
-        if ($callback)
-        {
+        if ($callback) {
             $callback($search);
         }
 
@@ -157,16 +143,22 @@ class ListSign extends Sign
 
     // - - - - - - - - - - - - Create Station - - - - - - - - - - - - \\
 
+    public function createStation(): ListStation
+    {
+        return new ListStation($this->road, $this);
+    }
+
     /**
      * Create list station
      *
-     * @param string $name
-     * @param Update $update
-     * @return ListStation
+     * @return void
      */
-    public function createStation(string $name, Update $update) : Station
+    public function resetStation(): void
     {
-        return new ListStation($this->road, $this, $name, $update);
+        $station = $this->createStation();
+
+        $station->searchSign = $this->searchSign ?? null;
+        $station->paginatorAt = $this->paginatorAt;
     }
 
 
@@ -182,8 +174,7 @@ class ListSign extends Sign
      */
     public function view(string|ListViewer $viewer)
     {
-        if (is_string($viewer))
-        {
+        if (is_string($viewer)) {
             $viewer = new $viewer;
         }
 
@@ -197,7 +188,7 @@ class ListSign extends Sign
      *
      * @return ListViewer
      */
-    public function getViewer() : ListViewer
+    public function getViewer(): ListViewer
     {
         return $this->viewer ??= new Station\List\ListPaginateViewer();
     }
@@ -206,7 +197,7 @@ class ListSign extends Sign
      * Show the result as pagination
      *
      * @param Closure|int|null $perPage
-     * @param Closure|array    $columns
+     * @param Closure|array $columns
      * @return $this
      */
     public function paginate(Closure|int|null $perPage = null, Closure|array $columns = ['*'])
@@ -216,9 +207,9 @@ class ListSign extends Sign
 
 
     public const PAGINATOR_AT_NOTHING = 0;
-    public const PAGINATOR_AT_TOP     = 1;
-    public const PAGINATOR_AT_BOTTOM  = 2;
-    public const PAGINATOR_AT_BOTH    = 3;
+    public const PAGINATOR_AT_TOP = 1;
+    public const PAGINATOR_AT_BOTTOM = 2;
+    public const PAGINATOR_AT_BOTH = 3;
 
     protected int $paginatorAt = self::PAGINATOR_AT_BOTTOM;
 
@@ -254,16 +245,6 @@ class ListSign extends Sign
         return $this->paginatorAt(self::PAGINATOR_AT_BOTH);
     }
 
-    /**
-     * Get paginator position
-     *
-     * @return int
-     */
-    public function getPaginatorAt()
-    {
-        return $this->paginatorAt;
-    }
-
     // - - - - - - - - - - - - List Formatting - - - - - - - - - - - - \\
 
     /**
@@ -286,7 +267,7 @@ class ListSign extends Sign
     public function formatListResizeAuto(int $size = 40)
     {
         return $this->formatListUsing(
-            fn (KeyFormatterBuilder $key) => $key->resizeAuto($size)
+            fn(KeyFormatterBuilder $key) => $key->resizeAuto($size),
         );
     }
 
@@ -299,7 +280,7 @@ class ListSign extends Sign
     public function formatListResize(int $columns)
     {
         return $this->formatListUsing(
-            fn (KeyFormatterBuilder $key) => $key->resize($columns)
+            fn(KeyFormatterBuilder $key) => $key->resize($columns),
         );
     }
 
@@ -312,7 +293,7 @@ class ListSign extends Sign
     public function formatListWrap(int $max)
     {
         return $this->formatListUsing(
-            fn (KeyFormatterBuilder $key) => $key->wrap($max)
+            fn(KeyFormatterBuilder $key) => $key->wrap($max),
         );
     }
 
@@ -325,14 +306,11 @@ class ListSign extends Sign
 
     // - - - - - - - - - - - - Filters - - - - - - - - - - - - \\
 
-    protected static function detectFilterableTypeFromCallback(Closure $callback) : ?string
+    protected static function detectFilterableTypeFromCallback(Closure $callback): ?string
     {
-        if ($type = @(new \ReflectionFunction($callback))->getParameters()[0]?->getType())
-        {
-            if ($type instanceof \ReflectionNamedType && $classType = $type->getName())
-            {
-                if (is_a($classType, Filterable::class, true))
-                {
+        if ($type = @(new \ReflectionFunction($callback))->getParameters()[0]?->getType()) {
+            if ($type instanceof \ReflectionNamedType && $classType = $type->getName()) {
+                if (is_a($classType, Filterable::class, true)) {
                     return $classType;
                 }
             }
@@ -346,25 +324,22 @@ class ListSign extends Sign
     /**
      * Add a filter
      *
-     * @param string             $name
+     * @param string $name
      * @param Filterable|Closure $filter
      * @return $this
      */
     public function filter(
-        string $name,
+        string             $name,
         Filterable|Closure $filter,
     )
     {
-        if (array_key_exists($name, $this->filters))
-        {
+        if (array_key_exists($name, $this->filters)) {
             throw new \InvalidArgumentException("Filter [$name] is already exists");
         }
 
-        if ($filter instanceof Closure)
-        {
+        if ($filter instanceof Closure) {
             $callback = $filter;
-            if (!$type = static::detectFilterableTypeFromCallback($callback))
-            {
+            if (!$type = static::detectFilterableTypeFromCallback($callback)) {
                 throw new \InvalidArgumentException("Filter callback has not a valid filterable type");
             }
 
@@ -383,13 +358,13 @@ class ListSign extends Sign
      * @param string $name
      * @return Filterable|null
      */
-    public function getFilterable(string $name) : ?Filterable
+    public function getFilterable(string $name): ?Filterable
     {
         return $this->filters[$name] ?? null;
     }
 
     /**
-     * Get all filterables
+     * Get all filterable
      *
      * @return Filterable[]
      */
@@ -404,7 +379,7 @@ class ListSign extends Sign
      * @param Filterable $filterable
      * @return string|null
      */
-    public function getFilterableName(Filterable $filterable) : ?string
+    public function getFilterableName(Filterable $filterable): ?string
     {
         $key = array_search($filterable, $this->filters, true);
         return $key === false ? null : $key;

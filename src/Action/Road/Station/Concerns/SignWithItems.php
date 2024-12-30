@@ -19,9 +19,22 @@ use Mmb\Action\Section\MenuKey;
 trait SignWithItems
 {
 
+    /**
+     * @var Station\Words\SignKey<$this>
+     */
+    public Station\Words\SignKey $itemKey;
+
     protected function bootSignWithItems()
     {
-        $this->defineDynamicKey('itemKey');
+        $this->itemKey = new Station\Words\SignKey($this->sign);
+        $this->itemKey->label(function ($record) {
+            if ($record instanceof Model)
+            {
+                return $record->name ?? $record->title ?? $record->getKey();
+            }
+
+            return object_get($record, 'name') ?? object_get($record, 'title') ?? throw_if(true, 'Unresolved item label');
+        });
     }
 
     /**

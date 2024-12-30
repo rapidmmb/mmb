@@ -3,77 +3,76 @@
 namespace Mmb\Support\Pov;
 
 use Closure;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Traits\Conditionable;
-use Mmb\Action\Memory\Step;
-use Mmb\Core\Bot;
+use Mmb\Context;
 use Mmb\Core\Updates\Infos\ChatInfo;
 use Mmb\Core\Updates\Infos\UserInfo;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
-use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Step\ConvertableToStepping;
-use Mmb\Support\Step\Stepping;
+use Mmb\Support\Step\Contracts\ConvertableToStepper;
+use Mmb\Support\Step\Contracts\Stepper;
+use Mmb\Support\Telegram\Contracts\TelegramIdentifier;
 use Throwable;
+use function Amp\async;
 
+// todo : this can be better now ! using context
 class POVBuilder
 {
     use Conditionable;
 
+    protected Context $context;
+
     public function __construct(
         public readonly POVFactory $factory,
+        ?Context                   $baseContext = null,
     )
     {
+        $this->context = isset($baseContext) ? $baseContext->copy() : new Context();
     }
 
-    private array $applies = [];
-
-    public function add(Closure $apply, Closure $revert)
-    {
-        $this->applies[] = [$apply, $revert];
-
-        return $this;
-    }
+//    private array $applies = [];
+//
+//    public function add(Closure $apply, Closure $revert)
+//    {
+//        $this->applies[] = [$apply, $revert];
+//
+//        return $this;
+//    }
 
     /**
-     * Change the value binding
+     * Add a value
      *
-     * @template T
-     * @param class-string<T> $class
-     * @param T               $value
+     * @param string $key
+     * @param mixed $value
      * @return $this
      */
-    public function bindSingleton(string $class, $value)
+    public function put(string $key, mixed $value): static
     {
-        $old = null;
-
-        $this->add(
-            function() use (&$old, $class, $value)
-            {
-                $old = app($class);
-                app()->bind($class, fn() => $value);
-            },
-            function() use (&$old, $class)
-            {
-                app()->bind($class, fn() => $old);
-            },
-        );
-
+        $this->context->put($key, $value);
         return $this;
     }
 
-    protected Update $update;
+    /**
+     * Forget a key
+     *
+     * @param string $key
+     * @return $this
+     */
+    public function forget(string $key): static
+    {
+        $this->context->forget($key);
+        return $this;
+    }
 
     /**
-     * Set the current update (required)
+     * Set the current update
      *
      * @param Update $update
      * @return $this
      */
-    public function update(Update $update)
+    public function update(Update $update): static
     {
-        $this->update = $update;
-
+        $this->context->update = $update;
         return $this;
     }
 
@@ -142,29 +141,17 @@ class POVBuilder
      */
     public function run($callback)
     {
-        $this->start();
-
-        try
-        {
+        try {
             // Run the callback
-            if ($callback instanceof Closure)
-            {
-                $return = Caller::invoke($callback, []);
+            if ($callback instanceof Closure) {
+                $return = Caller::invoke($this->context, $callback, [$this->context]);
+            } else {
+                $return = Caller::invokeAction($this->context, $callback, []);
             }
-            else
-            {
-                $return = Caller::invokeAction($callback, []);
-            }
-        }
-        catch (Throwable $e)
-        {
-            $this->end();
-
+        } catch (Throwable $e) {
             // Catch the error
-            if (isset($this->catch))
-            {
-                if ($this->catch === false)
-                {
+            if (isset($this->catch)) {
+                if ($this->catch === false) {
                     return null;
                 }
 
@@ -174,173 +161,56 @@ class POVBuilder
             throw $e;
         }
 
-        try
-        {
-            // Run $then callbacks
-            foreach ($this->then as $callback)
-            {
-                $return = $callback($return);
-            }
-        }
-        finally
-        {
-            $this->end();
+        // Run $then callbacks
+        foreach ($this->then as $callback) {
+            $return = $callback($return);
         }
 
         return $return;
     }
 
-    protected bool $isStarting = false;
-
-    /**
-     * Start the POV
-     *
-     * You should call end() to end the POV, otherwise it will automatically end (not recommended).
-     *
-     * @return void
-     */
-    public function start()
+    public function runAsync($callback)
     {
-        if ($this->isStarting)
-        {
-            throw new \RuntimeException("The POV already started");
-        }
-
-        $this->applyPOV();
-
-        $this->isStarting = true;
-    }
-
-    /**
-     * End the POV
-     *
-     * @return void
-     */
-    public function end()
-    {
-        if (!$this->isStarting)
-        {
-            throw new \RuntimeException("The POV is not started");
-        }
-
-        $this->revertPOV();
-
-        $this->isStarting = false;
-    }
-
-    protected ?Update $oldUpdate;
-
-    protected function applyPOV()
-    {
-        // Apply the POV
-        foreach ($this->applies as [$apply, ])
-        {
-            $apply();
-        }
-
-        $this->oldUpdate = app(Update::class);
-        app()->bind(Update::class, fn() => $this->update);
-    }
-
-    protected function revertPOV()
-    {
-        // Revert the POV
-        foreach (array_reverse($this->applies) as [, $revert])
-        {
-            $revert();
-        }
-
-        app()->bind(Update::class, fn() => $this->oldUpdate);
+        return async(fn() => $this->run($callback));
     }
 
 
     /**
      * Set the current user
      *
-     * @param Stepping|ConvertableToStepping $user
-     * @param bool                           $save
-     * @param ?bool                          $changeUpdate
+     * @param Stepper|ConvertableToStepper $user
+     * @param bool $save
+     * @param ?bool $changeUpdate
      * @return $this
      */
-    public function user(Stepping|ConvertableToStepping $user, bool $save = true, ?bool $changeUpdate = null)
+    public function user(Stepper|ConvertableToStepper $user, bool $save = true, ?bool $changeUpdate = null)
     {
-        $oldCurrentModel = null;
-        $oldGuardUser = null;
-        $oldStep = null;
-        $isSame = false;
-        $store = [];
-
-        if ($user instanceof ConvertableToStepping)
-        {
-            $user = $user->toStepping();
+        if ($user instanceof ConvertableToStepper) {
+            $user = $user->toStepper();
         }
 
-        if ($changeUpdate ?? !isset($this->update))
-        {
-            $this->update(
-                Update::make(
-                    [
-                        'message' => [
-                            'chat' => [
-                                'id' => $user->getKey(),
-                            ],
-                        ],
-                    ]
-                )
+        if ($changeUpdate ?? !$this->context->update) {
+            $this->updateUser(
+                $user->getAttribute($user instanceof TelegramIdentifier ? $user->getTelegramIdKeyName() : $user->getKeyName()),
             );
         }
 
-        return $this->add(
-            function() use ($user, &$oldStep, &$oldGuardUser, &$oldCurrentModel, &$isSame, &$store)
-            {
-                $oldStep = Step::getModel();
-                $oldCurrentModel = ModelFinder::current($user::class);
-                $oldGuardUser = $user instanceof Authenticatable ? app(Bot::class)->guard()->user() : null;
-                $isSame = $oldStep && $user && $oldStep->is($user);
+        $this->context->stepFactory->setModel($user);
+        $this->context->instance($user);
 
-                if (!$isSame)
-                {
-                    Step::setModel($user);
-                    ModelFinder::storeCurrent($user);
-                    if ($user instanceof Authenticatable)
-                    {
-                        app(Bot::class)->guard()->setUser($user);
-                    }
-                }
+        if ($save) {
+            $this->then(function ($value) use ($user) {
+                $user->save();
+                return $value;
+            });
+        }
 
-                $store = $this->factory->fireApplyingUser($user, $oldStep, $isSame);
-            },
-            function() use ($user, &$oldStep, &$oldGuardUser, &$oldCurrentModel, &$isSame, $save, &$store)
-            {
-                if ($save)
-                {
-                    $user->save();
-                }
-
-                if (!$isSame)
-                {
-                    Step::setModel($oldStep);
-                    if ($oldGuardUser)
-                    {
-                        app(Bot::class)->guard()->setUser($oldGuardUser);
-                    }
-                    if (isset($oldCurrentModel))
-                    {
-                        ModelFinder::storeCurrent($oldCurrentModel);
-                    }
-                }
-
-                $this->factory->fireRevertingUser($user, $oldStep, $isSame, $store);
-            },
-        );
+        return $this;
     }
 
-    public function __destruct()
+    public function toContext(): Context
     {
-        if ($this->isStarting)
-        {
-            $this->end();
-        }
+        return $this->context;
     }
 
 }

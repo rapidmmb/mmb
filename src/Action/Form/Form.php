@@ -8,6 +8,7 @@ use Mmb\Action\Filter\FilterFailException;
 use Mmb\Action\Form\Attributes\FormClassModifierAttributeContract;
 use Mmb\Action\Form\Attributes\FormMethodModifierAttributeContract;
 use Mmb\Action\Form\Attributes\FormPropertyModifierAttributeContract;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Behavior\Behavior;
@@ -54,13 +55,13 @@ class Form extends Action
     /**
      * Make new form
      *
-     * @param array       $attributes
-     * @param Update|null $update
+     * @param Context $context
+     * @param array $attributes
      * @return static
      */
-    public static function make(array $attributes = [], Update $update = null)
+    public static function make(Context $context, array $attributes = [])
     {
-        $form = new static($update);
+        $form = new static($context);
         $form->setInAttributes($attributes);
 
         return $form;
@@ -69,12 +70,29 @@ class Form extends Action
     /**
      * Request form
      *
-     * @param array       $attributes
+     * @param array $attributes
      * @return void
      */
     public function request(array $attributes = [])
     {
-        $this->with($attributes)->startForm();
+        $this->safe(function () use ($attributes) {
+            $this->with($attributes);
+            $this->bootForm();
+
+            $this->fire('requesting');
+            $this->startForm();
+        });
+    }
+
+    /**
+     * Listen to requesting form
+     *
+     * @param Closure $callback
+     * @return void
+     */
+    public function requesting(Closure $callback)
+    {
+        $this->listen('requesting', $callback);
     }
 
     private $_isBooted = false;
@@ -86,29 +104,23 @@ class Form extends Action
      */
     protected function bootForm()
     {
-        if (!$this->_isBooted)
-        {
-            foreach (AttributeLoader::getClassAttributesOf($this, FormClassModifierAttributeContract::class) as $attr)
-            {
+        if (!$this->_isBooted) {
+            foreach (AttributeLoader::getClassAttributesOf($this, FormClassModifierAttributeContract::class) as $attr) {
                 $attr->registerFormClassModifier($this);
             }
 
-            foreach (get_class_methods($this) as $method)
-            {
+            foreach (get_class_methods($this) as $method) {
                 foreach (AttributeLoader::getMethodAttributesOf(
                     $this, $method, FormMethodModifierAttributeContract::class
-                ) as $attr)
-                {
+                ) as $attr) {
                     $attr->registerFormMethodModifier($this, $method);
                 }
             }
 
-            foreach ((new \ReflectionClass($this))->getProperties() as $property)
-            {
+            foreach ((new \ReflectionClass($this))->getProperties() as $property) {
                 foreach (AttributeLoader::getPropertyAttributesOf(
                     $this, $property->name, FormPropertyModifierAttributeContract::class
-                ) as $attr)
-                {
+                ) as $attr) {
                     $attr->registerFormPropertyModifier($this, $property->name);
                 }
             }
@@ -121,27 +133,6 @@ class Form extends Action
         }
     }
 
-    /**
-     * Required attribute
-     *
-     * @param string $name
-     * @return void
-     */
-    protected function attrRequired(string $name)
-    {
-        if (!$this->has($name))
-        {
-            throw new \InvalidArgumentException(
-                sprintf("%s::request() required attribute [%s]", static::class, $name)
-            );
-        }
-    }
-
-    protected function attrModel(string $name)
-    {
-        // TODO
-    }
-
 
     /**
      * Automatically detect input type from callback
@@ -149,19 +140,16 @@ class Form extends Action
      * @template T
      *
      * @param Closure $callback
-     * @param T       $default
+     * @param T $default
      * @return string|T
      */
     public static function detectInputTypeFromCallback(Closure $callback, $default = Input::class)
     {
-        if ($parameter = @(new \ReflectionFunction($callback))->getParameters()[0])
-        {
+        if ($parameter = @(new \ReflectionFunction($callback))->getParameters()[0]) {
             $type = $parameter->getType();
-            if ($type instanceof \ReflectionNamedType)
-            {
+            if ($type instanceof \ReflectionNamedType) {
                 $class = $type->getName();
-                if (is_a($class, Input::class, true))
-                {
+                if (is_a($class, Input::class, true)) {
                     return $class;
                 }
             }
@@ -198,21 +186,20 @@ class Form extends Action
      * Create input (requesting)
      *
      * @param string $name
-     * @param bool   $isCurrent
+     * @param bool $isCurrent
      * @return Input
      */
     public function createInput(string $name, bool $isCurrent = false): Input
     {
         $input = $this->emptyInput($name);
         $input->isCreatingMode = true;
-        if($isCurrent) $this->currentInput = $input;
+        if ($isCurrent) $this->currentInput = $input;
         $input->fire('initializing');
         $this->fire('initializingInput', $input);
-        if(method_exists($this, $name))
-        {
+        if (method_exists($this, $name)) {
             $this->invokeDynamic(
                 $name, [$input], [
-                    'form'  => $this,
+                    'form' => $this,
                 ]
             );
         }
@@ -228,18 +215,17 @@ class Form extends Action
      * Loading input (filling)
      *
      * @param string $name
-     * @param bool   $isCurrent
+     * @param bool $isCurrent
      * @return Input
      */
     public function loadInput(string $name, bool $isCurrent = true): Input
     {
         $input = $this->emptyInput($name);
         $input->isCreatingMode = false;
-        if($isCurrent) $this->currentInput = $input;
+        if ($isCurrent) $this->currentInput = $input;
         $input->fire('initializing');
         $this->fire('initializingInput', $input);
-        if (method_exists($this, $name))
-        {
+        if (method_exists($this, $name)) {
             $this->invokeDynamic(
                 $name, [$input], [
                     'form' => $this,
@@ -259,14 +245,12 @@ class Form extends Action
     public ?Input $currentInput = null;
 
     public array $loadedKeyMap;
-    public array $lastKeyMap;
 
     public function startForm()
     {
         $this->bootForm();
         $this->handleBy(
-            function()
-            {
+            function () {
                 $this->fire('start');
                 $this->first();
             }
@@ -277,8 +261,7 @@ class Form extends Action
     {
         $this->bootForm();
         $this->handleBy(
-            function()
-            {
+            function () {
                 $this->fire('step');
                 $this->pass();
                 $this->next();
@@ -318,19 +301,13 @@ class Form extends Action
 
     public function handleBy($callback)
     {
-        try
-        {
+        try {
             $callback();
             $this->storeStepHandler();
-        }
-        catch(FilterFailException $failException)
-        {
+        } catch (FilterFailException $failException) {
             return null;
-        }
-        catch(ForceActionFormException $forceAction)
-        {
-            if($forceAction->store)
-            {
+        } catch (ForceActionFormException $forceAction) {
+            if ($forceAction->store) {
                 $this->storeStepHandler();
             }
 
@@ -362,13 +339,11 @@ class Form extends Action
 
     public function next()
     {
-        if(!$this->currentInput)
-        {
+        if (!$this->currentInput) {
             $this->first();
         }
 
-        if($next = $this->findNextInput($this->currentInput->name))
-        {
+        if ($next = $this->findNextInput($this->currentInput->name)) {
             $this->goto($next);
         }
 
@@ -382,8 +357,7 @@ class Form extends Action
 
     public function before()
     {
-        if($this->currentInput && $next = $this->findNearBeforeInput($this->currentInput->name))
-        {
+        if ($this->currentInput && $next = $this->findNearBeforeInput($this->currentInput->name)) {
             $this->goto($next);
         }
 
@@ -397,8 +371,7 @@ class Form extends Action
 
     public function first()
     {
-        if($first = @$this->getPath()[0])
-        {
+        if ($first = @$this->getPath()[0]) {
             $this->goto($first);
         }
 
@@ -407,7 +380,7 @@ class Form extends Action
 
     public function hasAnyInput()
     {
-        return (bool) @$this->getPath();
+        return (bool)@$this->getPath();
     }
 
     /**
@@ -435,8 +408,7 @@ class Form extends Action
 
     public function error(string|FilterFailException $message)
     {
-        if($message instanceof FilterFailException)
-        {
+        if ($message instanceof FilterFailException) {
             $message = $this->formatFilterError($message);
         }
 
@@ -455,12 +427,13 @@ class Form extends Action
         $stepHandler->setForm($this);
         $stepHandler->attributes = $this->getOutAttributes() ?: null;
         $stepHandler->currentInput = $this->currentInput?->name;
-        $stepHandler->keyMap =
-            $this->currentInput?->isStoring() ?
-                $this->currentInput?->getKeyBuilder()->toStorableMap() :
-                null;
+        if ($this->currentInput?->isStoring()) {
+            $stepHandler->keyMap = $this->currentInput->toStorableKeyMap();
+        } else {
+            $stepHandler->keyMap = null;
+        }
         $stepHandler->class = static::class;
-        if($keep) $stepHandler->keep();
+        if ($keep) $stepHandler->keep($this->context);
 
         return $stepHandler;
     }
@@ -489,14 +462,13 @@ class Form extends Action
     {
         $input = $this->loadInput($name ?? $this->loadedInInput, true);
 
-        if($input->name == $this->loadedInInput)
-        {
-            $input->mergeStorableMap($this->loadedKeyMap);
+        if ($input->name == $this->loadedInInput) {
+            $input->loadInputKeyboardMap($this->loadedKeyMap);
         }
 
         $input->pass($update ?? $this->update);
         $this->fire('leave', $input);
-        $input->fire('leave');
+        $input->fire('leave'); // todo: move it to next() method
     }
 
     public function findInputIndex(string $name)
@@ -509,8 +481,7 @@ class Form extends Action
     {
         $index = $this->findInputIndex($name);
 
-        if($index === -1)
-        {
+        if ($index === -1) {
             return $this->findNearNextInput($name);
         }
 
@@ -520,14 +491,10 @@ class Form extends Action
     public function findNearNextInput(string $name)
     {
         $passed = false;
-        foreach($this->getInputs() as $key)
-        {
-            if($key == $name)
-            {
+        foreach ($this->getInputs() as $key) {
+            if ($key == $name) {
                 $passed = true;
-            }
-            elseif($passed && $this->findInputIndex($key) != -1)
-            {
+            } elseif ($passed && $this->findInputIndex($key) != -1) {
                 return $key;
             }
         }
@@ -538,14 +505,10 @@ class Form extends Action
     public function findNearBeforeInput(string $name)
     {
         $may = false;
-        foreach($this->getInputs() as $key)
-        {
-            if($key == $name)
-            {
+        foreach ($this->getInputs() as $key) {
+            if ($key == $name) {
                 break;
-            }
-            elseif($this->findInputIndex($key) != -1)
-            {
+            } elseif ($this->findInputIndex($key) != -1) {
                 $may = $key;
             }
         }
@@ -624,8 +587,7 @@ class Form extends Action
     public function addDefaultKey(Input $input)
     {
         $defaultFormKey = $input->enableDefaultFormKey ?? $this->defaultFormKey;
-        if($defaultFormKey)
-        {
+        if ($defaultFormKey) {
             $cancelKey = $input->enableCancelKey ?? $this->cancelKey;
             $skipKey = $input->enableSkipKey ?? $this->skipKey;
             $previousKey = $input->enablePreviousKey ?? $this->previousKey;
@@ -633,62 +595,58 @@ class Form extends Action
             $ineffectiveKey = $input->enableIneffectiveKey ?? $this->ineffectiveKey;
             $withoutChangesKey = $input->enableWithoutChangesKey ?? $this->withoutChangesKey;
 
-            if($cancelKey !== false)
-            {
+            $cancel = $skip = $prev = $ineffective = $withoutChanges = null;
+
+            if ($cancelKey !== false) {
                 $cancel = $input->keyAction(
                     $cancelKey === true ? __('mmb::form.key.cancel') : $cancelKey,
                     fn() => $this->cancel(),
                 );
             }
 
-            if($skipKey !== false)
-            {
+            if ($skipKey !== false) {
                 $skip = $input->keyAction(
                     $cancelKey === true ? __('mmb::form.key.skip') : $cancelKey,
                     fn($pass) => $pass(null),
                 );
             }
 
-            if($previousKey !== false && $this->hasBefore())
-            {
+            if ($previousKey !== false && $this->hasBefore()) {
                 $prev = $input->keyAction(
                     $previousKey === true ? __('mmb::form.key.previous') : $previousKey,
                     fn() => $this->before(),
                 );
             }
 
-            if($ineffectiveKey !== false)
-            {
+            if ($ineffectiveKey !== false) {
                 $ineffective = $input->keyAction(
                     $ineffectiveKey === true ? __('mmb::form.key.ineffective') : $ineffectiveKey,
-                    function () use ($input)
-                    {
+                    function () use ($input) {
                         unset($this->attributes[$input->name]);
                         $this->next();
                     },
                 );
             }
 
-            if($withoutChangesKey !== false)
-            {
+            if ($withoutChangesKey !== false) {
                 $withoutChanges = $input->keyAction(
                     $withoutChangesKey === true ? __('mmb::form.key.without-changes') : $withoutChangesKey,
-                    function () use ($input)
-                    {
+                    function () use ($input) {
                         unset($this->attributes[$input->name]);
                         $this->next();
                     },
                 );
             }
 
-            if($mirrorKey)
-                $input->addHeader([@$cancel, @$prev]);
-            $input->addHeader([@$skip, @$ineffective, @$withoutChanges]);
+            if ($mirrorKey) {
+                $input->header([[$cancel, $prev]]);
+            }
+            $input->header([[$skip, $ineffective, $withoutChanges]]);
 
-            if($mirrorKey)
-                $input->addFooter([@$skip, @$ineffective, @$withoutChanges]);
-
-            $input->addFooter([@$cancel, @$prev]);
+            if ($mirrorKey) {
+                $input->footer([[$skip, $ineffective, $withoutChanges]]);
+            }
+            $input->footer([[$cancel, $prev]]);
         }
     }
 
@@ -812,9 +770,8 @@ class Form extends Action
      */
     protected function onBack(bool $finished = true)
     {
-        if (!is_null($back = $this->get('#back')))
-        {
-            Caller::invokeAction($back, [], [
+        if (!is_null($back = $this->get('#back'))) {
+            Caller::invokeAction($this->context, $back, [], [
                 'form' => $this,
                 'finished' => $finished,
             ]);
@@ -832,7 +789,7 @@ class Form extends Action
      */
     protected function onBackDefault(bool $finished = true)
     {
-        Behavior::back($this->get('#backA') ?? static::class, dynamicArgs: [
+        Behavior::back($this->context, $this->get('#backA') ?? static::class, dynamicArgs: [
             'form' => $this,
             'finished' => $finished,
         ]);
@@ -870,13 +827,12 @@ class Form extends Action
      * Add back callback
      *
      * @param string|object|array $class
-     * @param string|null         $method
+     * @param string|null $method
      * @return $this
      */
     public function withBack(string|object|array $class, string $method = null)
     {
-        if (!is_array($class))
-        {
+        if (!is_array($class)) {
             $class = [is_object($class) ? get_class($class) : $class, $method];
         }
 

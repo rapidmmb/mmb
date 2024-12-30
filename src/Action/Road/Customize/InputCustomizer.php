@@ -56,10 +56,12 @@ class InputCustomizer
         return $this->rtl ?? $this->formCustomizer->isRtl();
     }
 
-    public function init(Station $station, InlineForm $form, Input $input)
+    public function init(InlineForm $form, Input $input)
     {
-        $station->fireSignAs($this->sign, $this->callback, $input, form: $form);
+        $this->sign->call($this->callback, $input, form: $form);
 
+        // todo
+        
         $schema = $this->fetchMultipleSchema($station, [$this, $this->formCustomizer], 'header', $input);
         $input->header($schema);
 

@@ -66,15 +66,15 @@ trait HasEvents
     /**
      * Fire an event
      *
-     * @param string|Closure|array $event
+     * @param string|Closure|array $__event
      * @param                      ...$args
      * @return mixed
      */
-    public function fire(string|Closure|array $event, ...$args)
+    public function fire(string|Closure|array $__event, ...$args)
     {
         return $this->fireWithOptions(
-            is_string($event) ? $this->getEventOptions($event) : [],
-            $event,
+            is_string($__event) ? $this->getEventOptions($__event) : [],
+            $__event,
             ...$args
         );
     }
@@ -82,45 +82,46 @@ trait HasEvents
     /**
      * Fire an event with options
      *
-     * @param array                $options
-     * @param string|Closure|array $event
+     * @param array                $__options
+     * @param string|Closure|array $__event
      * @param                      ...$args
      * @return mixed
      */
-    public function fireWithOptions(array $options, string|Closure|array $event, ...$args)
+    public function fireWithOptions(array $__options, string|Closure|array $__event, ...$args)
     {
-        if (is_array($event))
+        if (is_array($__event))
         {
             // Empty array -> Nothing
-            if (!$event)
+            if (!$__event)
                 return null;
 
             // Array<String> -> Call multiple events
-            if (is_string(head($event)))
+            if (is_string(head($__event)))
             {
                 $result = [];
-                foreach ($event as $ev)
+                foreach ($__event as $ev)
                 {
-                    $result[] = $this->fireWithOptions($options, $ev, ...$args);
+                    $result[] = $this->fireWithOptions($__options, $ev, ...$args);
                 }
 
                 return $result;
             }
         }
 
-        if ($event instanceof Closure)
+        if ($__event instanceof Closure)
         {
-            $event = [$event];
+            $__event = [$__event];
         }
 
         [$normalArgs, $dynamicArgs] = Caller::splitArguments($args);
 
         return EventCaller::fire(
-            $options,
-            is_array($event) ? $event : $this->_listened_events[$event] ?? [],
+            $this->context,
+            $__options,
+            is_array($__event) ? $__event : $this->_listened_events[$__event] ?? [],
             $normalArgs,
-            $dynamicArgs + (is_string($event) ? $this->getEventDynamicArgs($event) : $this->getEventDynamicArgs('*')),
-            is_string($event) && method_exists($this, $fn = 'on' . $event) ? $this->$fn(...) : null,
+            $dynamicArgs + (is_string($__event) ? $this->getEventDynamicArgs($__event) : $this->getEventDynamicArgs('*')),
+            is_string($__event) && method_exists($this, $fn = 'on' . $__event) ? $this->$fn(...) : null,
         );
     }
 

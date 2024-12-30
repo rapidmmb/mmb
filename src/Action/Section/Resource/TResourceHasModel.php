@@ -3,7 +3,6 @@
 namespace Mmb\Action\Section\Resource;
 
 use Illuminate\Database\Eloquent\Model;
-use Mmb\Support\Db\ModelFinder;
 
 trait TResourceHasModel
 {
@@ -27,14 +26,14 @@ trait TResourceHasModel
             throw new \TypeError(sprintf("Expected model of type [%s], given [%s]", $modelClass, smartTypeOf($model)));
         }
 
-        return ModelFinder::find($modelClass, $model, withTrashed: true, orFail: true);
+        return $this->context->finder->find($modelClass, $model, withTrashed: true, orFail: true);
     }
 
     public function getIdFrom($record)
     {
         if ($record instanceof Model)
         {
-            ModelFinder::store($record);
+            $this->context->finder->store($record);
             return $record->getKey();
         }
 

@@ -4,6 +4,7 @@ namespace Mmb\Support\Action;
 
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
@@ -13,10 +14,16 @@ class ActionCallback implements Arrayable
     public array $withArgs = [];
 
     public function __construct(
-        public $action,
+        public       $action,
         public array $defaultArgs = [],
     )
     {
+    }
+
+    public function addArgs(array $args)
+    {
+        array_push($this->defaultArgs, ...$args);
+        return $this;
     }
 
     /**
@@ -24,7 +31,7 @@ class ActionCallback implements Arrayable
      *
      * @return bool
      */
-    public function isNamed()
+    public function isNamed(): bool
     {
         return is_string($this->action);
     }
@@ -34,7 +41,7 @@ class ActionCallback implements Arrayable
      *
      * @return bool
      */
-    public function isStorable()
+    public function isStorable(): bool
     {
         return is_string($this->action) || is_array($this->action);
     }
@@ -44,7 +51,7 @@ class ActionCallback implements Arrayable
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->defaultArgs ? [$this->action, $this->defaultArgs] : [$this->action];
     }
@@ -53,10 +60,18 @@ class ActionCallback implements Arrayable
      * Make from array
      *
      * @param array $array
-     * @return static
+     * @return ?static
      */
-    public static function fromArray(array $array)
+    public static function fromArray(array $array): ?static
     {
+        if (count($array) == 0) {
+            return null;
+        }
+
+        if (!is_string($array[0])) {
+            return null;
+        }
+
         return count($array) == 1 ? new static($array[0]) : new static($array[0], $array[1]);
     }
 
@@ -76,39 +91,34 @@ class ActionCallback implements Arrayable
      * Invoke method
      *
      * @param        $object
-     * @param Update $update
-     * @param array  $args
-     * @param array  $dynamicArgs
+     * @param Context $context
+     * @param array $args
+     * @param array $dynamicArgs
      * @return mixed
      */
-    public function invoke($object, Update $update, array $args, array $dynamicArgs)
+    public function invoke($object, Context $context, array $args, array $dynamicArgs)
     {
         $args = [...$this->defaultArgs, ...$this->withArgs, ...$args];
 
         // String action
-        if(is_string($this->action))
-        {
-            if(str_contains($this->action, '@'))
-            {
+        if (is_string($this->action)) {
+            if (str_contains($this->action, '@')) {
                 [$class, $method] = explode($this->action, '@', 2);
-                return $class::make($update)->invokeDynamic($method, $args, $dynamicArgs);
+                return $class::makeByContext($context)->invokeDynamic($method, $args, $dynamicArgs);
             }
 
             return $object->invokeDynamic($this->action, $args, $dynamicArgs);
         }
 
         // Array action
-        if(is_array($this->action))
-        {
+        if (is_array($this->action)) {
             [$class, $method] = $this->action;
-            return $class::make($update)->invokeDynamic($method, $args, $dynamicArgs);
+            return $class::makeByContext($context)->invokeDynamic($method, $args, $dynamicArgs);
         }
 
         // Closure action
-        if($this->action instanceof Closure)
-        {
-            $fn = $this->action;
-            return Caller::invoke($fn, $args, $dynamicArgs);
+        if ($this->action instanceof Closure) {
+            return Caller::invoke($context, $this->action, $args, $dynamicArgs);
         }
 
         throw new \TypeError(sprintf("Invalid action type, given [%s]", smartTypeOf($this->action)));

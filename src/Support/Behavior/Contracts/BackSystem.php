@@ -2,9 +2,11 @@
 
 namespace Mmb\Support\Behavior\Contracts;
 
+use Mmb\Context;
+
 interface BackSystem
 {
 
-    public function back(array $args, array $dynamicArgs) : void;
+    public function back(Context $context, array $args, array $dynamicArgs) : void;
 
 }

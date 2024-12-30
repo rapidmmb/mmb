@@ -96,8 +96,7 @@ class ShortSerialize
      */
     protected static function serializeAny($object, \WeakMap $stack)
     {
-        switch (gettype($object))
-        {
+        switch (gettype($object)) {
             case 'integer':
                 return 'i:' . $object . ';';
 
@@ -114,13 +113,11 @@ class ShortSerialize
                 return static::serializeArray($object, $stack);
 
             case 'object':
-                if ($object instanceof BackedEnum)
-                {
+                if ($object instanceof BackedEnum) {
                     return static::serializeObject($object, $stack);
                 }
 
-                if ($stack->offsetExists($object))
-                {
+                if ($stack->offsetExists($object)) {
                     return 'r:' . $stack->offsetGet($object) . ';';
                 }
 
@@ -135,14 +132,13 @@ class ShortSerialize
     /**
      * Serialize a class value
      *
-     * @param object   $object
+     * @param object $object
      * @param \WeakMap $stack
      * @return string
      */
     protected static function serializeObject(object $object, \WeakMap $stack)
     {
-        if ($object instanceof Model)
-        {
+        if ($object instanceof Model) {
             $string = serialize($object);
             return 'p:' . strlen($string) . ':' . $string;
         }
@@ -150,21 +146,15 @@ class ShortSerialize
         $class = get_class($object);
         $type = array_search($class, static::$aliases) ?: $class;
 
-        if ($object instanceof BackedEnum)
-        {
+        if ($object instanceof BackedEnum) {
             return "e:$type:" . static::serializeAny($object->value, $stack);
         }
 
-        if ($object instanceof Shortable)
-        {
+        if ($object instanceof Shortable) {
             $data = $object->shortSerialize();
-        }
-        elseif ($object instanceof \Carbon\Carbon)
-        {
+        } elseif ($object instanceof \Carbon\Carbon) {
             $data = ['t' => $object->timestamp];
-        }
-        else
-        {
+        } else {
             $data = [];
             static::exportObjectData(
                 $object,
@@ -177,8 +167,7 @@ class ShortSerialize
         }
 
         $r = '';
-        foreach ($data as $key => $value)
-        {
+        foreach ($data as $key => $value) {
             $r .= $key . '=';
             $r .= static::serializeAny($value, $stack);
         }
@@ -190,50 +179,39 @@ class ShortSerialize
     /**
      * Export object properties
      *
-     * @param object           $object
+     * @param object $object
      * @param \ReflectionClass $class
-     * @param array            $data
+     * @param array $data
      * @return void
      */
     protected static function exportObjectData(object $object, \ReflectionClass $class, array &$data, ?array $whitelist, ?array $blacklist, ?array $aliases)
     {
-        foreach ($class->getProperties() as $property)
-        {
-            if ($property->isInitialized($object))
-            {
-                if ($whitelist && !in_array($property->name, $whitelist) && !in_array($class->name . '.' . $property->name, $whitelist))
-                {
+        foreach ($class->getProperties() as $property) {
+            if ($property->isInitialized($object)) {
+                if ($whitelist && !in_array($property->name, $whitelist) && !in_array($class->name . '.' . $property->name, $whitelist)) {
                     continue;
                 }
 
-                if ($blacklist && (in_array($property->name, $blacklist) || in_array($class->name . '.' . $property->name, $blacklist)))
-                {
+                if ($blacklist && (in_array($property->name, $blacklist) || in_array($class->name . '.' . $property->name, $blacklist))) {
                     continue;
                 }
 
-                if ($aliases && (($key = array_search($class->name . '.' . $property->name, $aliases)) !== false || ($key = array_search($property->name, $aliases)) !== false))
-                {
+                if ($aliases && (($key = array_search($class->name . '.' . $property->name, $aliases)) !== false || ($key = array_search($property->name, $aliases)) !== false)) {
                     // Alias applied
-                }
-                elseif ($property->isPrivate())
-                {
+                } elseif ($property->isPrivate()) {
                     $key = array_search($class->name, static::$aliases) ?: $class->name;
                     $key .= '.' . $property->name;
-                }
-                else
-                {
+                } else {
                     $key = $property->name;
                 }
 
-                if (!array_key_exists($key, $data))
-                {
+                if (!array_key_exists($key, $data)) {
                     $data[$key] = $property->getValue($object);
                 }
             }
         }
 
-        if ($parent = $class->getParentClass())
-        {
+        if ($parent = $class->getParentClass()) {
             static::exportObjectData($object, $parent, $data, $whitelist, $blacklist, $aliases);
         }
     }
@@ -241,40 +219,30 @@ class ShortSerialize
     /**
      * Serialize an array
      *
-     * @param array    $array
+     * @param array $array
      * @param \WeakMap $stack
      * @return string
      */
     protected static function serializeArray(array $array, \WeakMap $stack)
     {
-        if (array_is_list($array))
-        {
+        if (array_is_list($array)) {
             $r = '';
-            foreach ($array as $value)
-            {
+            foreach ($array as $value) {
                 $r .= static::serializeAny($value, $stack);
             }
 
             $count = count($array);
             return "l:$count:$r";
-        }
-        else
-        {
+        } else {
             $i = 0;
             $r = '';
-            foreach ($array as $key => $value)
-            {
-                if ($i === $key)
-                {
+            foreach ($array as $key => $value) {
+                if ($i === $key) {
                     $i++;
                     $r .= '+' . static::serializeAny($value, $stack);
-                }
-                elseif (is_int($key))
-                {
+                } elseif (is_int($key)) {
                     $r .= '#' . $key . '>' . static::serializeAny($value, $stack);
-                }
-                else
-                {
+                } else {
                     $r .= '&' . strlen($key) . '>' . $key . static::serializeAny($value, $stack);
                 }
             }
@@ -286,12 +254,9 @@ class ShortSerialize
 
     public static function tryUnserialize(string $value)
     {
-        try
-        {
+        try {
             return static::unserialize($value);
-        }
-        catch (\Throwable $e)
-        {
+        } catch (\Throwable $e) {
             return null;
         }
     }
@@ -313,17 +278,15 @@ class ShortSerialize
      * Fetch next object
      *
      * @param string $value
-     * @param int    $ptr
-     * @param array  $stack
+     * @param int $ptr
+     * @param array $stack
      * @return mixed
      */
     protected static function fetchAny(string $value, int &$ptr, array &$stack)
     {
         // Fixed values
-        if (@$value[$ptr + 1] == ';')
-        {
-            switch (@$value[$ptr])
-            {
+        if (@$value[$ptr + 1] == ';') {
+            switch (@$value[$ptr]) {
                 case 'T':
                     $ptr += 2;
                     return true;
@@ -341,8 +304,7 @@ class ShortSerialize
         // Check type
         $type = static::fetch($value, $ptr, ':');
 
-        switch ($type)
-        {
+        switch ($type) {
             // Numeric value
             case 'i':
             case 'd':
@@ -361,8 +323,7 @@ class ShortSerialize
                 $count = static::fetchNumber($value, $ptr, ':');
 
                 $list = [];
-                for ($i = 0; $i < $count; $i++)
-                {
+                for ($i = 0; $i < $count; $i++) {
                     $list[] = static::fetchAny($value, $ptr, $stack);
                 }
 
@@ -373,10 +334,8 @@ class ShortSerialize
                 $count = static::fetchNumber($value, $ptr, ':');
 
                 $list = [];
-                for ($i = 0; $i < $count; $i++)
-                {
-                    switch (@$value[$ptr++])
-                    {
+                for ($i = 0; $i < $count; $i++) {
+                    switch (@$value[$ptr++]) {
                         case '+':
                             $list[] = static::fetchAny($value, $ptr, $stack);
                             break;
@@ -404,26 +363,23 @@ class ShortSerialize
                 $type = static::fetch($value, $ptr, ':');
                 $class = static::$aliases[$type] ?? $type;
 
-                if (!class_exists($class) || !is_a($class, BackedEnum::class, true))
-                {
+                if (!class_exists($class) || !is_a($class, BackedEnum::class, true)) {
                     return null;
                 }
 
                 return $class::tryFrom(
-                    static::fetchAny($value, $ptr, $stack)
+                    static::fetchAny($value, $ptr, $stack),
                 );
 
 
             // Object un-serialization
             default:
                 $class = static::$aliases[$type] ?? $type;
-                if (!class_exists($class))
-                {
+                if (!class_exists($class)) {
                     return null;
                 }
 
-                if (is_a($class, Carbon::class, true))
-                {
+                if (is_a($class, Carbon::class, true)) {
                     $data = static::fetchData($value, $ptr, $stack);
                     $carbon = new $class($data['t'] ?? null);
                     $stack[] = $carbon;
@@ -437,46 +393,32 @@ class ShortSerialize
 
                 $data = static::fetchData($value, $ptr, $stack);
 
-                if ($object instanceof Shortable)
-                {
+                if ($object instanceof Shortable) {
                     $object->shortUnserialize($data);
-                }
-                else
-                {
+                } else {
                     $aliases = $object instanceof ShortableAliases ? $object->getShortAliases() : null;
 
-                    foreach ($data as $key => $val)
-                    {
-                        try
-                        {
-                            if ($aliases && array_key_exists($key, $aliases))
-                            {
+                    foreach ($data as $key => $val) {
+                        try {
+                            if ($aliases && array_key_exists($key, $aliases)) {
                                 $key = $aliases[$key];
                             }
 
-                            if (str_contains($key, '.'))
-                            {
-                                try
-                                {
+                            if (str_contains($key, '.')) {
+                                try {
                                     [$target, $key] = explode('.', $key, 2);
                                     $target = static::$aliases[$target] ?? $target;
                                     $property = new \ReflectionProperty($target, $key);
-                                }
-                                catch (\ReflectionException $e)
-                                {
+                                } catch (\ReflectionException $e) {
                                     $property = $ref->getProperty($key);
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 $property = $ref->getProperty($key);
                             }
 
                             $property->setAccessible(true);
                             $property->setValue($object, $val);
-                        }
-                        catch (\ReflectionException $e)
-                        {
+                        } catch (\ReflectionException $e) {
                             $object->{$key} = $val;
                         }
                     }
@@ -490,15 +432,14 @@ class ShortSerialize
      * Fetch next value
      *
      * @param string $value
-     * @param int    $ptr
+     * @param int $ptr
      * @param string $breaker
      * @return string
      */
     protected static function fetch(string $value, int &$ptr, string $breaker)
     {
         $text = '';
-        for (; $ptr < strlen($value); $ptr++)
-        {
+        for (; $ptr < strlen($value); $ptr++) {
             if ($value[$ptr] == $breaker) break;
             $text .= $value[$ptr];
         }
@@ -511,7 +452,7 @@ class ShortSerialize
      * Fetch next number
      *
      * @param string $value
-     * @param int    $ptr
+     * @param int $ptr
      * @param string $breaker
      * @return int
      */
@@ -524,7 +465,7 @@ class ShortSerialize
      * Fetch next string
      *
      * @param string $value
-     * @param int    $ptr
+     * @param int $ptr
      * @param string $sep
      * @return string
      */
@@ -541,16 +482,15 @@ class ShortSerialize
      * Fetch object data
      *
      * @param string $value
-     * @param int    $ptr
+     * @param int $ptr
      * @return array
      */
-    protected static function fetchData(string $value, int &$ptr, array &$stack) : array
+    protected static function fetchData(string $value, int &$ptr, array &$stack): array
     {
         $count = static::fetchNumber($value, $ptr, ':');
 
         $data = [];
-        for ($i = 0; $i < $count; $i++)
-        {
+        for ($i = 0; $i < $count; $i++) {
             $data[static::fetch($value, $ptr, '=')]
                 = static::fetchAny($value, $ptr, $stack);
         }

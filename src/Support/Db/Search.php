@@ -7,6 +7,9 @@ use Spatie\Searchable\Search as BaseSearch;
 use Spatie\Searchable\SearchAspect;
 use Spatie\Searchable\SearchResultCollection;
 
+/**
+ * @deprecated
+ */
 class Search extends BaseSearch
 {
 

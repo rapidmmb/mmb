@@ -3,12 +3,14 @@
 namespace Mmb\Action\Section\Attributes;
 
 use Attribute;
+use Mmb\Action\Action;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Section\Controllers\Attributes\OnCallback;
 use Mmb\Action\Section\Controllers\QueryMatcher;
 use Mmb\Action\Section\Controllers\QueryMatchPattern;
 use Mmb\Action\Section\Dialog;
 use Mmb\Action\Section\Section;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
@@ -23,10 +25,7 @@ class FixedDialog extends OnCallback
 
     protected static $matchers = [];
 
-    /**
-     * @return QueryMatcher
-     */
-    public function getMatcher(string $class, string $method)
+    public function getMatcher(string $class, string $method): QueryMatcher
     {
         $pattern = ($this->full ? '' : QueryMatcher::getClassId($class) . ':') . $this->pattern;
 
@@ -38,24 +37,19 @@ class FixedDialog extends OnCallback
         return static::$matchers[$pattern];
     }
 
-    public function fire(QueryMatchPattern $pattern, string $class, string $method)
+    public function fire(Context $context, QueryMatchPattern $pattern, string $class, string $method)
     {
         [$args, $within] = Caller::splitArguments($pattern->getVisibleMatches());
 
-        $dialog = new Dialog;
+        $dialog = new Dialog($context);
         $dialog->loadFromData($within);
 
-        /** @var InlineLoadRegister $dialogLoad */
-        $dialogLoad = $class::make()->loadInlineRegister($dialog, $method);
+        /** @var Action $action */
+        $action = $class::makeByContext($context);
+        $dialogLoad = $action->loadInlineRegister($dialog, $method);
         $dialogLoad->register();
 
-        $dialog->makeReady();
-        // Dialog::handleFrom();
-        $dialog->fireAction(
-            $dialog->findActionFromString('D' . $pattern->getMatch('_action')),
-            app(Update::class),
-            $args
-        );
+        $dialog->fireFixedClickedKey($pattern->getMatch('_action'), $args);
     }
 
 }

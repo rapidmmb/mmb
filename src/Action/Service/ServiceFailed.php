@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Service;
 
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
 
@@ -16,11 +17,11 @@ class ServiceFailed extends \Exception implements CallableException
         parent::__construct($message, $code, $previous);
     }
 
-    public function invoke(Update $update)
+    public function invoke(Context $context)
     {
         if ($this->failMessage)
         {
-            $update->response($this->failMessage);
+            $context->update->response($this->failMessage);
         }
     }
 

@@ -7,9 +7,8 @@ use Mmb\Action\Section\Controllers\Attributes\OnCallback;
 use Mmb\Action\Section\Controllers\CallbackControl;
 use Mmb\Action\Section\Controllers\QueryMatcher;
 use Mmb\Action\Section\Section;
+use Mmb\Context;
 use Mmb\Support\Db\Attributes\FindById;
-use Mmb\Support\Db\FinderFactory;
-use Mmb\Support\Db\ModelFinder;
 use Mmb\Tests\TestCase;
 
 class CallbackControlTest extends TestCase
@@ -17,7 +16,7 @@ class CallbackControlTest extends TestCase
 
     public function test_create_key()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -32,7 +31,7 @@ class CallbackControlTest extends TestCase
 
     public function test_with_arguments()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -47,7 +46,7 @@ class CallbackControlTest extends TestCase
 
     public function test_auto_match()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -62,7 +61,7 @@ class CallbackControlTest extends TestCase
 
     public function test_auto_match_with_arguments()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -79,7 +78,7 @@ class CallbackControlTest extends TestCase
 
     public function test_auto_match_invokes()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -98,7 +97,7 @@ class CallbackControlTest extends TestCase
 
     public function test_auto_match_has_different_queries_for_each_class()
     {
-        $sectionA = new class extends Section
+        $sectionA = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -112,7 +111,7 @@ class CallbackControlTest extends TestCase
             {
             }
         };
-        $sectionB = new class extends Section
+        $sectionB = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -133,7 +132,7 @@ class CallbackControlTest extends TestCase
 
     public function test_auto_match_has_same_queries_when_using_full_mode()
     {
-        $sectionA = new class extends Section
+        $sectionA = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -142,7 +141,7 @@ class CallbackControlTest extends TestCase
             {
             }
         };
-        $sectionB = new class extends Section
+        $sectionB = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -157,7 +156,7 @@ class CallbackControlTest extends TestCase
 
     public function test_auto_match_customized()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -177,7 +176,7 @@ class CallbackControlTest extends TestCase
 
     public function test_auto_match_customized_with_name_parameter()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -197,7 +196,7 @@ class CallbackControlTest extends TestCase
 
     public function test_model_argument_with_find_attribute()
     {
-        $section = new class extends Section
+        $section = new class($this->context) extends Section
         {
             use CallbackControl;
 
@@ -208,8 +207,7 @@ class CallbackControlTest extends TestCase
             }
         };
 
-        app()->singleton(FinderFactory::class);
-        ModelFinder::store(new _CallbackControlTestModel([
+        $this->context->finder->store(new _CallbackControlTestModel([
             'id' => 10,
         ]));
 

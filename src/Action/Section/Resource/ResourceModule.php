@@ -22,7 +22,7 @@ class ResourceModule extends Section
         public readonly string $name,
     )
     {
-        parent::__construct(null);
+        parent::__construct($maker->section->context);
 
         // Back key
         $this->addBackKey(
@@ -47,7 +47,7 @@ class ResourceModule extends Section
         if($action instanceof Closure)
         {
             $dynamicArgs += $this->getDynArgs();
-            Caller::invoke($action, $args, $dynamicArgs);
+            Caller::invoke($this->context, $action, $args, $dynamicArgs);
         }
         elseif(!$action)
         {
@@ -173,7 +173,7 @@ class ResourceModule extends Section
                     $dyn[$key] = $v;
             }
 
-            return Caller::invoke($value, $arr, $dyn);
+            return Caller::invoke($this->context, $value, $arr, $dyn);
         }
 
         return $value;
@@ -209,14 +209,14 @@ class ResourceModule extends Section
 
 
 
-    public function menu(string $name, ...$args)
+    public function menu(string $__name, ...$__args)
     {
-        return $this->maker->section->menu($name, ...$args);
+        return $this->maker->section->menu($__name, ...$__args);
     }
 
-    public function inlineForm(string $name, ...$args)
+    public function inlineForm(string $__name, ...$__args)
     {
-        return $this->maker->section->inlineForm($name, ...$args);
+        return $this->maker->section->inlineForm($__name, ...$__args);
     }
 
 

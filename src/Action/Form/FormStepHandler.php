@@ -8,6 +8,7 @@ use Mmb\Action\Memory\Attributes\StepHandlerSerialize as Serialize;
 use Mmb\Action\Memory\Attributes\StepHandlerShortClass as ShortClass;
 use Mmb\Action\Memory\Attributes\StepHandlerInstead as Instead;
 use Mmb\Action\Memory\StepHandler;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FormStepHandler extends StepHandler
@@ -37,18 +38,18 @@ class FormStepHandler extends StepHandler
     /**
      * Load and cache the form
      *
-     * @param Update $update
+     * @param Context $context
      * @return Form|null
      */
-    protected function getForm(Update $update) : ?Form
+    protected function getForm(Context $context) : ?Form
     {
         if (!$this->isLoadedForm)
         {
             $this->isLoadedForm = true;
-            if ($this->class && is_a($this->class, Form::class, true))
+            if ($this->class && class_exists($this->class) && is_a($this->class, Form::class, true))
             {
                 /** @var Form $form */
-                $form = new $this->class($update);
+                $form = $this->class::makeByContext($context);
                 $form->loadStepHandler($this);
 
                 $this->loadedForm = $form;
@@ -75,9 +76,9 @@ class FormStepHandler extends StepHandler
     }
 
 
-    public function handle(Update $update) : void
+    public function handle(Context $context, Update $update) : void
     {
-        if ($form = $this->getForm($update))
+        if ($form = $this->getForm($context))
         {
             $form->continueForm();
             return;
@@ -86,18 +87,18 @@ class FormStepHandler extends StepHandler
         $update->skipHandler();
     }
 
-    public function onBegin(Update $update) : void
+    public function onBegin(Context $context, Update $update) : void
     {
-        $this->getForm($update)?->beginUpdate();
+        $this->getForm($context)?->beginUpdate();
     }
 
-    public function onEnd(Update $update) : void
+    public function onEnd(Context $context, Update $update) : void
     {
-        $this->getForm($update)?->endUpdate();
+        $this->getForm($context)?->endUpdate();
     }
 
-    public function onLost(Update $update)
+    public function onLost(Context $context, Update $update)
     {
-        $this->getForm($update)?->lost();
+        $this->getForm($context)?->lost();
     }
 }

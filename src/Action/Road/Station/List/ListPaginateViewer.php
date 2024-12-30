@@ -8,6 +8,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Mmb\Action\Section\Menu;
 use Mmb\Support\Format\KeyFormatter;
 use Mmb\Support\Format\KeyFormatterBuilder;
+use Mmb\Support\KeySchema\KeyboardInterface;
 
 class ListPaginateViewer extends ListViewer
 {
@@ -23,16 +24,16 @@ class ListPaginateViewer extends ListViewer
 
     public LengthAwarePaginator $paginator;
 
-    public function bootPagination(Builder $query) : bool
+    public function bootPagination(Builder $query): bool
     {
         $perPage =
             $this->perPage instanceof Closure ?
-                fn ($total) => $this->station->fireSign($this->perPage, $total) :
+                fn($total) => $this->station->call($this->perPage, $total) :
                 $this->perPage;
 
         $columns =
             $this->columns instanceof Closure ?
-                $this->station->fireSign($this->columns) :
+                $this->station->call($this->columns) :
                 $this->columns;
 
         $this->paginator = $query->paginate($perPage, $columns, page: $this->station->page);
@@ -40,48 +41,47 @@ class ListPaginateViewer extends ListViewer
         $this->station->mergeDynamicArgs(
             [
                 'paginator' => $this->paginator,
-                'page'      => $this->station->page,
-                'perPage'   => $this->paginator->perPage(),
-                'total'     => $this->paginator->total(),
-                'lastPage'  => $this->paginator->lastPage(),
-            ]
+                'page' => $this->station->page,
+                'perPage' => $this->paginator->perPage(),
+                'total' => $this->paginator->total(),
+                'lastPage' => $this->paginator->lastPage(),
+            ],
         );
 
         return $this->paginator->isNotEmpty();
     }
 
-    public function renderList(Menu $menu) : KeyFormatterBuilder
+    public function renderList(KeyboardInterface $keyboard): KeyFormatterBuilder
     {
         return KeyFormatter::for(
-            function () use ($menu)
-            {
-                foreach ($this->paginator as $item)
-                {
+            function () use ($keyboard) {
+                $items = $this->station->sign->items->getVisibleItems($this->paginator->all());
+
+                foreach ($items as $item) {
                     yield [
-                        $this->station->sign->getItemKey($this->station, $menu, $item),
+                        $item->key->makeKey($keyboard),
                     ];
                 }
-            }
+            },
         );
     }
 
-    public function renderPaginator(Menu $menu) : KeyFormatterBuilder
+    public function renderPaginator(KeyboardInterface $keyboard): KeyFormatterBuilder
     {
         return KeyFormatter::for(
             [
-                $menu->paginateRow(
+                $keyboard->paginateRow(
                     $this->paginator,
-                    function (int $page)
-                    {
+                    function (int $page) {
                         $this->station->page = $page;
                         $this->station->fireAction('main');
-                    }
+                    },
                 ),
-            ]
+            ],
         );
     }
 
-    public function renderTitleKeyLabel() : ?string
+    public function renderTitleKeyLabel(): ?string
     {
         return sprintf("صفحه %s از %s", $this->paginator->currentPage(), $this->paginator->lastPage());
     }

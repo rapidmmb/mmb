@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Traits\Macroable;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class Filter extends FilterRule
@@ -36,8 +37,7 @@ class Filter extends FilterRule
      */
     public function add($rule)
     {
-        if($rule instanceof Closure)
-        {
+        if ($rule instanceof Closure) {
             $rule = new Rules\FilterCallback($rule);
         }
 
@@ -52,19 +52,14 @@ class Filter extends FilterRule
      */
     public function and($rule)
     {
-        if($rule instanceof Closure)
-        {
+        if ($rule instanceof Closure) {
             $rule($rule = Filter::make());
         }
 
-        if(!($rule instanceof FilterRule))
-        {
-            if(class_exists($class = static::class . "\\Rules\\Be" . ucfirst($rule)))
-            {
+        if (!($rule instanceof FilterRule)) {
+            if (class_exists($class = static::class . "\\Rules\\Be" . ucfirst($rule))) {
                 $rule = new $class;
-            }
-            else
-            {
+            } else {
                 throw new \InvalidArgumentException(
                     sprintf(
                         "Filter rule should be [%s], given [%s]",
@@ -88,12 +83,11 @@ class Filter extends FilterRule
      * @param null|FilterRule|string|Closure(FilterRule): FilterRule $rule
      * @return $this
      */
-    public function or($rule = null)
+    public function or(null|FilterRule|string|Closure $rule = null)
     {
         $this->filters[] = [];
 
-        if($rule !== null)
-        {
+        if ($rule !== null) {
             $this->and($rule);
         }
 
@@ -115,49 +109,42 @@ class Filter extends FilterRule
     /**
      * Pass filter
      *
+     * @param Context $context
      * @param Update $update
-     * @param        $value
+     * @param &$value
      * @return void
      */
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
         $this->lastUpdate = $update;
         $fails = [];
 
         // OR group
-        foreach($this->filters as $group)
-        {
-            try
-            {
+        foreach ($this->filters as $group) {
+            try {
                 $initValue = $value;
 
                 // AND group
-                foreach($group as $rule)
-                {
-                    $rule->pass($update, $initValue);
+                foreach ($group as $rule) {
+                    $rule->pass($context, $update, $initValue);
                 }
 
                 // Passed
                 $value = $initValue;
                 return;
-            }
-            catch(FilterFailException $fail)
-            {
+            } catch (FilterFailException $fail) {
                 $fails[] = $fail;
             }
         }
 
         // Failed
-        if($fails)
-        {
-            for($i = 0; $i < count($fails) - 1; $i++)
-            {
+        if ($fails) {
+            for ($i = 0; $i < count($fails) - 1; $i++) {
                 $fails[$i]->next = $fails[$i + 1];
             }
 
             // Error callback
-            if($fn = $this->onError)
-            {
+            if ($fn = $this->onError) {
                 $value = $fn(
                     isset($this->errorImploding) ?
                         $fails[0]->implode($this->errorImploding) :
@@ -167,8 +154,7 @@ class Filter extends FilterRule
             }
 
             // Exception callback
-            if($fn = $this->catchError)
-            {
+            if ($fn = $this->catchError) {
                 $value = $fn($fails[0]);
                 return;
             }
@@ -180,14 +166,16 @@ class Filter extends FilterRule
     /**
      * Apply filters and return value
      *
+     * @param Context $context
      * @param Update $update
      * @return mixed
+     * @throws FilterFailException
      */
-    public function filter(Update $update)
+    public function filter(Context $context, Update $update)
     {
         $value = $update;
 
-        $this->pass($update, $value);
+        $this->pass($context, $update, $value);
 
         return $value;
     }
@@ -201,7 +189,7 @@ class Filter extends FilterRule
      * Set error callback
      *
      * @param Closure(string $description): mixed $callback
-     * @param string|null                         $implode
+     * @param string|null $implode
      * @return $this
      */
     public function error(Closure $callback, string $implode = null)
@@ -242,8 +230,7 @@ class Filter extends FilterRule
      */
     public function catchDefault()
     {
-        return $this->catch(function(FilterFailException $exception)
-        {
+        return $this->catch(function (FilterFailException $exception) {
             static::handleGlobally($exception, $this->lastUpdate);
         });
     }
@@ -380,7 +367,7 @@ class Filter extends FilterRule
      * @param mixed $numberError
      * @param mixed $textError
      * @param mixed $messageError
-     * @param bool  $unsigned
+     * @param bool $unsigned
      * @return $this
      */
     public function int($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
@@ -407,7 +394,7 @@ class Filter extends FilterRule
      * @param mixed $numberError
      * @param mixed $textError
      * @param mixed $messageError
-     * @param bool  $unsigned
+     * @param bool $unsigned
      * @return $this
      */
     public function number($numberError = null, $textError = null, $messageError = null, bool $unsigned = false)
@@ -528,9 +515,9 @@ class Filter extends FilterRule
     /**
      * Filter regex pattern
      *
-     * @param string     $pattern
+     * @param string $pattern
      * @param int|string $result
-     * @param mixed      $error
+     * @param mixed $error
      * @return $this
      */
     public function regex(string $pattern, int|string $result = '', $error = null)
@@ -550,8 +537,8 @@ class Filter extends FilterRule
     public function forwarded(
         bool $fromUser = true,
         bool $fromChannel = true,
-        $message = null,
-        $messageError = null
+             $message = null,
+             $messageError = null
     )
     {
         return $this->add(new Rules\FilterForwarded(
@@ -613,8 +600,8 @@ class Filter extends FilterRule
     /**
      * Filter the item exists in table
      *
-     * @param string       $table
-     * @param string|null  $column
+     * @param string $table
+     * @param string|null $column
      * @param Closure|null $query
      * @param              $message
      * @return $this
@@ -627,11 +614,11 @@ class Filter extends FilterRule
     /**
      * Filter the item not exists in table
      *
-     * @param string       $table
-     * @param string|null  $column
-     * @param mixed        $except
+     * @param string $table
+     * @param string|null $column
+     * @param mixed $except
      * @param Closure|null $query
-     * @param null         $message
+     * @param null $message
      * @return $this
      */
     public function unique(string $table, ?string $column = null, $except = null, ?Closure $query = null, $message = null)
@@ -663,12 +650,9 @@ class Filter extends FilterRule
     public static function handleGlobally(FilterFailException $exception, Update $update)
     {
         $handler = static::$globalFailHandler;
-        if (is_string($handler))
-        {
+        if (is_string($handler)) {
             Container::getInstance()->make($handler)->handle($exception, $update);
-        }
-        else
-        {
+        } else {
             (static::$globalFailHandler)($exception, $update);
         }
     }

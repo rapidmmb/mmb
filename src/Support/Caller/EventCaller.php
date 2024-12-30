@@ -3,6 +3,7 @@
 namespace Mmb\Support\Caller;
 
 use Closure;
+use Mmb\Context;
 
 class EventCaller
 {
@@ -134,14 +135,16 @@ class EventCaller
     /**
      * Fire an event
      *
-     * @param array        $options
-     * @param array        $listeners
-     * @param array        $normalArgs
-     * @param array        $dynamicArgs
+     * @param Context $context
+     * @param array $options
+     * @param array $listeners
+     * @param array $normalArgs
+     * @param array $dynamicArgs
      * @param Closure|null $defaultEvent
      * @return mixed
      */
     public static function fire(
+        Context  $context,
         array    $options,
         array    $listeners,
         array    $normalArgs,
@@ -154,18 +157,14 @@ class EventCaller
         $defaultType = $options['default'] ?? self::DEFAULT_ALWAYS;
         $returnType = $options['return'] ?? self::RETURN_AUTO;
 
-        if ($sortType == self::SORT_REVERSE)
-        {
+        if ($sortType == self::SORT_REVERSE) {
             $listeners = array_reverse($listeners);
         }
 
-        if (isset($defaultEvent))
-        {
-            switch ($defaultType)
-            {
+        if (isset($defaultEvent)) {
+            switch ($defaultType) {
                 case self::DEFAULT_ALWAYS:
-                    if ($callType != self::CALL_ONLY_LAST || !$listeners)
-                    {
+                    if ($callType != self::CALL_ONLY_LAST || !$listeners) {
                         $listeners[] = $defaultEvent;
                     }
                     break;
@@ -175,22 +174,19 @@ class EventCaller
                     break;
 
                 case self::DEFAULT_WHEN_NOT_LISTENING:
-                    if (!$listeners)
-                    {
+                    if (!$listeners) {
                         $listeners = [$defaultEvent];
                     }
                     break;
 
                 case self::DEFAULT_PROXY:
                     $next = $listeners ?
-                        function (...$args) use($options, $listeners, $dynamicArgs)
-                        {
+                        function (...$args) use ($context, $options, $listeners, $dynamicArgs) {
                             [$normalArgs, $dynamicArgs2] = Caller::splitArguments($args);
 
-                            return self::fire($options, $listeners, $normalArgs, [...$dynamicArgs, ...$dynamicArgs2]);
+                            return self::fire($context, $options, $listeners, $normalArgs, [...$dynamicArgs, ...$dynamicArgs2]);
                         } :
-                        function ()
-                        {
+                        function () {
                             return null;
                         };
 
@@ -199,74 +195,66 @@ class EventCaller
                     break;
             }
         }
+        
+        $return = $returnType == self::RETURN_ALL ? [] : null;
 
-
-        if ($returnType == self::RETURN_ALL)
-        {
-            $return = [];
-        }
-
-        try
-        {
+        try {
             static::$eventDynamicStack[] = $dynamicArgs;
 
-            switch ($callType)
-            {
+            switch ($callType) {
                 case self::CALL_UNTIL_TRUE:
-                    static::fireUntilTrue($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireUntilTrue($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_UNTIL_NOT_NULL:
-                    static::fireUntilNotNull($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireUntilNotNull($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_UNTIL_FALSE:
-                    static::fireUntilFalse($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireUntilFalse($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_UNTIL_ACTUAL_FALSE:
-                    static::fireUntilActualFalse($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireUntilActualFalse($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_BUILDER:
-                    static::fireBuilder($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireBuilder($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_MULTIPLE_BUILDERS:
-                    static::fireMultipleBuilders($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireMultipleBuilders($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_PIPELINE:
-                    static::firePipleline($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::firePipleline($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_ONLY_LAST:
-                    static::fireOnlyLast($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireOnlyLast($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
 
                 case self::CALL_LINEAR:
                 default:
-                    static::fireLinear($listeners, $normalArgs, $dynamicArgs, $return, $returnType);
+                    static::fireLinear($context, $listeners, $normalArgs, $dynamicArgs, $return, $returnType);
                     return $return;
             }
-        }
-        finally
-        {
+        } finally {
             array_pop(static::$eventDynamicStack);
         }
     }
 
     protected static function fireLinear(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        foreach ($listeners as $listener)
-        {
-            $temp = Caller::invoke($listener, $normalArgs, $dynamicArgs);
+        foreach ($listeners as $listener) {
+            $temp = Caller::invoke($context, $listener, $normalArgs, $dynamicArgs);
             static::mindReturn($returnType, $temp, $return);
         }
 
@@ -274,36 +262,35 @@ class EventCaller
     }
 
     protected static function fireOnlyLast(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        if ($listeners)
-        {
-            $return = Caller::invoke(last($listeners), $normalArgs, $dynamicArgs);
+        if ($listeners) {
+            $return = Caller::invoke($context, last($listeners), $normalArgs, $dynamicArgs);
         }
 
         return true;
     }
 
     protected static function fireUntilTrue(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        foreach ($listeners as $listener)
-        {
-            $temp = Caller::invoke($listener, $normalArgs, $dynamicArgs);
+        foreach ($listeners as $listener) {
+            $temp = Caller::invoke($context, $listener, $normalArgs, $dynamicArgs);
             static::mindReturn($returnType, $temp, $return);
 
-            if ($temp)
-            {
+            if ($temp) {
                 return true;
             }
         }
@@ -312,20 +299,19 @@ class EventCaller
     }
 
     protected static function fireUntilNotNull(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        foreach ($listeners as $listener)
-        {
-            $temp = Caller::invoke($listener, $normalArgs, $dynamicArgs);
+        foreach ($listeners as $listener) {
+            $temp = Caller::invoke($context, $listener, $normalArgs, $dynamicArgs);
             static::mindReturn($returnType, $temp, $return);
 
-            if ($temp !== null)
-            {
+            if ($temp !== null) {
                 return true;
             }
         }
@@ -334,20 +320,19 @@ class EventCaller
     }
 
     protected static function fireUntilFalse(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        foreach ($listeners as $listener)
-        {
-            $temp = Caller::invoke($listener, $normalArgs, $dynamicArgs);
+        foreach ($listeners as $listener) {
+            $temp = Caller::invoke($context, $listener, $normalArgs, $dynamicArgs);
             static::mindReturn($returnType, $temp, $return);
 
-            if (!$temp)
-            {
+            if (!$temp) {
                 return true;
             }
         }
@@ -356,20 +341,19 @@ class EventCaller
     }
 
     protected static function fireUntilActualFalse(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        foreach ($listeners as $listener)
-        {
-            $temp = Caller::invoke($listener, $normalArgs, $dynamicArgs);
+        foreach ($listeners as $listener) {
+            $temp = Caller::invoke($context, $listener, $normalArgs, $dynamicArgs);
             static::mindReturn($returnType, $temp, $return);
 
-            if ($temp === false)
-            {
+            if ($temp === false) {
                 return true;
             }
         }
@@ -378,39 +362,38 @@ class EventCaller
     }
 
     protected static function fireBuilder(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        if (!$normalArgs)
-        {
+        if (!$normalArgs) {
             throw new \InvalidArgumentException("Expected one argument for builder event");
         }
 
         $return = array_shift($normalArgs);
 
-        foreach ($listeners as $listener)
-        {
-            $return = Caller::invoke($listener, [$return, ...$normalArgs], $dynamicArgs);
+        foreach ($listeners as $listener) {
+            $return = Caller::invoke($context, $listener, [$return, ...$normalArgs], $dynamicArgs);
         }
 
         return false;
     }
 
     protected static function fireMultipleBuilders(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        foreach ($listeners as $listener)
-        {
-            $normalArgs = Caller::invoke($listener, $normalArgs, $dynamicArgs);
+        foreach ($listeners as $listener) {
+            $normalArgs = Caller::invoke($context, $listener, $normalArgs, $dynamicArgs);
         }
 
         $return = $normalArgs;
@@ -419,46 +402,41 @@ class EventCaller
     }
 
     protected static function firePipleline(
-        array $listeners,
-        array $normalArgs,
-        array $dynamicArgs,
-              &$return,
-              $returnType,
+        Context $context,
+        array   $listeners,
+        array   $normalArgs,
+        array   $dynamicArgs,
+                &$return,
+                $returnType,
     )
     {
-        if (!$normalArgs)
-        {
+        if (!$normalArgs) {
             throw new \InvalidArgumentException("Expected one argument for pipeline event");
         }
 
-        if (count($normalArgs) > 1)
-        {
+        if (count($normalArgs) > 1) {
             throw new \InvalidArgumentException("Too many argument passed for pipeline event, expected 1");
         }
 
-        $return = self::nextPipeline($listeners, 0, $dynamicArgs)(array_pop($normalArgs));
+        $return = self::nextPipeline($context, $listeners, 0, $dynamicArgs)(array_pop($normalArgs));
 
         return false;
     }
 
     protected static function nextPipeline(
-        array &$listeners,
-        int   $index,
-        array &$dynamicArgs,
+        Context $context,
+        array   &$listeners,
+        int     $index,
+        array   &$dynamicArgs,
     )
     {
-        if ($index < count($listeners))
-        {
-            return function ($value) use (&$listeners, $index, &$dynamicArgs)
-            {
-                $next = self::nextPipeline($listeners, $index + 1, $dynamicArgs);
-                return Caller::invoke($listeners[$index], [$value, $next], $dynamicArgs);
+        if ($index < count($listeners)) {
+            return function ($value) use (&$listeners, $index, &$dynamicArgs, $context) {
+                $next = self::nextPipeline($context, $listeners, $index + 1, $dynamicArgs);
+                return Caller::invoke($context, $listeners[$index], [$value, $next], $dynamicArgs);
             };
-        }
-        else
-        {
-            return static function ($value)
-            {
+        } else {
+            return static function ($value) {
                 return $value;
             };
         }
@@ -466,16 +444,14 @@ class EventCaller
 
     protected static function mindReturn($returnType, $value, &$return)
     {
-        switch ($returnType)
-        {
+        switch ($returnType) {
             case self::RETURN_AUTO:
             case self::RETURN_LAST:
                 $return = $value;
                 break;
 
             case self::RETURN_FIRST_TRUE:
-                if (is_null($return) && $value)
-                {
+                if (is_null($return) && $value) {
                     $return = $value;
                 }
                 break;

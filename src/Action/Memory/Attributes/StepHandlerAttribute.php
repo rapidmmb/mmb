@@ -19,8 +19,8 @@ abstract class StepHandlerAttribute
     public bool $preventDefault = false;
 
     public function init(
-        string $name,
-        StepMemory $memory,
+        string      $name,
+        StepMemory  $memory,
         StepHandler $handler,
     )
     {
@@ -82,33 +82,31 @@ abstract class StepHandlerAttribute
     /**
      * Save property data
      *
-     * @param array       $attrs
-     * @param string      $name
-     * @param StepMemory  $memory
+     * @param StepHandlerAttribute[] $attrs
+     * @param string $name
+     * @param StepMemory $memory
      * @param StepHandler $handler
      * @return void
      */
     public static function save(
-        array $attrs,
-        string $name,
-        StepMemory $memory,
+        array       $attrs,
+        string      $name,
+        StepMemory  $memory,
         StepHandler $handler,
     )
     {
         $data = $handler->$name;
         $alias = $name;
-        foreach($attrs as $attr)
-        {
+        foreach ($attrs as $attr) {
             $attr->init($name, $memory, $handler);
 
             $attr->beforeSave();
-            if($attr->preventDefault) return;
+            if ($attr->preventDefault) return;
 
             $data = $attr->onSave($data);
-            if($attr->preventDefault) return;
+            if ($attr->preventDefault) return;
 
-            if(($alias0 = $attr->getAlias()) !== null)
-            {
+            if (($alias0 = $attr->getAlias()) !== null) {
                 $alias = $alias0;
             }
         }
@@ -119,39 +117,36 @@ abstract class StepHandlerAttribute
     /**
      * Load property data
      *
-     * @param array       $attrs
-     * @param string      $name
-     * @param StepMemory  $memory
+     * @param StepHandlerAttribute[] $attrs
+     * @param string $name
+     * @param StepMemory $memory
      * @param StepHandler $handler
      * @return void
      */
     public static function load(
-        array $attrs,
-        string $name,
-        StepMemory $memory,
+        array       $attrs,
+        string      $name,
+        StepMemory  $memory,
         StepHandler $handler,
     )
     {
         $alias = $name;
-        foreach($attrs as $attr)
-        {
+        foreach ($attrs as $attr) {
             $attr->init($name, $memory, $handler);
 
-            if(($alias0 = $attr->getAlias()) !== null)
-            {
+            if (($alias0 = $attr->getAlias()) !== null) {
                 $alias = $alias0;
             }
         }
 
         $data = $memory->get($alias);
 
-        foreach($attrs as $attr)
-        {
+        foreach ($attrs as $attr) {
             $attr->beforeLoad();
-            if($attr->preventDefault) return;
+            if ($attr->preventDefault) return;
 
             $data = $attr->onLoad($data);
-            if($attr->preventDefault) return;
+            if ($attr->preventDefault) return;
         }
 
         $handler->$name = $data;

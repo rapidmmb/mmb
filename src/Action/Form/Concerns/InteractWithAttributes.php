@@ -20,8 +20,7 @@ trait InteractWithAttributes
      */
     public function get(string $name, $default = null)
     {
-        if ($this->hasDynamicAttributes($name))
-        {
+        if ($this->hasDynamicAttributes($name)) {
             return $this->getDynamicAttribute($name);
         }
 
@@ -33,7 +32,7 @@ trait InteractWithAttributes
      *
      * @return Collection
      */
-    public function all()
+    public function all(): Collection
     {
         return collect($this->attributes);
     }
@@ -44,7 +43,7 @@ trait InteractWithAttributes
      * @param $keys
      * @return Collection
      */
-    public function only($keys)
+    public function only($keys): Collection
     {
         return $this->all()->only(...func_get_args());
     }
@@ -54,7 +53,7 @@ trait InteractWithAttributes
      *
      * @return array
      */
-    public function values()
+    public function values(): array
     {
         return $this->only($this->inputs())->toArray();
     }
@@ -80,8 +79,7 @@ trait InteractWithAttributes
      */
     public function put(string $name, $value)
     {
-        if ($this->hasDynamicAttributes($name))
-        {
+        if ($this->hasDynamicAttributes($name)) {
             $this->setDynamicAttribute($name, $value);
             return;
         }
@@ -90,12 +88,23 @@ trait InteractWithAttributes
     }
 
     /**
+     * Forget an attribute value
+     *
+     * @param string $name
+     * @return void
+     */
+    public function forget(string $name)
+    {
+        unset($this->attributes[$name]);
+    }
+
+    /**
      * Checks have attribute
      *
      * @param string $name
      * @return bool
      */
-    public function has(string $name)
+    public function has(string $name): bool
     {
         return array_key_exists($name, $this->attributes) || $this->hasDynamicAttributes($name);
     }
@@ -118,7 +127,7 @@ trait InteractWithAttributes
      * @param        $value
      * @return void
      */
-    public function __set(string $name, $value) : void
+    public function __set(string $name, $value): void
     {
         $this->put($name, $value);
     }
@@ -207,16 +216,14 @@ trait InteractWithAttributes
      *
      * @param string $name
      * @param        $value
-     * @param bool   $casting
+     * @param bool $casting
      * @return void
      */
     public function setDynamicAttribute(string $name, $value, bool $casting = false)
     {
-        if ($casting)
-        {
-            foreach (AttributeLoader::getPropertyAttributesOf($this, $name, FormDynamicPropertyAttributeContract::class) as $attr)
-            {
-                $value = $attr->getFormDynamicPropertyForLoad($this, $name, $value);
+        if ($casting) {
+            foreach (AttributeLoader::getPropertyAttributesOf($this, $name, FormDynamicPropertyAttributeContract::class) as $attr) {
+                $value = $attr->getFormDynamicPropertyForLoad($this->context, $this, $name, $value);
             }
         }
 
@@ -230,10 +237,8 @@ trait InteractWithAttributes
      */
     protected function loadDynamicAttributesFromIn()
     {
-        foreach ($this->getDynamicAttributeNames() as $name)
-        {
-            if (array_key_exists($name, $this->attributes))
-            {
+        foreach ($this->getDynamicAttributeNames() as $name) {
+            if (array_key_exists($name, $this->attributes)) {
                 $this->setDynamicAttribute($name, $this->attributes[$name], true);
                 unset($this->attributes[$name]);
             }
@@ -245,17 +250,15 @@ trait InteractWithAttributes
      *
      * @return array
      */
-    protected function getOutDynamicAttributes() : array
+    protected function getOutDynamicAttributes(): array
     {
         $data = [];
 
-        foreach ($this->getDynamicAttributeNames() as $name)
-        {
+        foreach ($this->getDynamicAttributeNames() as $name) {
             $value = $this->getDynamicAttribute($name);
 
-            foreach (AttributeLoader::getPropertyAttributesOf($this, $name, FormDynamicPropertyAttributeContract::class) as $attr)
-            {
-                $value = $attr->getFormDynamicPropertyForStore($this, $name, $value);
+            foreach (AttributeLoader::getPropertyAttributesOf($this, $name, FormDynamicPropertyAttributeContract::class) as $attr) {
+                $value = $attr->getFormDynamicPropertyForStore($this->context, $this, $name, $value);
             }
 
             $data[$name] = $value;

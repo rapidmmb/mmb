@@ -3,9 +3,7 @@
 namespace Mmb\Core;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Mmb\Support\Db\ModelFinder;
 
 /**
  * Creative bot channeling
@@ -42,17 +40,15 @@ class CreativeBotChanneling extends DefaultBotChanneling
     /**
      * Get bot from configs or database
      *
-     * @param string      $name
+     * @param string $name
      * @param string|null $hookToken
      * @return Bot
      */
     public function getBot(string $name, ?string $hookToken)
     {
-        if (!isset($this->args[$name]['token']) && isset($hookToken))
-        {
+        if (!isset($this->args[$name]['token']) && isset($hookToken)) {
             /** @var Model $info */
-            if($info = ModelFinder::findBy($this->model, $hookToken, $this->hookColumn))
-            {
+            if ($info = $this->model::query()->where($this->hookColumn, $hookToken)->first()) {
                 $bot = new Bot(new InternalCreativeBotInfo(
                     token: $info->getAttribute($this->tokenColumn),
                     username: $this->usernameColumn ? $info->getAttribute($this->usernameColumn) : (
@@ -72,7 +68,6 @@ class CreativeBotChanneling extends DefaultBotChanneling
     }
 
 
-
     /**
      * Find bot by hook token from configs or database
      *
@@ -83,11 +78,9 @@ class CreativeBotChanneling extends DefaultBotChanneling
     {
         $result = parent::findByHookToken($hookToken);
 
-        if($result === null)
-        {
+        if ($result === null) {
             /** @var Model $info */
-            if($info = ModelFinder::findBy($this->model, $hookToken, $this->hookColumn))
-            {
+            if ($info = $this->model::query()->where($this->hookColumn, $hookToken)->first()) {
                 return $info->getAttribute($this->nameColumn);
             }
         }
@@ -97,8 +90,7 @@ class CreativeBotChanneling extends DefaultBotChanneling
 
     public function getWebhookUrl(InternalBotInfo $info)
     {
-        if ($info instanceof InternalCreativeBotInfo)
-        {
+        if ($info instanceof InternalCreativeBotInfo) {
             return route('mmb.webhook', ['hookToken' => $info->record->getAttribute($this->hookColumn)]);
         }
 

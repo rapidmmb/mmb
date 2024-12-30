@@ -2,6 +2,9 @@
 
 namespace Mmb\Support\Db;
 
+/**
+ * @deprecated
+ */
 trait HasFinder
 {
 
@@ -12,7 +15,7 @@ trait HasFinder
      */
     public static function current()
     {
-        return ModelFinder::current(static::class);
+//        return ModelFinderDeprecated::current(static::class);
     }
 
     /**
@@ -22,8 +25,8 @@ trait HasFinder
      */
     public function finderStore()
     {
-        ModelFinder::store($this);
-        return $this;
+//        ModelFinderDeprecated::store($this);
+//        return $this;
     }
 
     /**
@@ -35,7 +38,7 @@ trait HasFinder
      */
     public static function findCache($id, $or = null)
     {
-        return ModelFinder::find(static::class, $id, $or);
+//        return ModelFinderDeprecated::find(static::class, $id, $or);
     }
 
     /**
@@ -48,7 +51,7 @@ trait HasFinder
      */
     public static function findCacheBy(string $key, $id, $or = null)
     {
-        return ModelFinder::findBy(static::class, $key, $id, $or);
+//        return ModelFinderDeprecated::findBy(static::class, $key, $id, $or);
     }
 
 }

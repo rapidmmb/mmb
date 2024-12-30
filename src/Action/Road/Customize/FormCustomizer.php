@@ -43,7 +43,7 @@ class FormCustomizer
     }
 
 
-    public function init(Station $station, InlineForm $form, ?array $chunks = null)
+    public function init(InlineForm $form, ?array $chunks = null)
     {
         $form->disableCancelKey();
 
@@ -59,9 +59,9 @@ class FormCustomizer
 
             $form->input(
                 $inputCustomizer->name,
-                function (Input $input) use ($station, $form, $inputCustomizer)
+                function (Input $input) use ($form, $inputCustomizer)
                 {
-                    $inputCustomizer->init($station, $form, $input);
+                    $inputCustomizer->init($form, $input);
                 }
             );
         }

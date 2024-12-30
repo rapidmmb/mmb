@@ -7,6 +7,7 @@ use Mmb\Action\Form\Inline\InlineForm;
 use Mmb\Action\Inline\Attributes\InlineAttributeContract;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Section\Menu;
+use Mmb\Context;
 use Mmb\Support\Behavior\Behavior;
 
 #[Attribute(Attribute::TARGET_METHOD)]
@@ -19,31 +20,24 @@ class WithBack implements InlineAttributeContract
     {
     }
 
-    public function registerInline(InlineRegister $register)
+    public function registerInline(Context $context, InlineRegister $register)
     {
-        if ($register->inlineAction instanceof Menu)
-        {
-            $register->after(function () use ($register)
-            {
+        if ($register->inlineAction instanceof Menu) {
+            $register->after(function () use ($register) {
                 if (
                     is_null($this->action) &&
                     !method_exists($register->target, 'back')
-                )
-                {
-                    $key = $register->inlineAction->key(__('mmb::menu.key.back'), fn () => Behavior::back(get_class($register->target)));
-                }
-                else
-                {
+                ) {
+                    $key = $register->inlineAction->key(__('mmb::menu.key.back'), fn() => Behavior::back($register->context, get_class($register->target)));
+                } else {
                     $key = $register->inlineAction->key(__('mmb::menu.key.back'), $this->action ?? 'back');
                 }
 
                 $register->inlineAction->footer([
-                    [ $key ],
+                    [$key],
                 ]);
             });
-        }
-        elseif ($register->inlineAction instanceof InlineForm && isset($this->action))
-        {
+        } elseif ($register->inlineAction instanceof InlineForm && isset($this->action)) {
             $register->inlineAction->back($this->action);
         }
     }

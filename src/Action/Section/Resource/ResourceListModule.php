@@ -465,6 +465,7 @@ class ResourceListModule extends ResourceModule
         foreach($this->top as $event)
         {
             Caller::invoke(
+                $this->context,
                 $event, [], [
                     'menu'      => $menu,
                     'page'      => $page,
@@ -549,6 +550,7 @@ class ResourceListModule extends ResourceModule
         foreach($this->bottom as $event)
         {
             Caller::invoke(
+                $this->context,
                 $event, [], [
                     'menu'      => $menu,
                     'page'      => $page,

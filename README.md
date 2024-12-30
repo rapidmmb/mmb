@@ -118,7 +118,10 @@ class HomeSection extends Section
 {
     public function main()
     {
-        $this->menu('mainMenu')->response("Welcome!");
+//        $this->menu('mainMenu')->response("Welcome!");
+
+        // New syntax:
+        $this->mainMenu->response("Welcome!");
     }
 
     public function mainMenu(Menu $menu)
@@ -138,6 +141,53 @@ class HomeSection extends Section
     }
 }
 ```
+
+#### Safe Call
+
+```php
+public function main()
+{
+    // Don't use this!
+    PanelSection::make($this->context)->main();
+    
+    // Use this instead:
+    PanelSection::make($this->context)->safe->main();
+}
+```
+
+The magic `safe` property, make sure the authorizations and handle errors.
+
+```php
+public function main()
+{
+    denied(404);
+}
+
+public function denied404()
+{
+    $this->response("An error occurred");
+}
+```
+
+The `denied404` method only calls if the `main` method calls using safe proxy.
+Or make sure using:
+
+```php
+$this->safe(function () {
+  $this->response("This is safe");
+});
+```
+
+If you want to handle the errors, but turning off authorizations, use `unsafe`:
+
+```php
+public function main()
+{
+    PanelSection::make($this->context)->unsafe->main();
+}
+```
+
+
 
 ### Form
 ```php
@@ -169,7 +219,7 @@ class TestForm extends Form
 
     public function onFinish()
     {
-        $this->response("Finished");
+        $this->response("Your amount is: {$this->amount}");
     }
 
     public function onCancel()
@@ -208,7 +258,7 @@ protected $previousKey = true;
 protected $skipKey = true;
 protected $mirrorKey = true;
 
-protected $previousKey = "<< Back <<";
+protected $previousKey = "<< Previous <<";
 ```
 
 #### Attributes
@@ -219,7 +269,7 @@ public function amount(Input $input);
 public $customAttr;
 
 #[AsAttribute]
-#[FindById]
+#[Find]
 public BotUser $user;
 
 public function onFinish()
@@ -232,14 +282,14 @@ public function onFinish()
 
 #### Requests
 ```php
-TestForm::make()->request();
+TestForm::make($context)->request();
 // Or
-TestForm::make()->request([
+TestForm::make($context)->request([
     'customAttr' => 'Test',
     'user' => $user,
 ]);
 // Or
-TestForm::make([
+TestForm::make($context, [
     'customAttr' => 'Test',
     'user' => $user,
 ])->request();
@@ -266,13 +316,13 @@ protected $inputs = [
 
 #### Requests
 ```php
-TestForm::make()->requestChunk('bankChunk');
-TestForm::make()->requestChunk(['name', 'bankChunk']);
-TestForm::make(['user' => $user])->requestChunk('name');
-TestForm::make()->requestChunk('name', [
+TestForm::make($context)->requestChunk('bankChunk');
+TestForm::make($context)->requestChunk(['name', 'bankChunk']);
+TestForm::make($context['user' => $user])->requestChunk('name');
+TestForm::make($context)->requestChunk('name', [
     'user' => $user,
 ]);
-TestForm::make(['user' => $user])->withChunk('name')->request();
+TestForm::make($context, ['user' => $user])->withChunk('name')->request();
 ```
 
 ### Input
@@ -374,8 +424,7 @@ $input->keyAction('Click me', fn($pass) => $pass("Hello World"))
 
 #### Enabled Condition
 ```php
-$input->key('Some key')->when($id == 3)
-$input->key('Some key')->unless($id != 3)
+$input->key('Some key')->if($id == 3)
 ```
 
 ### Command
@@ -439,7 +488,7 @@ class StartCommand extends StartCommandAction
 
     public function handle()
     {
-        HomeSection::make()->main();
+        HomeSection::make($this->context)->safe->main();
     }
     
     public function invite($code)
@@ -452,6 +501,16 @@ class StartCommand extends StartCommandAction
         $this->handle();
     }
 
+}
+```
+
+And use these methods for interacting with start command:
+
+```php
+public function main()
+{
+    $botUrl = StartCommand::make($this->context)->url();
+    $inviteUrl = StartCommand::make($this->context)->url('invite-code');
 }
 ```
 
@@ -597,7 +656,7 @@ class EnterAgeMiddleAction extends MiddleAction
 
     public function main()
     {
-        $this->inlineForm('ageForm')->request();
+        $this->ageForm->request();
     }
 
     public function ageForm(InlineForm $form)
@@ -607,9 +666,9 @@ class EnterAgeMiddleAction extends MiddleAction
                 ->unsignedInt()->clamp(10, 150)
                 ->prompt("Enter your age:")
             )
-            ->cancel(fn() => HomeSection::invokes('main'))
+            ->cancel(fn() => HomeSection::make($this->context)->safe->main())
             ->finish(function (Form $form)
-            {
+            {            
                 BotUser::current()->update(['age' => $form->age]);
                 $this->redirect();
             });
@@ -622,7 +681,7 @@ Request runs anyway
 ```php
 public function enterAge()
 {
-    EnterAgeMiddleAction::request([static::class, 'ageEntered']);
+    EnterAgeMiddleAction::make($this->context)->redirectTo(static::class, 'ageEntered')->request();
 }
 
 public function ageEntered()
@@ -637,7 +696,7 @@ Required runs when class is required (and stop the code)
 ```php
 public function withdraw()
 {
-    EnterAgeMiddleAction::requiredHere();
+    EnterAgeMiddleAction::make($this->context)->requiredHere();
 
     if (BotUser::current()->age < 20)
     {
@@ -652,7 +711,7 @@ public function withdraw()
 ```php
 public function withdraw()
 {
-    EnterAgeMiddleAction::required([static::class, 'withdraw']);
+    EnterAgeMiddleAction::make()->required([static::class, 'withdraw']);
 
     if (BotUser::current()->age < 20)
     {
@@ -670,7 +729,7 @@ class TestAction extends MiddleAction
 {
     public function main(BotUser $user)
     {
-        $this->inlineForm('myForm', user: $user)->request();
+        $this->myForm->make(user: $user)->request();
     }
 
     public function myForm(InlineForm $form, #[FindById] User $user);
@@ -680,7 +739,7 @@ class AnotherClass extends Section
 {
     public function withdraw()
     {
-        TestAction::requiredHere($user);
+        TestAction::make($this->context)->requiredHere($user);
     }
 }
 ```
@@ -1414,13 +1473,13 @@ public function mainMenu(Menu $menu)
     ;
 }
 ```
-#### Variant history
-+ 1- Argument history
+#### Variant memory
++ 1- Argument memory
 ```php
 public function mainMenu(Menu $menu, int $number, #[FindById] Post $dbPost, Post $serializedPost)
 ```
 If you define a Model like Post, you have two options.
-1- Using #[FindById] to save just `id` and reload model from database.
+1- Using #[Find] to save just `id` and reload model from database.
 2- Empty using to save all attributes in user data (will not reload from database).
 
 Usage:
@@ -1429,14 +1488,14 @@ public function main()
 {
     $dbPost = Post::find(27);
     $sPost = new Post(['title' => 'Hello world']);
-    $this->menu('mainMenu', number: 100, dbPost: $dbPost, serializedPost: $sPost)->response();
+    $this->mainMenu->make(number: 100, dbPost: $dbPost, serializedPost: $sPost)->response();
 }
 ```
 
-+ 2- Property history
++ 2- Property memory
 ```php
 public int $number;
-#[FindById]
+#[Find]
 public Post $dbPost;
 public Post $serializedPost;
 
@@ -1455,7 +1514,7 @@ public function main()
     $this->dbPost = Post::find(27);
     $this->serializedPost = new Post(['title' => 'Hello world']);
     
-    $this->menu('mainMenu')->response();
+    $this->mainMenu->response();
 }
 ```
 
@@ -1528,7 +1587,7 @@ class ChannelPostHandler extends UpdateHandler
 ```php
 class PostHandling extends Section implements UpdateHandling
 {
-    public function handleUpdate(Update $update)
+    public function handleUpdate(Context $context, Update $update)
     {
         if ($update->channelPost->id != MY_CHANNEL)
         {
@@ -1555,8 +1614,7 @@ Handler::add(MyCustomHandler::class);
 By using `extend`, you can extend an existing handler
 
 ```php
-Handler::extend(PrivateHandler::class, function (HandlerExtends $extends)
-{
+Handler::extend(PrivateHandler::class, function (HandlerExtends $extends) {
     $extends
         ->first(
             fn (HandlerFactory $handler) => $handler
@@ -1784,7 +1842,7 @@ $pattern = $matcher->findPattern('My name is Mahdi');
 
 if ($pattern)
 {
-    $pattern->invoke();
+    $pattern->invoke($this);
 }
 ```
 
@@ -2035,15 +2093,15 @@ to second user and then response that. Why?
 
 If you want to send a menu to first user:
 ```php
-$this->menu('myMenu')->response();
+$this->myMenu->response();
 ```
 That's easy! But what about second user? That's should be hard.
 
 Don't worry! POV is here!
 ```php
-pov()->user($secondUser)->run(function ()
+pov()->user($secondUser)->run(function ($context)
 {
-    static::make()->menu('myMenu')->response();
+    static::make($context)->myMenu->response();
 });
 ```
 That's so easy!
@@ -2063,9 +2121,9 @@ class ChatQueueSection extends Section
             ]);
 
             pov()->user($queue->user)->run(
-                fn () => static::invokes('openedChat', $chat)
+                fn (Context $context) => static::make($context)->safe->openedChat($chat)
             );
-            static::invokes('openedChat', $chat);
+            $this->openedChat($chat);
         }
         else
         {
@@ -2076,7 +2134,7 @@ class ChatQueueSection extends Section
 
     public function openedChat(Chat $chat)
     {
-        $this->menu('chatMenu', chat: $chat)->response();
+        $this->chatMenu->make(chat: $chat)->response();
     }
 
     public function chatMenu(Menu $menu, #[FindById] Chat $chat)
@@ -2091,16 +2149,13 @@ class ChatQueueSection extends Section
 }
 ```
 
-Note: If you use POV, you should make new class and then use that methods.
+Note: POV creates a new `Context` object that you should use this instead of old context.
 
-That's because the current Section is using old user data like Update,
-`with` values, and ...
-
-So you can make new instance for new POV like this:
+So you should make new instance for new POV like this:
 ```php
-static::make()->myFunc(); // Instead of $this->myFunc()
+static::make($newContext)->myFunc(); // Instead of $this->myFunc()
 // Or
-static::invokes('myFunc');
+static::invokes($newContext, 'myFunc');
 ```
 
 

@@ -6,45 +6,41 @@ use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Action;
 use Mmb\Action\Inline\Attributes\InlineWithPropertyAttributeContract;
+use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Memory\ConvertableToStep;
-use Mmb\Action\Memory\Step;
 use Mmb\Action\Memory\StepHandler;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\AttributeLoader;
-use Mmb\Support\Db\ModelFinder;
 
 abstract class InlineAction implements ConvertableToStep
 {
 
-    public Update $update;
-
     public function __construct(
-        Update $update = null,
+        public Context $context,
     )
     {
-        $this->update = $update ?? app(Update::class);
     }
 
-    protected         $initializerClass  = null;
+    protected $initializerClass = null;
     protected ?string $initializerMethod = null;
 
     /**
      * Set initializer method to reload with next update
      *
-     * @param mixed  $object
+     * @param mixed $object
      * @param string $method
      * @return $this
      */
     public function initializer($object, string $method)
     {
-        if(!is_a($object, Action::class, true))
-        {
+        if (!is_a($object, Action::class, true)) {
             throw new \TypeError(
                 sprintf(
                     "Initializer object must be instance of [%s], given [%s]",
                     Action::class,
-                    is_string($object) ? $object : smartTypeOf($object)
-                )
+                    is_string($object) ? $object : smartTypeOf($object),
+                ),
             );
         }
 
@@ -79,6 +75,16 @@ abstract class InlineAction implements ConvertableToStep
         return $this->initializerMethod;
     }
 
+    /**
+     * Register the inline action
+     *
+     * @param InlineRegister $register
+     * @return void
+     */
+    public function register(InlineRegister $register)
+    {
+    }
+
 
     /**
      * List of step events
@@ -92,7 +98,7 @@ abstract class InlineAction implements ConvertableToStep
      *
      * The event should be marked with `#[UseEvents]`
      *
-     * @param string  $event
+     * @param string $event
      * @param Closure $callback
      * @return $this
      */
@@ -109,8 +115,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function fireStepEvent(string $event, ...$args)
     {
-        foreach ($this->stepEvents[strtolower($event)] ?? [] as $callback)
-        {
+        foreach ($this->stepEvents[strtolower($event)] ?? [] as $callback) {
             $callback(...$args);
         }
     }
@@ -189,8 +194,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function creating(Closure $callback)
     {
-        if($this->isCreating())
-        {
+        if ($this->isCreating()) {
             $callback($this);
         }
 
@@ -205,8 +209,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function loading(Closure $callback)
     {
-        if($this->isLoading())
-        {
+        if ($this->isLoading()) {
             $callback($this);
         }
 
@@ -214,9 +217,9 @@ abstract class InlineAction implements ConvertableToStep
     }
 
     protected array $storedWithData;
-    protected array $withs            = [];
-    protected array $withsOn          = [];
-    public ?array   $cachedWithinData = null;
+    protected array $withs = [];
+    protected array $withsOn = [];
+    public ?array $cachedWithinData = null;
 
     /**
      * Get within data once
@@ -225,13 +228,11 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function getWithinData()
     {
-        if ($this->isLoading())
-        {
+        if ($this->isLoading()) {
             return $this->storedWithData ?? [];
         }
 
-        if (!isset($this->cachedWithinData))
-        {
+        if (!isset($this->cachedWithinData)) {
             $this->makeReadyWithinData();
         }
 
@@ -250,17 +251,13 @@ abstract class InlineAction implements ConvertableToStep
     {
         array_push($this->withs, ...$names);
 
-        if ($this->isCreating() && $this->initializerClass)
-        {
-            foreach ($names as $name)
-            {
-                if (array_key_exists($name, $this->haveData))
-                {
+        if ($this->isCreating() && $this->initializerClass) {
+            foreach ($names as $name) {
+                if (array_key_exists($name, $this->haveData)) {
                     $value = $this->haveData[$name];
 
-                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
-                    {
-                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr) {
+                        $value = $attr->getInlineWithPropertyForLoad($this->context, $this, $name, $value);
                     }
 
                     $this->initializerClass->$name = $value;
@@ -269,17 +266,13 @@ abstract class InlineAction implements ConvertableToStep
             }
         }
 
-        if($this->isLoading() && isset($this->storedWithData) && $this->initializerClass)
-        {
-            foreach($names as $name)
-            {
-                if(array_key_exists($name, $this->storedWithData))
-                {
+        if ($this->isLoading() && isset($this->storedWithData) && $this->initializerClass) {
+            foreach ($names as $name) {
+                if (array_key_exists($name, $this->storedWithData)) {
                     $value = $this->storedWithData[$name];
 
-                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr)
-                    {
-                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                    foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $name, InlineWithPropertyAttributeContract::class) as $attr) {
+                        $value = $attr->getInlineWithPropertyForLoad($this->context, $this, $name, $value);
                     }
 
                     $this->initializerClass->$name = $value;
@@ -304,18 +297,14 @@ abstract class InlineAction implements ConvertableToStep
     {
         $this->withsOn[] = [$object, $namespace, $names];
 
-        if ($this->isLoading() && isset($this->storedWithData))
-        {
-            foreach ($names as $name)
-            {
+        if ($this->isLoading() && isset($this->storedWithData)) {
+            foreach ($names as $name) {
                 $storedName = $namespace . ':' . $name;
-                if (array_key_exists($storedName, $this->storedWithData))
-                {
+                if (array_key_exists($storedName, $this->storedWithData)) {
                     $value = $this->storedWithData[$storedName];
 
-                    foreach (AttributeLoader::getPropertyAttributesOf($object, $name, InlineWithPropertyAttributeContract::class) as $attr)
-                    {
-                        $value = $attr->getInlineWithPropertyForLoad($this, $name, $value);
+                    foreach (AttributeLoader::getPropertyAttributesOf($object, $name, InlineWithPropertyAttributeContract::class) as $attr) {
+                        $value = $attr->getInlineWithPropertyForLoad($this->context, $this, $name, $value);
                     }
 
                     $object->$name = $value;
@@ -338,15 +327,11 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function have(string $name, &$value, $default = null)
     {
-        if ($this->isCreating())
-        {
-            if(count(func_get_args()) > 2)
-            {
+        if ($this->isCreating()) {
+            if (func_num_args() > 2) {
                 $value = value($default);
             }
-        }
-        elseif ($this->isLoading())
-        {
+        } elseif ($this->isLoading()) {
             $value = $this->storedWithData[$name];
         }
 
@@ -356,19 +341,15 @@ abstract class InlineAction implements ConvertableToStep
 
     protected function haveAs(string $name, &$value, $saving, $loading, bool $hasDefault = false, $default = null)
     {
-        if($this->isCreating())
-        {
-            if($hasDefault)
-            {
+        if ($this->isCreating()) {
+            if ($hasDefault) {
                 $value = value($default);
             }
 
             $this->haveData[$name] = $saving($value);
-        }
-        elseif($this->isLoading())
-        {
+        } elseif ($this->isLoading()) {
             $value = $loading(
-                $this->haveData[$name] = $this->storedWithData[$name]
+                $this->haveData[$name] = $this->storedWithData[$name],
             );
         }
 
@@ -381,10 +362,10 @@ abstract class InlineAction implements ConvertableToStep
      * This function will save model key only
      *
      * @template T
-     * @param string          $name
+     * @param string $name
      * @param class-string<T> $class
-     * @param Model|null|T    $value
-     * @param null            $default
+     * @param Model|null|T $value
+     * @param null $default
      * @return $this
      */
     public function haveModel(string $name, string $class, ?Model &$value, $default = null)
@@ -392,9 +373,9 @@ abstract class InlineAction implements ConvertableToStep
         return $this->haveAs(
             $name,
             $value,
-            fn($model) => ModelFinder::store($model),
-            fn($key) => ModelFinder::findOrFail($class, $key),
-            count(func_get_args()) > 3,
+            fn($model) => $this->context->finder->store($model),
+            fn($key) => $this->context->finder->findOrFail($class, $key),
+            func_num_args() > 3,
             $default,
         );
     }
@@ -404,10 +385,10 @@ abstract class InlineAction implements ConvertableToStep
      *
      * This function will save the model name and key only.
      *
-     * @param string     $name
-     * @param array      $classes
+     * @param string $name
+     * @param array $classes
      * @param Model|null $value
-     * @param null       $default
+     * @param null $default
      * @return $this
      */
     public function haveDynamicModel(string $name, array $classes, ?Model &$value, $default = null)
@@ -415,9 +396,9 @@ abstract class InlineAction implements ConvertableToStep
         return $this->haveAs(
             $name,
             $value,
-            fn($model) => ModelFinder::storeDynamic($model),
-            fn($key) => ModelFinder::findDynamicOrFail($classes, $key),
-            count(func_get_args()) > 3,
+            fn($model) => $this->context->finder->storeDynamic($model),
+            fn($key) => $this->context->finder->findDynamicOrFail($classes, $key),
+            func_num_args() > 3,
             $default,
         );
     }
@@ -428,46 +409,42 @@ abstract class InlineAction implements ConvertableToStep
      * This function will save the enum value only.
      *
      * @template T
-     * @param string          $name
+     * @param string $name
      * @param class-string<T> $class
-     * @param Model|null|T    $value
-     * @param null            $default
+     * @param Model|null|T $value
+     * @param null $default
      * @return $this
      */
     public function haveEnum(string $name, string $class, &$value, $default = null)
     {
-        if(is_a($class, \UnitEnum::class))
-        {
+        if (is_a($class, \UnitEnum::class)) {
             return $this->haveAs(
                 $name,
                 $value,
                 fn($enum) => $enum->name,
-                function($key) use($class)
-                {
-                    foreach($class::cases() as $case)
-                    {
-                        if($case->name == $key)
-                        {
+                function ($key) use ($class) {
+                    foreach ($class::cases() as $case) {
+                        if ($case->name == $key) {
                             return $case;
                         }
                     }
 
-                    abort(404); // TODO: test this methods
+                    denied(404);
                 },
-                count(func_get_args()) > 3,
+                func_num_args() > 3,
                 $default,
             );
-        }
-        elseif(is_a($class, \BackedEnum::class))
-        {
+        } elseif (is_a($class, \BackedEnum::class)) {
             return $this->haveAs(
                 $name,
                 $value,
                 fn($enum) => $enum->value,
-                fn($key) => $class::tryFrom($key) ?? abort(404),
-                count(func_get_args()) > 3,
+                fn($key) => $class::tryFrom($key) ?? denied(404),
+                func_num_args() > 3,
                 $default,
             );
+        } else {
+            throw new \TypeError("Expected UnitEnum or BackedEnum, given {$class}");
         }
     }
 
@@ -480,8 +457,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function makeReady()
     {
-        if($this->isReady)
-        {
+        if ($this->isReady) {
             return;
         }
 
@@ -497,31 +473,25 @@ abstract class InlineAction implements ConvertableToStep
 
     protected function makeReadyWithinData()
     {
-        if(is_object($this->initializerClass))
-        {
+        if (is_object($this->initializerClass)) {
             $this->cachedWithinData = $this->haveData;
 
-            foreach($this->withs as $with)
-            {
+            foreach ($this->withs as $with) {
                 $value = $this->initializerClass->$with;
 
-                foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $with, InlineWithPropertyAttributeContract::class) as $attr)
-                {
-                    $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
+                foreach (AttributeLoader::getPropertyAttributesOf($this->initializerClass, $with, InlineWithPropertyAttributeContract::class) as $attr) {
+                    $value = $attr->getInlineWithPropertyForStore($this->context, $this, $with, $value);
                 }
 
                 $this->cachedWithinData[$with] = $value;
             }
 
-            foreach($this->withsOn as [$object, $namespace, $withs])
-            {
-                foreach ($withs as $with)
-                {
+            foreach ($this->withsOn as [$object, $namespace, $withs]) {
+                foreach ($withs as $with) {
                     $value = $object->$with;
 
-                    foreach (AttributeLoader::getPropertyAttributesOf($object, $with, InlineWithPropertyAttributeContract::class) as $attr)
-                    {
-                        $value = $attr->getInlineWithPropertyForStore($this, $with, $value);
+                    foreach (AttributeLoader::getPropertyAttributesOf($object, $with, InlineWithPropertyAttributeContract::class) as $attr) {
+                        $value = $attr->getInlineWithPropertyForStore($this->context, $this, $with, $value);
                     }
 
                     $this->cachedWithinData[$namespace . ':' . $with] = $value;
@@ -539,21 +509,14 @@ abstract class InlineAction implements ConvertableToStep
      */
     public function get(string $name, $default = null)
     {
-        if($this->isCreating())
-        {
-            if (in_array($name, $this->withs) && $this->initializerClass)
-            {
+        if ($this->isCreating()) {
+            if (in_array($name, $this->withs) && $this->initializerClass) {
                 return $this->initializerClass->$name;
-            }
-            elseif (array_key_exists($name, $this->haveData))
-            {
+            } elseif (array_key_exists($name, $this->haveData)) {
                 return $this->haveData[$name];
             }
-        }
-        elseif($this->isLoading())
-        {
-            if(array_key_exists($name, $this->storedWithData))
-            {
+        } elseif ($this->isLoading()) {
+            if (array_key_exists($name, $this->storedWithData)) {
                 return $this->storedWithData[$name];
             }
         }
@@ -576,18 +539,16 @@ abstract class InlineAction implements ConvertableToStep
         $isDefault = false;
         $id = $this->get(
             $name,
-            function() use (&$isDefault)
-            {
+            function () use (&$isDefault) {
                 $isDefault = true;
-            }
+            },
         );
 
-        if($isDefault)
-        {
+        if ($isDefault) {
             return value($default);
         }
 
-        return ModelFinder::find($class, $id);
+        return $this->context->finder->find($class, $id);
     }
 
     /**
@@ -600,10 +561,9 @@ abstract class InlineAction implements ConvertableToStep
     {
         return $this->get(
             $name,
-            static function() use ($name)
-            {
+            static function () use ($name) {
                 throw new \RuntimeException("Undefined property [$name]");
-            }
+            },
         );
     }
 
@@ -614,7 +574,7 @@ abstract class InlineAction implements ConvertableToStep
      */
     protected function saveAction()
     {
-        Step::set($this);
+        $this->context->stepFactory->set($this);
     }
 
 
@@ -627,20 +587,19 @@ abstract class InlineAction implements ConvertableToStep
      * Load from step
      *
      * @param InlineStepHandler $step
-     * @param Update            $update
+     * @param Update $update
      * @return void
      */
     protected function loadFromStep(InlineStepHandler $step, Update $update)
     {
         $this->storedWithData = $step->withinData ?: [];
 
-        if(
+        if (
             $step->initalizeClass &&
             is_a($step->initalizeClass, Action::class, true)
-        )
-        {
+        ) {
             /** @var Action $instance */
-            $instance = new ($step->initalizeClass)($update);
+            $instance = $step->initalizeClass::makeByContext($this->context);
             $instance->loadInlineRegister($this, $step->initalizeMethod)->register();
         }
     }
@@ -670,7 +629,7 @@ abstract class InlineAction implements ConvertableToStep
     /**
      * @return StepHandler|null
      */
-    public function toStep() : ?StepHandler
+    public function toStep(): ?StepHandler
     {
         $step = $this->stepHandlerClass::make();
         $this->saveToStep($step);
@@ -680,13 +639,14 @@ abstract class InlineAction implements ConvertableToStep
     /**
      * Make new instance from step
      *
+     * @param Context $context
      * @param InlineStepHandler $step
-     * @param Update            $update
+     * @param Update $update
      * @return $this
      */
-    public static function makeFromStep(InlineStepHandler $step, Update $update) : static
+    public static function makeFromStep(Context $context, InlineStepHandler $step, Update $update): static
     {
-        $inline = new static($update);
+        $inline = new static($context);
         $inline->isCreating = false;
         $inline->loadFromStep($step, $update);
 

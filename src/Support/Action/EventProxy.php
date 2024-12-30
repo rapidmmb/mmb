@@ -4,6 +4,9 @@ namespace Mmb\Support\Action;
 
 use Mmb\Action\Action;
 
+/**
+ * @deprecated 
+ */
 class EventProxy
 {
 

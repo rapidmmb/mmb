@@ -2,20 +2,27 @@
 
 namespace Mmb\Tests;
 
+use Mmb\Context;
 use Mmb\Core\Bot;
 use Mmb\Core\InternalBotInfo;
-use Mmb\Core\Requests\TelegramRequest;
+use Mmb\Core\Client\TelegramClient;
 use Mmb\Core\Updates\Update;
 use Mmb\Providers\MmbServiceProvider;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
+
+    public Context $context;
+
     protected function setUp() : void
     {
         parent::setUp();
 
         app()->singleton(Bot::class, fn() => new Bot(new InternalBotInfo('12345', 'test', null, null)));
-        app()->singleton(Update::class, fn() => new Update([]));
+
+        $this->context = new Context();
+        $this->context->bot = bot();
+        $this->context->update = new Update([]);
     }
 
     protected function getPackageProviders($app)
@@ -28,6 +35,6 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
 
     public function bot() : Bot
     {
-        return app(Bot::class);
+        return $this->context->bot;
     }
 }

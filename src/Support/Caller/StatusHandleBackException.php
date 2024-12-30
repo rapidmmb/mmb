@@ -2,6 +2,7 @@
 
 namespace Mmb\Support\Caller;
 
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -39,13 +40,14 @@ class StatusHandleBackException extends HttpException implements CallableExcepti
     /**
      * Invoke callback
      *
-     * @param Update $update
+     * @param Context $context
      * @return void
      */
-    public function invoke(Update $update)
+    public function invoke(Context $context)
     {
-        Caller::invoke($this->callback, [], [
-            'update' => $update,
+        Caller::invoke($context, $this->callback, [], [
+            'update' => $context->update,
+            'context' => $context,
             'code' => $this->getStatusCode(),
             'message' => $this->getMessage(),
             'exception' => $this,

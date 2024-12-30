@@ -4,13 +4,14 @@ namespace Mmb\Action\Update;
 
 use Closure;
 use Illuminate\Support\Facades\Facade;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 /**
  * @method static void add(string $class)
  * @method static void merge(array $classes)
  * @method static void extend(string $class, Closure $callback)
- * @method static void handle(Update $update, array $mergedHandlers = [])
+ * @method static void handle(Context $context, Update $update, array $mergedHandlers = [])
  */
 class Handle extends Facade
 {

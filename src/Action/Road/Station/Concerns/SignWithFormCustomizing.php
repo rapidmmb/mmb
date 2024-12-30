@@ -2,7 +2,6 @@
 
 namespace Mmb\Action\Road\Station\Concerns;
 
-use Illuminate\Support\Str;
 use Mmb\Action\Form\Form;
 use Mmb\Action\Form\FormKey;
 use Mmb\Action\Form\Input;
@@ -10,20 +9,12 @@ use Mmb\Action\Road\Customize\FormCustomizer;
 use Closure;
 use Mmb\Action\Road\Customize\InputCustomizer;
 
-/**
- * @method $this insertBodyKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertBodyRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertBodySchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeBodyKey(string $name)
- * @method $this moveBodyKey(string $name, ?int $x, ?int $y)
- */
 trait SignWithFormCustomizing
 {
 
     protected function bootHasFormCustomizing()
     {
-        match ($this->road->getRtl())
-        {
+        match ($this->road->getRtl()) {
             true    => $this->rtl(),
             false   => $this->ltr(),
             default => null,
@@ -32,7 +23,7 @@ trait SignWithFormCustomizing
 
     private FormCustomizer $_formCustomizer;
 
-    public function getFormCustomizer() : FormCustomizer
+    public function getFormCustomizer(): FormCustomizer
     {
         return $this->_formCustomizer ??= new FormCustomizer($this);
     }
@@ -52,10 +43,10 @@ trait SignWithFormCustomizing
     /**
      * Insert new input
      *
-     * @param string                                $name
-     * @param Closure(Input $input): void           $callback
-     * @param string|null                           $chunk
-     * @param int                                   $order
+     * @param string $name
+     * @param Closure(Input $input): void $callback
+     * @param string|null $chunk
+     * @param int $order
      * @param (Closure(InputCustomizer): void)|null $customize
      * @return $this
      */
@@ -64,23 +55,21 @@ trait SignWithFormCustomizing
         Closure  $callback,
         ?string  $chunk = null,
         int      $order = 50,
-        ?Closure $customize = null
+        ?Closure $customize = null,
     )
     {
         $input = $this->getFormCustomizer()->insertInput($name, $callback, $chunk, $order);
 
-        if ($customize)
-        {
+        if ($customize) {
             $customize($input);
         }
 
         return $this;
     }
 
-    public function useInput(string $name, Closure $callback)
+    public function tapInput(string $name, Closure $callback)
     {
-        if ($input = $this->getFormCustomizer()->getInput($name))
-        {
+        if ($input = $this->getFormCustomizer()->getInput($name)) {
             $callback($input);
 
             return $this;
@@ -92,11 +81,11 @@ trait SignWithFormCustomizing
     /**
      * Insert a key
      *
-     * @param string                  $group
+     * @param string $group
      * @param Closure(Form): ?FormKey $key
-     * @param string|null             $name
-     * @param int                     $x
-     * @param int                     $y
+     * @param string|null $name
+     * @param int $x
+     * @param int $y
      * @return $this
      */
     public function insertKey(string $group, Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
@@ -108,15 +97,14 @@ trait SignWithFormCustomizing
     /**
      * Insert a key row
      *
-     * @param string                         $group
+     * @param string $group
      * @param Closure(Form): array<?FormKey> $key
-     * @param string|null                    $name
-     * @param int                            $y
-     * @param bool|null                      $rtl
+     * @param string|null $name
+     * @param int $y
+     * @param bool|null $rtl
      * @return $this
      */
-    public function insertRow(string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null
-    )
+    public function insertRow(string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null)
     {
         $this->getFormCustomizer()->insertRow($group, $key, $name, $y, $rtl);
         return $this;
@@ -125,15 +113,15 @@ trait SignWithFormCustomizing
     /**
      * Insert a key schema
      *
-     * @param string                                $group
+     * @param string $group
      * @param Closure(Form): array<array<?FormKey>> $key
-     * @param string|null                           $name
-     * @param int                                   $y
-     * @param bool|null                             $rtl
+     * @param string|null $name
+     * @param int $y
+     * @param bool|null $rtl
      * @return $this
      */
     public function insertSchema(
-        string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null
+        string $group, Closure $key, ?string $name = null, int $y = PHP_INT_MAX, ?bool $rtl = null,
     )
     {
         $this->getFormCustomizer()->insertSchema($group, $key, $name, $y, $rtl);
@@ -156,8 +144,8 @@ trait SignWithFormCustomizing
     /**
      * Move key by name
      *
-     * @param string   $group
-     * @param string   $name
+     * @param string $group
+     * @param string $name
      * @param int|null $x
      * @param int|null $y
      * @return $this
@@ -188,56 +176,6 @@ trait SignWithFormCustomizing
     {
         $this->getFormCustomizer()->ltr();
         return $this;
-    }
-
-    /**
-     * Call a key manager method (use this method in the magic __call)
-     *
-     * @param string $method
-     * @param array  $args
-     * @return bool
-     */
-    protected function callKeyManager(string $method, array $args) : bool
-    {
-        if (str_starts_with($method, 'insert'))
-        {
-            $type = match (true)
-            {
-                str_ends_with($method, 'Key')    => 'Key',
-                str_ends_with($method, 'Row')    => 'Row',
-                str_ends_with($method, 'Schema') => 'Schema',
-            };
-
-            if ($type)
-            {
-                $this->{'insert' . $type}(Str::kebab(substr($method, 6, -strlen($type))), ...$args);
-                return true;
-            }
-        }
-
-        if (str_starts_with($method, 'remove') && str_ends_with($method, 'Key'))
-        {
-            $this->removeKey(Str::kebab(substr($method, 6, -3)), ...$args);
-            return true;
-        }
-
-        if (str_starts_with($method, 'move') && str_ends_with($method, 'Key'))
-        {
-            $this->moveKey(Str::kebab(substr($method, 4, -3)), ...$args);
-            return true;
-        }
-
-        return false;
-    }
-
-    public function __call(string $name, array $arguments)
-    {
-        if ($this->callKeyManager($name, $arguments))
-        {
-            return $this;
-        }
-
-        return parent::__call($name, $arguments);
     }
 
 }

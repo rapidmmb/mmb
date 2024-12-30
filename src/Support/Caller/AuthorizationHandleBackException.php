@@ -3,6 +3,7 @@
 namespace Mmb\Support\Caller;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Exceptions\CallableException;
 use Throwable;
@@ -38,14 +39,16 @@ class AuthorizationHandleBackException extends AuthorizationException implements
     /**
      * Invoke callback
      *
-     * @param Update $update
+     * @param Context $context
      * @return void
      */
-    public function invoke(Update $update)
+    public function invoke(Context $context)
     {
         Caller::invoke(
+            $context,
             $this->callback, [], [
-                'update' => $update,
+                'context' => $context,
+                'update' => $context->update,
                 'code' => $this->status(),
                 'message' => $this->getMessage(),
                 'exception' => $this,

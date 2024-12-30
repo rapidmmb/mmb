@@ -3,13 +3,15 @@
 namespace Mmb\Action\Memory;
 
 use Mmb\Action\Memory\Attributes\StepHandlerAttribute;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\AttributeLoader\HasAttributeLoader;
+use Mmb\Support\Serialize\Shortable;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 
-class StepHandler
+class StepHandler implements Shortable
 {
     use HasAttributeLoader;
 
@@ -17,8 +19,7 @@ class StepHandler
         ?StepMemory $memory = null,
     )
     {
-        if($memory)
-        {
+        if ($memory) {
             $this->load($memory);
         }
     }
@@ -37,13 +38,12 @@ class StepHandler
     public function load(StepMemory $memory)
     {
         $ref = new ReflectionClass($this);
-        foreach($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property)
-        {
+        foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             StepHandlerAttribute::load(
                 static::getPropertyAttributesOf($property->getName(), StepHandlerAttribute::class),
                 $property->getName(),
                 $memory,
-                $this
+                $this,
             );
         }
     }
@@ -57,20 +57,17 @@ class StepHandler
     public function save(StepMemory $memory)
     {
         $ref = new ReflectionClass($this);
-        foreach($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property)
-        {
+        foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             StepHandlerAttribute::save(
                 static::getPropertyAttributesOf($property->getName(), StepHandlerAttribute::class),
                 $property->getName(),
                 $memory,
-                $this
+                $this,
             );
         }
 
-        foreach($memory as $key => $value)
-        {
-            if($value === null)
-            {
+        foreach ($memory as $key => $value) {
+            if ($value === null) {
                 $memory->forget($key);
             }
         }
@@ -79,20 +76,22 @@ class StepHandler
     /**
      * Store step to user model
      *
+     * @param Context $context
      * @return void
      */
-    public function keep(): void
+    public function keep(Context $context): void
     {
-        Step::set($this);
+        $context->stepFactory->set($this);
     }
 
     /**
      * Handle the update
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function handle(Update $update) : void
+    public function handle(Context $context, Update $update): void
     {
     }
 
@@ -101,30 +100,33 @@ class StepHandler
      *
      * Set the `$update->isHandled` true, to stop handling
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function onBegin(Update $update) : void
+    public function onBegin(Context $context, Update $update): void
     {
     }
 
     /**
      * Handle the update in the end
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function onEnd(Update $update) : void
+    public function onEnd(Context $context, Update $update): void
     {
     }
 
     /**
      * Handle the update when step changed
      *
+     * @param Context $context
      * @param Update $update
      * @return void
      */
-    public function onLost(Update $update)
+    public function onLost(Context $context, Update $update)
     {
     }
 
@@ -137,12 +139,25 @@ class StepHandler
      */
     public function fire(string $event, ...$args)
     {
-        if (method_exists($this, $fn = 'on' . $event))
-        {
+        if (method_exists($this, $fn = 'on' . $event)) {
             return $this->$fn(...$args);
         }
 
         return null;
+    }
+
+    public function shortSerialize(): array
+    {
+        $memory = new StepMemory();
+        $this->save($memory);
+
+        return $memory->all();
+    }
+
+    public function shortUnserialize(array $data): void
+    {
+        $memory = new StepMemory($data);
+        $this->load($memory);
     }
 
 }

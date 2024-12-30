@@ -80,7 +80,7 @@ class ResourceMaker
         {
             throw new \InvalidArgumentException("Duplicated module named [$module->name]");
         }
-        $module->update = $this->section->update;
+        $module->context = $this->section->context;
         $this->modules[$module->name] = $module;
         return $this;
     }
@@ -170,7 +170,7 @@ class ResourceMaker
      */
     public function getModuleOrFail(string $name)
     {
-        return $this->getModule($name, fn() => abort(404));
+        return $this->getModule($name, fn() => denied(404));
     }
 
 }

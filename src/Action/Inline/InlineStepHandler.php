@@ -7,6 +7,7 @@ use Mmb\Action\Memory\Attributes\StepHandlerAlias as Alias;
 use Mmb\Action\Memory\Attributes\StepHandlerSafeClass as SafeClass;
 use Mmb\Action\Memory\Attributes\StepHandlerSerialize as Serialize;
 use Mmb\Action\Memory\StepHandler;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 abstract class InlineStepHandler extends StepHandler
@@ -25,7 +26,6 @@ abstract class InlineStepHandler extends StepHandler
     public $withinData;
 
 
-
     protected bool $isLoadedInlineAction = false;
 
     protected ?InlineAction $loadedInlineAction;
@@ -33,15 +33,15 @@ abstract class InlineStepHandler extends StepHandler
     /**
      * Load and cache the inline action
      *
+     * @param Context $context
      * @param Update $update
      * @return InlineAction|null
      */
-    protected function getInlineAction(Update $update) : ?InlineAction
+    protected function getInlineAction(Context $context, Update $update): ?InlineAction
     {
-        if (!$this->isLoadedInlineAction)
-        {
+        if (!$this->isLoadedInlineAction) {
             $this->isLoadedInlineAction = true;
-            $this->loadedInlineAction = $this->makeInlineAction($update);
+            $this->loadedInlineAction = $this->makeInlineAction($context, $update);
         }
 
         return $this->loadedInlineAction;
@@ -50,10 +50,11 @@ abstract class InlineStepHandler extends StepHandler
     /**
      * Make new inline action instance
      *
+     * @param Context $context
      * @param Update $update
      * @return InlineAction|null
      */
-    protected abstract function makeInlineAction(Update $update) : ?InlineAction;
+    protected abstract function makeInlineAction(Context $context, Update $update): ?InlineAction;
 
     /**
      * Set the cached inline action
@@ -61,7 +62,7 @@ abstract class InlineStepHandler extends StepHandler
      * @param InlineAction $inlineAction
      * @return void
      */
-    public function setInlineAction(InlineAction $inlineAction) : void
+    public function setInlineAction(InlineAction $inlineAction): void
     {
         $this->isLoadedInlineAction = true;
         $this->loadedInlineAction = $inlineAction;
@@ -70,16 +71,12 @@ abstract class InlineStepHandler extends StepHandler
 
     protected array $includeEvents;
 
-    public function getEvents() : array
+    public function getEvents(): array
     {
-        if (!isset($this->includeEvents))
-        {
-            if (class_exists($this->initalizeClass) && is_a($this->initalizeClass, Action::class, true))
-            {
+        if (!isset($this->includeEvents)) {
+            if (class_exists($this->initalizeClass) && is_a($this->initalizeClass, Action::class, true)) {
                 $this->includeEvents = $this->initalizeClass::getInlineUsingEvents($this->initalizeMethod);
-            }
-            else
-            {
+            } else {
                 $this->includeEvents = [];
             }
         }
@@ -88,12 +85,10 @@ abstract class InlineStepHandler extends StepHandler
     }
 
 
-    public function handle(Update $update) : void
+    public function handle(Context $context, Update $update): void
     {
-        if ($inlineAction = $this->getInlineAction($update))
-        {
-            if ($inlineAction->handle($update) !== false)
-            {
+        if ($inlineAction = $this->getInlineAction($context, $update)) {
+            if ($inlineAction->handle($update) !== false) {
                 return;
             }
         }
@@ -103,9 +98,10 @@ abstract class InlineStepHandler extends StepHandler
 
     public function fire(string $event, ...$args)
     {
-        if (in_array(strtolower($event), $this->getEvents()))
-        {
-            $this->getInlineAction(app(Update::class))->fireStepEvent($event, ...$args);
+        if (in_array(strtolower($event), $this->getEvents()) &&
+            ($context = @$args[0]) instanceof Context &&
+            ($update = @$args[1]) instanceof Update) {
+            $this->getInlineAction($context, $update)->fireStepEvent($event, ...$args);
         }
 
         return parent::fire($event, ...$args);

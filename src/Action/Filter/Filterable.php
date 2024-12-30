@@ -3,6 +3,7 @@
 namespace Mmb\Action\Filter;
 
 use Closure;
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 trait Filterable
@@ -20,16 +21,11 @@ trait Filterable
      */
     public function filter($filter, bool $passResult = false)
     {
-        if($filter instanceof Filter)
-        {
+        if ($filter instanceof Filter) {
             $this->filter = $filter;
-        }
-        elseif($filter instanceof Closure)
-        {
+        } elseif ($filter instanceof Closure) {
             $filter($this->getFilter());
-        }
-        else
-        {
+        } else {
             $this->getFilter()->add($filter);
         }
 
@@ -44,8 +40,7 @@ trait Filterable
      */
     public function getFilter()
     {
-        if(!isset($this->filter))
-        {
+        if (!isset($this->filter)) {
             $this->filter = Filter::make();
         }
 
@@ -61,7 +56,7 @@ trait Filterable
     public function useFilter($callback)
     {
         $callback($this->getFilter());
-        
+
         return $this;
     }
 
@@ -96,8 +91,7 @@ trait Filterable
      */
     public function error($callback)
     {
-        return $this->catch(static function(FilterFailException $e, Update $update) use($callback)
-        {
+        return $this->catch(static function (FilterFailException $e, Update $update) use ($callback) {
             return $callback($e->description);
         });
     }
@@ -105,7 +99,7 @@ trait Filterable
     /**
      * Add event to display filter error message
      *
-     * @param bool   $multiple
+     * @param bool $multiple
      * @param string $header
      * @param string $footer
      * @param string $prefix
@@ -114,8 +108,7 @@ trait Filterable
      */
     public function errorDisplay(bool $multiple = false, string $header = '', string $footer = '', string $prefix = '', string $suffix = '')
     {
-        return $this->catch(function(FilterFailException $e, Update $update) use($multiple, $header, $footer, $prefix, $suffix)
-        {
+        return $this->catch(function (FilterFailException $e, Update $update) use ($multiple, $header, $footer, $prefix, $suffix) {
             $update->response(
                 $multiple ?
                     $header . $prefix . $e->description . $suffix . $footer :
@@ -127,32 +120,30 @@ trait Filterable
     /**
      * Pass filter
      *
+     * @param Context $context
      * @param Update $update
      * @return array [$ok, $passed, $value]
      */
-    protected function passFilter(Update $update)
+    protected function passFilter(Context $context, Update $update)
     {
-        if(isset($this->filter))
-        {
-            try
-            {
-                $result = $this->filter->filter($update);
+        if (isset($this->filter)) {
+            try {
+
+                $result = $this->filter->filter($context, $update);
 
                 return [true, true, $result];
-            }
-            catch(FilterFailException $e)
-            {
-                if($fn = $this->filterCatcher)
-                {
+
+            } catch (FilterFailException $e) {
+
+                if ($fn = $this->filterCatcher) {
                     return [false, $fn($e, $update) !== false, null];
-                }
-                elseif($fn === null)
-                {
+                } elseif ($fn === null) {
                     Filter::handleGlobally($e, $update);
                     return [false, true, null];
                 }
 
-                return [false, $this->defaultFailCatch($e, $update), null];
+                return [false, $this->defaultFailCatch($e, $context, $update), null];
+                
             }
         }
 
@@ -163,10 +154,11 @@ trait Filterable
      * Default catch filter error
      *
      * @param FilterFailException $e
-     * @param Update              $update
+     * @param Context $context
+     * @param Update $update
      * @return false
      */
-    protected function defaultFailCatch(FilterFailException $e, Update $update)
+    protected function defaultFailCatch(FilterFailException $e, Context $context, Update $update)
     {
         return false;
     }

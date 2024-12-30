@@ -11,16 +11,15 @@ class StepHandlerInstead extends StepHandlerAttribute
 
     public function __construct(
         public array $instead,
-        public $saveDefault = null,
-        public $loadDefault = null,
+        public       $saveDefault = null,
+        public       $loadDefault = null,
     )
     {
     }
 
     public function onLoad($data)
     {
-        if(($key = array_search($data, $this->instead)) !== false)
-        {
+        if (($key = array_search($data, $this->instead)) !== false) {
             return $key;
         }
 
@@ -29,8 +28,7 @@ class StepHandlerInstead extends StepHandlerAttribute
 
     public function onSave($data)
     {
-        if(array_key_exists($data, $this->instead))
-        {
+        if (array_key_exists($data, $this->instead)) {
             return $this->instead[$data];
         }
 

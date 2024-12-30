@@ -3,32 +3,26 @@
 namespace Mmb\Action\Update;
 
 use Closure;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Arr;
-use Mmb\Action\Memory\Step;
-use Mmb\Action\Memory\StepEvent;
+use Mmb\Action\Action;
 use Mmb\Action\Memory\StepHandlerPipe;
-use Mmb\Action\Middle\MiddleAction;
 use Mmb\Action\Middle\MiddleActionHandledUpdateHandling;
 use Mmb\Action\Section\Controllers\CallbackControlGroupHandler;
 use Mmb\Action\Section\Controllers\CallbackControlHandler;
 use Mmb\Action\Section\Controllers\InlineControlGroupHandler;
 use Mmb\Action\Section\Controllers\InlineControlHandler;
-use Mmb\Core\Bot;
-use Mmb\Core\Updates\Update;
+use Mmb\Context;
 use Mmb\Support\Caller\Caller;
 use Mmb\Support\Caller\HasEvents;
-use Mmb\Support\Db\ModelFinder;
-use Mmb\Support\Step\ConvertableToStepping;
-use Mmb\Support\Step\Stepping;
+use Mmb\Support\Step\Contracts\ConvertableToStepper;
+use Mmb\Support\Step\Contracts\Stepper;
 
 class HandlerFactory
 {
     use HasEvents;
 
     public function __construct(
-        public readonly Bot $bot,
-        public readonly Update $update,
+        public Context $context,
     )
     {
     }
@@ -38,8 +32,8 @@ class HandlerFactory
     public function getEventDynamicArgs(string $event): array
     {
         return [
-            'update' => $this->update,
-            'bot' => $this->bot,
+            'update' => $this->context->update,
+            'bot' => $this->context->bot,
             ...$this->dynamicArgs,
             ...$this->getEventDefaultDynamicArgs($event)
         ];
@@ -57,7 +51,7 @@ class HandlerFactory
         [$args, $dynamicArgs] = Caller::splitArguments($args);
         $dynamicArgs += $this->getEventDynamicArgs('*');
 
-        return Caller::invoke($callback, $args, $dynamicArgs);
+        return Caller::invoke($this->context, $callback, $args, $dynamicArgs);
     }
 
     /**
@@ -87,15 +81,13 @@ class HandlerFactory
 
     /**
      * @param string $on
-     * @param array  $events
+     * @param array $events
      * @return void
      */
     public function collectionEvent(string $on, array $events)
     {
-        $this->listen($on, function () use($events)
-        {
-            foreach ($events as $event)
-            {
+        $this->listen($on, function () use ($events) {
+            foreach ($events as $event) {
                 $this->call($event, $this);
             }
         });
@@ -122,7 +114,7 @@ class HandlerFactory
     /**
      * Add inherited handlers
      *
-     * @param string  $name
+     * @param string $name
      * @param Closure $handlerResolver
      * @return $this
      */
@@ -142,8 +134,7 @@ class HandlerFactory
     {
         $items = [];
 
-        foreach ($this->inherits[$name] ?? [] as $inherit)
-        {
+        foreach ($this->inherits[$name] ?? [] as $inherit) {
             array_push($items, ...$this->call($inherit, $this));
         }
 
@@ -164,8 +155,7 @@ class HandlerFactory
      */
     public function match($condition)
     {
-        if (!$this->value($condition))
-        {
+        if (!$this->value($condition)) {
             $this->fallback();
         }
 
@@ -177,83 +167,71 @@ class HandlerFactory
     /**
      * Use a record
      *
-     * @param string       $model     Model type
-     * @param mixed|Closure $by        Get value to search
-     * @param Closure|null $create    Create when record not found
-     * @param Closure|null $validate  Validate the record
-     * @param string       $key       Get key to find the model
-     * @param bool         $useCache  Use cache to search model
-     * @param string       $name      Record name that passed in each callback
-     * @param bool         $asCurrent Set record as current record
-     * @param bool         $setUser   Set as guard user
-     * @param bool         $autoSave  Auto save after update handled
+     * @param string $model Model type
+     * @param mixed|Closure $by Get value to search
+     * @param Closure|null $create Create when record not found
+     * @param Closure|null $validate Validate the record
+     * @param string $key Get key to find the model
+     * @param bool $useCache Use cache to search model
+     * @param string $name Record name that passed in each callback
+     * @param bool $asCurrent Set record as current record
+     * @param bool $setUser Set as guard user
+     * @param bool $autoSave Auto save after update handled
      * @return $this
      */
     public function record(
-        string $model,
-        mixed $by,
+        string   $model,
+        mixed    $by,
         ?Closure $create = null,
         ?Closure $validate = null,
-        string $key = '',
-        bool $useCache = true,
-        string $name = 'record',
-        bool $asCurrent = true,
-        bool $setUser = false,
-        bool $autoSave = false,
+        string   $key = '',
+        bool     $useCache = true,
+        string   $name = 'record',
+        bool     $asCurrent = true,
+        bool     $setUser = false,
+        bool     $autoSave = false,
     )
     {
         $by = $this->value($by);
 
-        if ($by === null)
-        {
+        if ($by === null) {
             $this->fallback();
         }
 
-        if ($useCache)
-        {
-            $record = ModelFinder::findBy($model, $key, $by);
-        }
-        else
-        {
+        if ($useCache) {
+            $record = $this->context->finder->findBy($model, $key, $by);
+        } else {
             $record = $model::query()->where($key ?: app($model)->getKey())->first();
         }
 
-        if (!$record && $create)
-        {
+        if (!$record && $create) {
             $record = $this->call($create);
-            if (is_array($record))
-            {
+            if (is_array($record)) {
                 $record = $model::create($record);
             }
 
-            if ($record && $useCache)
-            {
-                ModelFinder::store($record);
+            if ($record && $useCache) {
+                $this->context->finder->store($record);
             }
         }
 
-        if (!$record)
-        {
+        if (!$record) {
             $this->fallback();
         }
 
-        if ($validate && !$this->call($validate, $record))
-        {
+        if ($validate && !$this->call($validate, $record)) {
             $this->fallback();
         }
 
-        if ($asCurrent)
-        {
-            ModelFinder::storeCurrent($record);
+        if ($asCurrent) {
+            $this->context->finder->storeCurrent($record);
         }
 
-        if ($setUser)
-        {
-            $this->bot->guard()->setUser($record);
+        if ($setUser) {
+            $this->context->bot->guard()->setUser($record);
         }
 
-        if ($autoSave)
-        {
+        if ($autoSave) {
             $this->finallySaves[] = $record;
         }
 
@@ -265,27 +243,27 @@ class HandlerFactory
     /**
      * Use a record as not-current record
      *
-     * @param string        $model     Model type
-     * @param mixed|Closure $by        Get value to search
-     * @param Closure|null  $create    Create when record not found
-     * @param Closure|null  $validate  Validate the record
-     * @param string        $key       Get key to find the model
-     * @param bool          $useCache  Use cache to search model
-     * @param string        $name      Record name that passed in each callback
-     * @param bool          $setUser   Set as guard user
-     * @param bool          $autoSave  Auto save after update handled
+     * @param string $model Model type
+     * @param mixed|Closure $by Get value to search
+     * @param Closure|null $create Create when record not found
+     * @param Closure|null $validate Validate the record
+     * @param string $key Get key to find the model
+     * @param bool $useCache Use cache to search model
+     * @param string $name Record name that passed in each callback
+     * @param bool $setUser Set as guard user
+     * @param bool $autoSave Auto save after update handled
      * @return $this
      */
     public function recordOther(
-        string $model,
-        mixed $by,
+        string   $model,
+        mixed    $by,
         ?Closure $create = null,
         ?Closure $validate = null,
-        string $key = '',
-        bool $useCache = true,
-        string $name = 'record',
-        bool $setUser = false,
-        bool $autoSave = false,
+        string   $key = '',
+        bool     $useCache = true,
+        string   $name = 'record',
+        bool     $setUser = false,
+        bool     $autoSave = false,
     )
     {
         return $this->record(
@@ -302,34 +280,34 @@ class HandlerFactory
         );
     }
 
-    protected ?Stepping $stepRecord = null;
+    protected ?Stepper $stepperRecord = null;
 
     /**
      * Use a step record
      *
-     * @param string        $model     Model type
-     * @param mixed|Closure $by        Get value to search
-     * @param Closure|null  $create    Create when record not found
-     * @param Closure|null  $validate  Validate the record
-     * @param string        $key       Get key to find the model
-     * @param bool          $useCache  Use cache to search model
-     * @param string        $name      Record name that passed in each callback
-     * @param bool          $asCurrent Set record as current record
-     * @param bool          $setUser   Set as guard user
-     * @param bool          $autoSave  Auto save after update handled
+     * @param string $model Model type
+     * @param mixed|Closure $by Get value to search
+     * @param Closure|null $create Create when record not found
+     * @param Closure|null $validate Validate the record
+     * @param string $key Get key to find the model
+     * @param bool $useCache Use cache to search model
+     * @param string $name Record name that passed in each callback
+     * @param bool $asCurrent Set record as current record
+     * @param bool $setUser Set as guard user
+     * @param bool $autoSave Auto save after update handled
      * @return $this
      */
     public function recordStep(
-        string $model,
-        mixed $by,
+        string   $model,
+        mixed    $by,
         ?Closure $create = null,
         ?Closure $validate = null,
-        string $key = '',
-        bool $useCache = true,
-        string $name = 'record',
-        bool $asCurrent = true,
-        bool $setUser = false,
-        bool $autoSave = false,
+        string   $key = '',
+        bool     $useCache = true,
+        string   $name = 'record',
+        bool     $asCurrent = true,
+        bool     $setUser = false,
+        bool     $autoSave = false,
     )
     {
         $this->record(...func_get_args());
@@ -341,25 +319,25 @@ class HandlerFactory
     /**
      * Use the user model
      *
-     * @param string        $model     Model type
-     * @param mixed|Closure $by        Get value to search
-     * @param Closure|null  $create    Create when record not found
-     * @param Closure|null  $validate  Validate the record
-     * @param string        $key       Get key to find the model
-     * @param bool          $useCache  Use cache to search model
-     * @param string        $name      Record name that passed in each callback
-     * @param bool          $autoSave  Auto save after update handled
+     * @param string $model Model type
+     * @param mixed|Closure $by Get value to search
+     * @param Closure|null $create Create when record not found
+     * @param Closure|null $validate Validate the record
+     * @param string $key Get key to find the model
+     * @param bool $useCache Use cache to search model
+     * @param string $name Record name that passed in each callback
+     * @param bool $autoSave Auto save after update handled
      * @return $this
      */
     public function recordUser(
-        string $model,
-        mixed $by,
+        string   $model,
+        mixed    $by,
         ?Closure $create = null,
         ?Closure $validate = null,
-        string $key = '',
-        bool $useCache = true,
-        string $name = 'record',
-        bool $autoSave = false,
+        string   $key = '',
+        bool     $useCache = true,
+        string   $name = 'record',
+        bool     $autoSave = false,
     )
     {
         $this->record(
@@ -375,8 +353,7 @@ class HandlerFactory
             autoSave: $autoSave,
         );
 
-        if ($this->dynamicArgs[$name] instanceof Stepping)
-        {
+        if ($this->dynamicArgs[$name] instanceof Stepper) {
             $this->stepAs($this->dynamicArgs[$name]);
         }
 
@@ -386,24 +363,22 @@ class HandlerFactory
     /**
      * Set step record as
      *
-     * @param string|Stepping|ConvertableToStepping|Closure $value
+     * @param string|Stepper|ConvertableToStepper|Closure $value
      * @return $this
      */
-    public function stepAs(string|Stepping|ConvertableToStepping|Closure $value)
+    public function stepAs(string|Stepper|ConvertableToStepper|Closure $value)
     {
-        if ($value instanceof ConvertableToStepping)
-        {
-            $value = $value->toStepping();
+        if ($value instanceof ConvertableToStepper) {
+            $value = $value->toStepper();
         }
 
         $value = $this->value($value);
 
-        if (is_string($value))
-        {
+        if (is_string($value)) {
             $value = $this->dynamicArgs[$value];
         }
 
-        $this->stepRecord = $value;
+        $this->stepperRecord = $value;
 
         return $this;
     }
@@ -413,17 +388,16 @@ class HandlerFactory
     /**
      * Handle the update
      *
-     * @param array        $handlers
+     * @param array $handlers
      * @param Closure|null $final
      * @return $this
      */
     public function handle(
-        array $handlers,
+        array    $handlers,
         ?Closure $final = null,
     )
     {
-        if ($this->isHandled)
-        {
+        if ($this->isHandled) {
             throw new \InvalidArgumentException("This handler has been handled before");
         }
 
@@ -433,38 +407,29 @@ class HandlerFactory
 
         $handlers = Arr::flatten($handlers);
 
-        try
-        {
-            $this->update->isHandled = false;
+        try {
+            $this->context->update->isHandled = false;
 
-            if ($this->stepRecord)
-            {
-                Step::setModel($this->stepRecord);
-                StepEvent::fire('begin', $this->update);
+            if ($this->stepperRecord) {
+                $this->context->stepFactory->setModel($this->stepperRecord);
+                $this->context->stepFactory->fire('begin', $this->context, $this->context->update);
             }
 
-            if (!$this->update->isHandled)
-            {
-                while (true)
-                {
-                    $this->update->isHandled = false;
+            if (!$this->context->update->isHandled) {
+                while (true) {
+                    $this->context->update->isHandled = false;
 
-                    try
-                    {
-                        foreach ($handlers as $handler)
-                        {
-                            if ($handler instanceof Closure)
-                            {
+                    try {
+                        foreach ($handlers as $handler) {
+                            if ($handler instanceof Closure) {
                                 $handler = $handler();
                             }
 
-                            if ($handler === null)
-                            {
+                            if ($handler === null) {
                                 continue;
                             }
 
-                            if (!is_a($handler, UpdateHandling::class, true))
-                            {
+                            if (!is_a($handler, UpdateHandling::class, true)) {
                                 throw new \TypeError(
                                     "Expected [" . UpdateHandling::class . "], given [" . (is_string(
                                         $handler
@@ -472,67 +437,54 @@ class HandlerFactory
                                 );
                             }
 
-                            if (is_string($handler))
-                            {
-                                if (is_a($handler, MiddleAction::class, true))
-                                {
-                                    $handler = $handler::make();
+                            if (is_string($handler)) {
+                                if (is_a($handler, Action::class, true)) {
+                                    $handler = $handler::makeByContext($this->context);
                                 }
-                                $handler = new $handler;
+                                else {
+                                    $handler = new $handler;
+                                }
                             }
 
-                            $this->update->isHandled = true;
-                            $handler->handleUpdate($this->update);
+                            $this->context->update->isHandled = true;
+                            $handler->handleUpdate($this->context, $this->context->update);
 
-                            if ($this->update->isHandled)
-                            {
+                            if ($this->context->update->isHandled) {
                                 break 2;
                             }
                         }
 
                         break;
-                    }
-                    catch (RepeatHandlingException $e)
-                    {
+                    } catch (RepeatHandlingException $e) {
                         // Continue loop
                         continue;
-                    }
-                    catch (StopHandlingException $e)
-                    {
+                    } catch (StopHandlingException $e) {
                         break;
-                    }
-                    catch (CancelHandlingException $e)
-                    {
+                    } catch (CancelHandlingException $e) {
                         return $this;
                     }
                 }
             }
 
-            StepEvent::fire('end', $this->update);
+            $this->context->stepFactory?->fire('end', $this->context, $this->context->update);
 
-            if ($final)
-            {
+            if ($final) {
                 $this->call($final);
             }
 
             $this->fire('final');
 
-            foreach ($this->finallySaves as $record)
-            {
+            foreach ($this->finallySaves as $record) {
                 $record->save();
             }
-        }
-        finally
-        {
-            if ($this->stepRecord)
-            {
-                Step::setModel(null);
+        } finally {
+            if ($this->stepperRecord) {
+                $this->context->stepFactory->setModel(null);
             }
         }
 
         return $this;
     }
-
 
 
     /**
@@ -542,9 +494,8 @@ class HandlerFactory
      */
     public function step()
     {
-        if ($this->stepRecord)
-        {
-            return new StepHandlerPipe($this->stepRecord);
+        if ($this->stepperRecord) {
+            return new StepHandlerPipe($this->stepperRecord);
         }
 
         throw new \InvalidArgumentException("Step model is not set");
@@ -559,8 +510,7 @@ class HandlerFactory
      */
     public function callback(string $class, string ...$classes)
     {
-        if ($classes)
-        {
+        if ($classes) {
             return new CallbackControlGroupHandler([$class, ...$classes]);
         }
 
@@ -576,8 +526,7 @@ class HandlerFactory
      */
     public function inline(string $class, string ...$classes)
     {
-        if ($classes)
-        {
+        if ($classes) {
             return new InlineControlGroupHandler([$class, ...$classes]);
         }
 
@@ -589,7 +538,7 @@ class HandlerFactory
      *
      * @param string $class
      * @param string $method
-     * @param mixed  ...$args
+     * @param mixed ...$args
      * @return MiddleActionHandledUpdateHandling
      */
     public function afterMiddles(string $class, string $method, ...$args)

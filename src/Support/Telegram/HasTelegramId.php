@@ -2,6 +2,9 @@
 
 namespace Mmb\Support\Telegram;
 
+/**
+ * @deprecated
+ */
 trait HasTelegramId
 {
 

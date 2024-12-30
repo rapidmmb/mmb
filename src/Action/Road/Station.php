@@ -4,6 +4,8 @@ namespace Mmb\Action\Road;
 
 use Closure;
 use Mmb\Action\Form\Inline\InlineForm;
+use Mmb\Action\Inline\InlineAction;
+use Mmb\Action\Inline\Register\InlineCreateRegister;
 use Mmb\Action\Inline\Register\InlineLoadRegister;
 use Mmb\Action\Inline\Register\InlineRegister;
 use Mmb\Action\Road\Attributes\StationParameterResolverAttributeContract;
@@ -23,39 +25,17 @@ abstract class Station extends Section
 
     public function __construct(
         public readonly Road $road,
-
         /**
          * @var T|Sign $sign
          */
         public readonly Sign $sign,
-
-        public string        $name,
-
-        Update               $update = null,
     )
     {
-        parent::__construct($update);
+        parent::__construct($road->context);
     }
 
-    public function menu(string $name, ...$args)
+    public function reset()
     {
-        $register = $this->createInlineRegister(Menu::class, $name, $args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
-        return $register->register();
-    }
-
-    public function inlineForm(string $name, ...$args)
-    {
-        $register = $this->createInlineRegister(InlineForm::class, $name, $args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
-        return $register->register();
-    }
-
-    public function dialog(string $name, ...$args)
-    {
-        $register = $this->createInlineRegister(Dialog::class, $name, $args);
-        $register->inlineAction->initializer($this->road, $this->name . '.' . $name);
-        return $register->register();
     }
 
     protected function onInitializeInlineRegister(InlineRegister $register)
@@ -67,18 +47,32 @@ abstract class Station extends Section
 
     public function initializeInlineRegister(InlineRegister $register)
     {
+        if ($register instanceof InlineCreateRegister) {
+            $register->inlineAction->initializer($this->road, $this->sign->name . '.' . $register->method);
+        }
+
         $register->before(
-            function () use ($register)
-            {
+            function () use ($register) {
                 $register->inlineAction->with(...$this->road->getStationWith($this));
                 $register->inlineAction->withOn('$', $this, 'ps');
 
-                if ($register instanceof InlineLoadRegister)
-                {
+                if ($register instanceof InlineLoadRegister) {
                     $this->loadPsCallData();
                 }
-            }
+            },
         );
+    }
+
+    /**
+     * Call a callback
+     *
+     * @param Closure $callback
+     * @param ...$args
+     * @return mixed
+     */
+    public function call(Closure $callback, ...$args)
+    {
+        return $this->fireSign($callback, ...$args);
     }
 
     /**
@@ -91,19 +85,6 @@ abstract class Station extends Section
     public function fireSign(string|array|Closure $event, ...$args)
     {
         return $this->sign->fire($event, ...array_merge($args, $this->getDynamicArgs()));
-    }
-
-    /**
-     * Fire a sign event
-     *
-     * @param WeakSign             $sign
-     * @param string|array|Closure $event
-     * @param                      ...$args
-     * @return mixed
-     */
-    public function fireSignAs(WeakSign $sign, string|array|Closure $event, ...$args)
-    {
-        return $sign->fire($event, ...array_merge($args, $this->getDynamicArgs()));
     }
 
 
@@ -126,7 +107,7 @@ abstract class Station extends Section
      *
      * @return array
      */
-    protected function getDynamicArgs() : array
+    protected function getDynamicArgs(): array
     {
         return [
             'station' => $this,
@@ -168,15 +149,11 @@ abstract class Station extends Section
     {
         [$normalArgs, $dynamicArgs] = Caller::splitArguments($args);
 
-        if ($name == 'main')
-        {
+        if ($name == 'main') {
             $name = $this->defaultAction;
 
             $this->prepareDefaultAction($normalArgs, $dynamicArgs);
-        }
-
-        elseif ($name == 'revert')
-        {
+        } elseif ($name == 'revert') {
             $name = $this->revertAction ?? $this->defaultAction;
         }
 
@@ -206,13 +183,10 @@ abstract class Station extends Section
      */
     protected function prepareDefaultAction(array $normalArgs, array $dynamicArgs)
     {
-        foreach ($this->sign->getParams() as [$names, $callback, $resolvers])
-        {
+        foreach ($this->sign->getParams() as [$names, $callback, $resolvers]) {
             $pass = [];
-            foreach ($names as $name)
-            {
-                if (array_key_exists($name, $dynamicArgs))
-                {
+            foreach ($names as $name) {
+                if (array_key_exists($name, $dynamicArgs)) {
                     $value = $dynamicArgs[$name];
                     unset($dynamicArgs[$name]);
 
@@ -220,25 +194,21 @@ abstract class Station extends Section
                     [$resolver, $ref] = $resolvers[$name] ?? [null, null];
 
                     $this->psCall[$name]
-                        = $pass[$name] = $resolver ? $resolver->getStationParameterForLoad($ref, $value) : $value;
-                    $this->ps[$name] = $resolver ? $resolver->getStationParameterForStore($ref, $value) : $value;
-                }
-                elseif (!$callback)
-                {
+                        = $pass[$name] = $resolver ? $resolver->getStationParameterForLoad($this->context, $ref, $value) : $value;
+                    $this->ps[$name] = $resolver ? $resolver->getStationParameterForStore($this->context, $ref, $value) : $value;
+                } elseif (!$callback) {
                     throw new \InvalidArgumentException("Parameter [$name] is required");
                 }
             }
 
-            if ($callback)
-            {
+            if ($callback) {
                 $this->fireSign($callback, ...$pass);
             }
         }
 
-        if ($dynamicArgs)
-        {
+        if ($dynamicArgs) {
             throw new \InvalidArgumentException(
-                sprintf("Too many parameters, parameter [%s] is not required", array_keys($dynamicArgs)[0])
+                sprintf("Too many parameters, parameter [%s] is not required", array_keys($dynamicArgs)[0]),
             );
         }
     }
@@ -248,7 +218,7 @@ abstract class Station extends Section
      *
      * @return array
      */
-    public function getKeeps() : array
+    public function getKeeps(): array
     {
         return $this->keeps;
     }
@@ -258,29 +228,25 @@ abstract class Station extends Section
      *
      * @return array
      */
-    public function keepData() : array
+    public function keepData(): array
     {
         $data = [];
-        foreach ($this->getKeeps() as $keep)
-        {
+        foreach ($this->getKeeps() as $keep) {
             $resolver = AttributeLoader::getPropertyAttributeOf(
-                $this, $keep, StationPropertyResolverAttributeContract::class
+                $this, $keep, StationPropertyResolverAttributeContract::class,
             );
 
-            if ($resolver)
-            {
+            if ($resolver) {
                 $data[$keep] = $resolver->getStationPropertyForStore(
-                    new \ReflectionProperty($this, $keep), $this->$keep
+                    $this->context,
+                    new \ReflectionProperty($this, $keep), $this->$keep,
                 );
-            }
-            else
-            {
+            } else {
                 $data[$keep] = $this->$keep;
             }
         }
 
-        if ($this->ps)
-        {
+        if ($this->ps) {
             $data['ps'] = $this->ps;
         }
 
@@ -295,24 +261,20 @@ abstract class Station extends Section
      */
     public function revertData(array $data)
     {
-        foreach ($data as $name => $value)
-        {
-            if ($name == 'ps')
-            {
+        foreach ($data as $name => $value) {
+            if ($name == 'ps') {
                 $this->ps = $value;
                 $this->loadPsCallData();
                 continue;
             }
 
-            if (property_exists($this, $name))
-            {
+            if (property_exists($this, $name)) {
                 $resolver = AttributeLoader::getPropertyAttributeOf(
-                    $this, $name, StationPropertyResolverAttributeContract::class
+                    $this, $name, StationPropertyResolverAttributeContract::class,
                 );
 
-                if ($resolver)
-                {
-                    $this->$name = $resolver->getStationPropertyForLoad(new \ReflectionProperty($this, $name), $value);
+                if ($resolver) {
+                    $this->$name = $resolver->getStationPropertyForLoad($this->context, new \ReflectionProperty($this, $name), $value);
                     continue;
                 }
             }
@@ -326,22 +288,18 @@ abstract class Station extends Section
      */
     public function loadPsCallData()
     {
-        foreach ($this->sign->getParams() as [$names, $callback, $resolvers])
-        {
-            foreach ($names as $name)
-            {
-                if (array_key_exists($name, $this->ps))
-                {
+        foreach ($this->sign->getParams() as [$names, $callback, $resolvers]) {
+            foreach ($names as $name) {
+                if (array_key_exists($name, $this->ps)) {
                     $value = $this->ps[$name];
 
                     /** @var ?StationParameterResolverAttributeContract $resolver */
                     [$resolver, $ref] = $resolvers[$name] ?? [null, null];
 
-                    $this->psCall[$name] = $resolver ? $resolver->getStationParameterForLoad($ref, $value) : $value;
+                    $this->psCall[$name] = $resolver ? $resolver->getStationParameterForLoad($this->context, $ref, $value) : $value;
                 }
             }
         }
-
     }
 
 }

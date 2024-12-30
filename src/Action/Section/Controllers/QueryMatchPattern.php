@@ -250,7 +250,7 @@ class QueryMatchPattern
         if (is_string($action))
             return $object->invokeDynamic($action, $args, $namedArgs + ['pattern' => $this]);
         else
-            return Caller::invoke($action, $args, $namedArgs + ['pattern' => $this]);
+            return Caller::invoke($object->context, $action, $args, $namedArgs + ['pattern' => $this]);
     }
 
 

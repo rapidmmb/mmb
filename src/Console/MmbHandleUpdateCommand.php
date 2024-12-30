@@ -3,6 +3,7 @@
 namespace Mmb\Console;
 
 use Illuminate\Console\Command;
+use Mmb\Context;
 use Mmb\Core\BotChanneling;
 use Mmb\Core\Updates\Update;
 use function Laravel\Prompts\error;
@@ -33,15 +34,14 @@ class MmbHandleUpdateCommand extends Command
 
         $updateData = @json_decode($this->argument('update'), true);
 
-        if (!$updateData)
-        {
+        if (!$updateData) {
             error("Update data is not valid json format");
             return 1;
         }
 
         $update = Update::make($updateData, $bot, true);
 
-        $update->handle();
+        $update->handle(new Context());
 
         return 0;
     }

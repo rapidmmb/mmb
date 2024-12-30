@@ -5,30 +5,21 @@ namespace Mmb\Action\Road\Station;
 use Closure;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\Str;
-use Mmb\Action\Contracts\Menuable;
 use Mmb\Action\Form\Input;
 use Mmb\Action\Road\Customize\InputCustomizer;
 use Mmb\Action\Road\Road;
+use Mmb\Action\Road\Sign;
 use Mmb\Action\Road\Station;
+use Mmb\Action\Road\Station\Words\SignBackKey;
+use Mmb\Action\Road\Station\Words\SignMessage;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Action\Section\Menu;
 use Mmb\Support\Caller\EventCaller;
 use Mmb\Support\Encoding\Modes\Mode;
 use Mmb\Support\Encoding\Modes\StringContent;
+use Mmb\Support\KeySchema\KeyboardInterface;
 
 /**
- * @method $this insertHeaderKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertHeaderRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertHeaderSchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeHeaderKey(string $name)
- * @method $this moveHeaderKey(string $name, ?int $x, ?int $y)
- *
- * @method $this insertFooterKey(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX)
- * @method $this insertFooterRow(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this insertFooterSchema(Closure $key, ?string $name = null, int $x = 100, int $y = PHP_INT_MAX, ?bool $rtl = null)
- * @method $this removeFooterKey(string $name)
- * @method $this moveFooterKey(string $name, ?int $x, ?int $y)
- *
  * @method $this message(Closure|string|StringContent|array $message)
  * @method $this messageMode(Closure|string|Mode $mode)
  * @method $this messageUsing(Closure $callback)
@@ -61,19 +52,35 @@ use Mmb\Support\Encoding\Modes\StringContent;
  */
 class SearchSign extends WeakSign
 {
-    use Concerns\SignWithFormCustomizing,
-        Concerns\SignWithQueryFilters,
-        Concerns\SignWithMessage,
-        Concerns\SignWithBacks;
+    use Concerns\SignWithFormCustomizing;
 
     public function __construct(Road $road, public readonly ListSign $listSign)
     {
         parent::__construct($road);
     }
 
+    /**
+     * @var SignBackKey<$this>
+     */
+    public SignBackKey $back;
+
+    /**
+     * @var SignMessage<$this>
+     */
+    public SignMessage $message;
+
+    /**
+     * @var Words\SignExtendedQuery<$this>
+     */
+    public Station\Words\SignExtendedQuery $query;
+
     protected function boot()
     {
         parent::boot();
+
+        $this->addKey($this->back = new SignBackKey($this));
+        $this->message = new SignMessage($this);
+        $this->query = new Station\Words\SignExtendedQuery($this);
 
         $this->insertInput('search', $this->searchInput(...), customize: $this->searchCustomizeInput(...));
 
@@ -91,6 +98,11 @@ class SearchSign extends WeakSign
         $this->shutdownProxyKey($this->listSign, 'searchingKey', 'header');
     }
 
+    public function getRoot(): Sign
+    {
+        return $this->listSign;
+    }
+
     // - - - - - - - - - - - - Search Input - - - - - - - - - - - - \\
 
     protected function searchCustomizeInput(InputCustomizer $input)
@@ -98,7 +110,7 @@ class SearchSign extends WeakSign
         $input
             ->insertKey(
                 'body',
-                fn (Menuable $menu, ListStation $station) => $this->getDefinedDynamicKey($station, 'resetKey', $menu),
+                fn (KeyboardInterface $menu, ListStation $station) => $this->getDefinedDynamicKey($station, 'resetKey', $menu),
                 'resetKey',
                 50,
                 0,

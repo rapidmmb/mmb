@@ -5,16 +5,16 @@ namespace Mmb\Action\Road\Station;
 use Closure;
 use Illuminate\Contracts\Database\Query\Builder;
 use Mmb\Action\Road\Road;
+use Mmb\Action\Road\Station;
 use Mmb\Action\Road\Station\Concerns\SignWithMenuCustomizing;
+use Mmb\Action\Road\Station\Words\SignBackKey;
+use Mmb\Action\Road\Station\Words\SignMessage;
 use Mmb\Action\Road\WeakSign;
 use Mmb\Action\Section\Menu;
 
 class FilterSelectSign extends WeakSign implements Filterable
 {
-    use SignWithMenuCustomizing,
-        Concerns\SignWithQueryFilters,
-        Concerns\SignWithMessage,
-        Concerns\SignWithBacks;
+    use SignWithMenuCustomizing;
 
     public function __construct(
         Road               $road,
@@ -24,8 +24,37 @@ class FilterSelectSign extends WeakSign implements Filterable
         parent::__construct($road);
     }
 
-    protected bool                $hasNone   = true;
-    protected null|string|Closure $noneText  = null;
+    /**
+     * @var SignMessage<$this>
+     */
+    public SignMessage $message;
+
+    /**
+     * @var SignBackKey<$this>
+     */
+    public SignBackKey $back;
+
+    /**
+     * @var Words\SignExtendedQuery<$this>
+     */
+    public Station\Words\SignExtendedQuery $query;
+
+    protected function boot()
+    {
+        parent::boot();
+
+        $this->addKey($this->back = new SignBackKey($this));
+        $this->message = new SignMessage($this);
+        $this->query = new Station\Words\SignExtendedQuery($this);
+    }
+
+    public function getRoot(): Sign
+    {
+        return $this->listSign;
+    }
+
+    protected bool $hasNone = true;
+    protected null|string|Closure $noneText = null;
     protected null|string|Closure $noneLabel = null;
 
     protected array $options = [];
@@ -33,9 +62,9 @@ class FilterSelectSign extends WeakSign implements Filterable
     /**
      * Add an option
      *
-     * @param string|Closure      $text
-     * @param Closure|null        $where
-     * @param Closure|null        $query
+     * @param string|Closure $text
+     * @param Closure|null $where
+     * @param Closure|null $query
      * @param string|Closure|null $label
      * @return $this
      */
@@ -54,7 +83,7 @@ class FilterSelectSign extends WeakSign implements Filterable
     {
         return $this->option(
             $text,
-            query: fn (Builder $query) => $query->orderBy($by),
+            query: fn(Builder $query) => $query->orderBy($by),
             label: $label,
         );
     }
@@ -63,7 +92,7 @@ class FilterSelectSign extends WeakSign implements Filterable
     {
         return $this->option(
             $text,
-            query: fn (Builder $query) => $query->orderByDesc($by),
+            query: fn(Builder $query) => $query->orderByDesc($by),
             label: $label,
         );
     }
@@ -72,7 +101,7 @@ class FilterSelectSign extends WeakSign implements Filterable
     {
         return $this->option(
             $text,
-            query: fn (Builder $query) => $query->latest(),
+            query: fn(Builder $query) => $query->latest(),
             label: $label,
         );
     }
@@ -161,12 +190,10 @@ class FilterSelectSign extends WeakSign implements Filterable
 
     public function applyOnWhere(ListStation $station, Builder $query, $value)
     {
-        if (array_key_exists($value, $this->options))
-        {
+        if (array_key_exists($value, $this->options)) {
             [$text, $label, $onWhere, $onQuery] = $this->options[$value];
 
-            if ($onWhere)
-            {
+            if ($onWhere) {
                 $query = $this->fireBy($station, $onWhere, $query);
             }
         }
@@ -176,12 +203,10 @@ class FilterSelectSign extends WeakSign implements Filterable
 
     public function applyOnQuery(ListStation $station, Builder $query, $value)
     {
-        if (array_key_exists($value, $this->options))
-        {
+        if (array_key_exists($value, $this->options)) {
             [$text, $label, $onWhere, $onQuery] = $this->options[$value];
 
-            if ($onWhere)
-            {
+            if ($onWhere) {
                 $query = $this->fireBy($station, $onWhere, $query);
             }
         }
@@ -191,20 +216,16 @@ class FilterSelectSign extends WeakSign implements Filterable
 
     public function fireFilter(ListStation $station)
     {
-        switch ($this->mode)
-        {
+        switch ($this->mode) {
             case self::MODE_SELECT:
                 $station->filterRequest($this);
                 break;
 
             case self::MODE_TOGGLE:
                 $myName = $this->listSign->getFilterableName($this);
-                if (is_null($value = $this->getNextValue()))
-                {
+                if (is_null($value = $this->getNextValue())) {
                     unset($station->filters[$myName]);
-                }
-                else
-                {
+                } else {
                     $station->filters[$myName] = $value;
                 }
 
@@ -221,8 +242,7 @@ class FilterSelectSign extends WeakSign implements Filterable
             $current = 0;
         else $current++;
 
-        if ($current >= count($this->options))
-        {
+        if ($current >= count($this->options)) {
             if ($this->hasNone)
                 $current = null;
             else $current = 0;
@@ -236,15 +256,12 @@ class FilterSelectSign extends WeakSign implements Filterable
 
     public function initializeMenu(ListStation $station, Menu $menu)
     {
-        $this->getMenuCustomizer()->init($station, $menu, ['header']);
+        $this->getMenuCustomizer()->init($menu, ['header']);
 
         $menu->schema(
-            function () use ($station, $menu)
-            {
-                if ($this->hasNone)
-                {
-                    $text = match (true)
-                    {
+            function () use ($station, $menu) {
+                if ($this->hasNone) {
+                    $text = match (true) {
                         is_string($this->noneText)         => $this->noneText,
                         $this->noneText instanceof Closure => $this->fireBy($station, $this->noneText),
                         default                            => __('mmb::road.filter.none'),
@@ -253,20 +270,17 @@ class FilterSelectSign extends WeakSign implements Filterable
                     yield [
                         $menu->key(
                             $text,
-                            function () use ($station)
-                            {
+                            function () use ($station) {
                                 unset($station->filters[$this->listSign->getFilterableName($this)]);
 
                                 $station->main();
-                            }
+                            },
                         ),
                     ];
                 }
 
-                foreach ($this->options as $id => [$text, $label, $onWhere, $onQuery])
-                {
-                    $text = match (true)
-                    {
+                foreach ($this->options as $id => [$text, $label, $onWhere, $onQuery]) {
+                    $text = match (true) {
                         is_string($text)         => $text,
                         $text instanceof Closure => $this->fireBy($station, $text),
                     };
@@ -274,22 +288,21 @@ class FilterSelectSign extends WeakSign implements Filterable
                     yield [
                         $menu->key(
                             $text,
-                            function () use ($id, $station)
-                            {
+                            function () use ($id, $station) {
                                 $station->filters[$this->listSign->getFilterableName($this)] = $id;
 
                                 $station->main();
-                            }
+                            },
                         ),
                     ];
                 }
-            }
+            },
         );
 
-        $this->getMenuCustomizer()->init($station, $menu, ['body', 'footer']);
+        $this->getMenuCustomizer()->init($menu, ['body', 'footer']);
     }
 
-    protected function setCurrentFilter(ListStation $station, $id) : void
+    protected function setCurrentFilter(ListStation $station, $id): void
     {
         if (is_null($id))
             unset($station->filters[$this->listSign->getFilterableName($this)]);
@@ -302,12 +315,11 @@ class FilterSelectSign extends WeakSign implements Filterable
         return $station->filters[$this->listSign->getFilterableName($this)] ?? null;
     }
 
-    public function getCurrentLabel(ListStation $station) : string
+    public function getCurrentLabel(ListStation $station): string
     {
         @[$text, $label] = $this->options[$this->getCurrentFilter($station)];
 
-        return match (true)
-        {
+        return match (true) {
             is_string($label)         => $label,
             $label instanceof Closure => $this->fireBy($station, $label),
             is_string($text)          => $text,

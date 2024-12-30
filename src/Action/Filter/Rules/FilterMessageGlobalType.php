@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Filter\Rules;
 
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FilterMessageGlobalType extends BeMessage
@@ -20,9 +21,9 @@ class FilterMessageGlobalType extends BeMessage
         $this->types = array_map('strtolower', (array) $types);
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
-        parent::pass($update, $value);
+        parent::pass($context, $update, $value);
 
         if (!in_array(strtolower($update->message->globalType), $this->types))
         {

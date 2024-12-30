@@ -30,16 +30,15 @@ class DefaultBotChanneling extends BotChanneling
     /**
      * Validate and handle update
      *
-     * @param string  $hookToken
+     * @param string $hookToken
      * @param Request $request
      * @return mixed
      */
     public function onRoute(string $hookToken, Request $request)
     {
         // Invalid hook token
-        if(!$this->findAndBind($hookToken))
-        {
-            return '';
+        if (!$this->findAndBind($hookToken)) {
+            return response()->noContent();
         }
 
         // Handle update
@@ -54,8 +53,7 @@ class DefaultBotChanneling extends BotChanneling
      */
     public function getWebhookUrl(InternalBotInfo $info)
     {
-        if (isset($info->configName) && $args = @$this->args[$info->configName])
-        {
+        if (isset($info->configName) && $args = @$this->args[$info->configName]) {
             return route('mmb.webhook', ['hookToken' => $args['hookToken']]);
         }
 

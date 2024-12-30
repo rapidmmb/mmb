@@ -3,13 +3,9 @@
 namespace Mmb\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
-use Mmb\Action\Memory\Step;
-use Mmb\Core\Bot;
 use Mmb\Core\BotChanneling;
+use Mmb\Core\UpdateLoopHandler;
 use Mmb\Core\Updates\Update;
-use Mmb\Support\Db\ModelFinder;
-use Symfony\Component\Console\Input\InputOption;
 
 class MmbServeCommand extends Command
 {
@@ -37,12 +33,35 @@ class MmbServeCommand extends Command
 
         \Laravel\Prompts\info("Mmb is listening to updates now...");
 
-        $bot->loopUpdates(
-            received: function ()
-            {
-                \Laravel\Prompts\info(sprintf("New update received at %s", date('H:i:s')));
+        (new UpdateLoopHandler(
+            bot: $bot,
+            received: function (Update $update) {
+                $this->log("New update received", $update);
             },
+            idle: function () {
+                $this->log("No updates found :)");
+            },
+            handling: function (Update $update) {
+                $this->log("Handling update", $update);
+            },
+            handled: function (Update $update) {
+                $this->log("Update handled", $update);
+            },
+            timeout: 120,
             delay: +$this->option('delay') ?? 0,
-        );
+        ))->run()->wait();
+    }
+
+    protected function log(string $message, ?Update $update = null)
+    {
+        $updateInfo = $update ? (
+            "#" . $update->id . (
+                $update->getChat() ?
+                    " Chat { " . $update->getChat()->id . " }" :
+                    ""
+            )
+        ) : null;
+
+        $this->info("[" . date('H:i:s') . "] " . $message . ($updateInfo ? ": " . $updateInfo : null));
     }
 }

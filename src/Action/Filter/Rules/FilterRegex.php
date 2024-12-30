@@ -2,6 +2,7 @@
 
 namespace Mmb\Action\Filter\Rules;
 
+use Mmb\Context;
 use Mmb\Core\Updates\Update;
 
 class FilterRegex extends BeText
@@ -16,11 +17,11 @@ class FilterRegex extends BeText
         parent::__construct();
     }
 
-    public function pass(Update $update, &$value)
+    public function pass(Context $context, Update $update, &$value)
     {
         if ($value instanceof Update)
         {
-            parent::pass($update, $value);
+            parent::pass($context, $update, $value);
         }
 
         if (!is_string($value) && !is_int($value) && !is_float($value))
