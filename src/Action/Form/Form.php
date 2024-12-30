@@ -68,7 +68,18 @@ class Form extends Action
     }
 
     /**
-     * Request form
+     * Request the form (alias to request)
+     *
+     * @param array $attributes
+     * @return void
+     */
+    public function main(array $attributes = [])
+    {
+        $this->request($attributes);
+    }
+
+    /**
+     * Request the form
      *
      * @param array $attributes
      * @return void
