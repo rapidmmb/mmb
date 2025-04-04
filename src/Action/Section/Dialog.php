@@ -4,14 +4,13 @@ namespace Mmb\Action\Section;
 
 use Closure;
 use Illuminate\Database\Eloquent\Model;
-use Mmb\Action\Action;
 use Mmb\Action\Memory\StepMemory;
 use Mmb\Action\Section\Attributes\FixedDialog;
 use Mmb\Core\Client\Exceptions\TelegramException;
 use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Support\Action\ActionCallback;
-use Mmb\Support\KeySchema\KeyInterface;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\KeySchema\KeyUniqueData;
 
 class Dialog extends Menu
@@ -63,10 +62,10 @@ class Dialog extends Menu
                 return null;
             }
 
-            $fixedDialog = $this->initializerClass::getMethodAttributeOf($this->initializerMethod, FixedDialog::class);
+            $fixedDialog = AttributeLoader::getMethodAttributeOf($this->initializerClass, $this->initializerMethod, FixedDialog::class);
 
             if (!$fixedDialog) {
-                throw new \TypeError("Fixed dialog required to define with #[FixedDialog] before the method.");
+                throw new \TypeError("Fixed dialog [$this->initializerClass::$this->initializerMethod] requires to defined with #[FixedDialog] on the method.");
             }
 
             return $this->fixedDialog = $fixedDialog;

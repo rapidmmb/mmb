@@ -5,16 +5,13 @@ namespace Mmb\Action\Memory;
 use Mmb\Action\Memory\Attributes\StepHandlerAttribute;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
-use Mmb\Support\AttributeLoader\HasAttributeLoader;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 use Mmb\Support\Serialize\Shortable;
-use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 
 class StepHandler implements Shortable
 {
-    use HasAttributeLoader;
-
     public function __construct(
         ?StepMemory $memory = null,
     )
@@ -40,7 +37,7 @@ class StepHandler implements Shortable
         $ref = new ReflectionClass($this);
         foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             StepHandlerAttribute::load(
-                static::getPropertyAttributesOf($property->getName(), StepHandlerAttribute::class),
+                AttributeLoader::getPropertyAttributesOf($this, $property->getName(), StepHandlerAttribute::class),
                 $property->getName(),
                 $memory,
                 $this,
@@ -59,7 +56,7 @@ class StepHandler implements Shortable
         $ref = new ReflectionClass($this);
         foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             StepHandlerAttribute::save(
-                static::getPropertyAttributesOf($property->getName(), StepHandlerAttribute::class),
+                AttributeLoader::getPropertyAttributesOf($this, $property->getName(), StepHandlerAttribute::class),
                 $property->getName(),
                 $memory,
                 $this,

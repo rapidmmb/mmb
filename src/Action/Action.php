@@ -19,11 +19,7 @@ use Mmb\Core\Updates\Messages\Message;
 use Mmb\Core\Updates\Update;
 use Mmb\Exceptions\AbortException;
 use Mmb\Support\AttributeLoader\AttributeLoader;
-use Mmb\Support\AttributeLoader\HasAttributeLoader;
 use Mmb\Support\Auth\AuthorizeClass;
-use Mmb\Support\Caller\AuthorizationHandleBackException;
-use Mmb\Support\Caller\Caller;
-use Mmb\Support\Caller\StatusHandleBackException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -32,7 +28,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 abstract class Action
 {
-    use HasAttributeLoader;
     use AuthorizesRequests {
         authorizeResource as private;
     }
@@ -292,7 +287,7 @@ abstract class Action
             return false;
         }
 
-        foreach (static::getClassAttributesOf(AuthorizeClass::class) as $auth) {
+        foreach (AttributeLoader::getClassAttributesOf(static::class, AuthorizeClass::class) as $auth) {
             if (!$auth->can()) {
                 return false;
             }
@@ -300,7 +295,7 @@ abstract class Action
 
         if (isset($method)) {
             try {
-                foreach (static::getMethodAttributesOf($method, AuthorizeClass::class) as $auth) {
+                foreach (AttributeLoader::getMethodAttributesOf(static::class, $method, AuthorizeClass::class) as $auth) {
                     if (!$auth->can()) {
                         return false;
                     }

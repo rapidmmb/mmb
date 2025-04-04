@@ -5,6 +5,7 @@ namespace Mmb\Action\Section\Controllers;
 use Illuminate\Support\Facades\Hash;
 use Mmb\Action\Action;
 use Mmb\Action\Section\Attributes\FixedDialog;
+use Mmb\Support\AttributeLoader\AttributeLoader;
 
 class QueryMatcher
 {
@@ -110,7 +111,7 @@ class QueryMatcher
 
         $methods = [];
         foreach (get_class_methods($object) as $method) {
-            if ($attr = $object::getMethodAttributeOf($method, $base)) {
+            if ($attr = AttributeLoader::getMethodAttributeOf($object, $method, $base)) {
 
                 if ($attr instanceof FixedDialog) {
 

@@ -12,10 +12,10 @@ use ReflectionProperty;
 class AttributeLoader
 {
 
-    private static array $_class_attributes      = [];
+    private static array $_class_attributes = [];
     private static array $_properties_attributes = [];
-    private static array $_methods_attributes    = [];
-    private static array $_parameter_attributes  = [];
+    private static array $_methods_attributes = [];
+    private static array $_parameter_attributes = [];
 
     /**
      * Get current class attributes
@@ -23,21 +23,18 @@ class AttributeLoader
      * @param string|object $target
      * @return array
      */
-    public static function getClassAttributes(string|object $target) : array
+    public static function getClassAttributes(string|object $target): array
     {
-        if (is_object($target))
-        {
+        if (is_object($target)) {
             $target = get_class($target);
         }
 
-        if(isset(static::$_class_attributes[$target]))
-        {
+        if (isset(static::$_class_attributes[$target])) {
             return static::$_class_attributes[$target];
         }
 
         $attrs = [];
-        foreach((new ReflectionClass($target))->getAttributes() as $attr)
-        {
+        foreach ((new ReflectionClass($target))->getAttributes() as $attr) {
             $attrs[] = $attr->newInstance();
         }
 
@@ -51,7 +48,7 @@ class AttributeLoader
      * @param class-string<T> $class
      * @return T[]
      */
-    public static function getClassAttributesOf(string|object $target, string $class) : array
+    public static function getClassAttributesOf(string|object $target, string $class): array
     {
         return array_filter(static::getClassAttributes($target), fn($attr) => $attr instanceof $class);
     }
@@ -60,25 +57,22 @@ class AttributeLoader
      * Get property attributes
      *
      * @param string|object $target
-     * @param string        $property
+     * @param string $property
      * @return array
      */
-    public static function getPropertyAttributes(string|object $target, string $property) : array
+    public static function getPropertyAttributes(string|object $target, string $property): array
     {
-        if (is_object($target))
-        {
+        if (is_object($target)) {
             $target = get_class($target);
         }
 
-        if(isset(static::$_properties_attributes[$target][$property]))
-        {
+        if (isset(static::$_properties_attributes[$target][$property])) {
             return static::$_properties_attributes[$target][$property];
         }
 
         $attrs = [];
 
-        foreach((new ReflectionProperty($target, $property))->getAttributes() as $attr)
-        {
+        foreach ((new ReflectionProperty($target, $property))->getAttributes() as $attr) {
             $attrs[] = $attr->newInstance();
         }
 
@@ -89,12 +83,12 @@ class AttributeLoader
      * Get property attributes
      *
      * @template T
-     * @param string|object   $target
-     * @param string          $property
+     * @param string|object $target
+     * @param string $property
      * @param class-string<T> $class
      * @return T[]
      */
-    public static function getPropertyAttributesOf(string|object $target, string $property, string $class) : array
+    public static function getPropertyAttributesOf(string|object $target, string $property, string $class): array
     {
         return array_filter(static::getPropertyAttributes($target, $property), fn($attr) => $attr instanceof $class);
     }
@@ -103,25 +97,22 @@ class AttributeLoader
      * Get method attributes
      *
      * @param string|object $target
-     * @param string        $method
+     * @param string $method
      * @return array
      */
-    public static function getMethodAttributes(string|object $target, string $method) : array
+    public static function getMethodAttributes(string|object $target, string $method): array
     {
-        if (is_object($target))
-        {
+        if (is_object($target)) {
             $target = get_class($target);
         }
 
         $lower = strtolower($method);
-        if(isset(static::$_methods_attributes[$target][$lower]))
-        {
+        if (isset(static::$_methods_attributes[$target][$lower])) {
             return static::$_methods_attributes[$target][$lower];
         }
 
         $attrs = [];
-        foreach((new ReflectionMethod($target, $method))->getAttributes() as $attr)
-        {
+        foreach ((new ReflectionMethod($target, $method))->getAttributes() as $attr) {
             $attrs[] = $attr->newInstance();
         }
 
@@ -132,12 +123,12 @@ class AttributeLoader
      * Get method attributes
      *
      * @template T
-     * @param string|object   $target
-     * @param string          $method
+     * @param string|object $target
+     * @param string $method
      * @param class-string<T> $class
      * @return T[]
      */
-    public static function getMethodAttributesOf(string|object $target, string $method, string $class) : array
+    public static function getMethodAttributesOf(string|object $target, string $method, string $class): array
     {
         return array_filter(static::getMethodAttributes($target, $method), fn($attr) => $attr instanceof $class);
     }
@@ -159,8 +150,8 @@ class AttributeLoader
      * Get class attribute
      *
      * @template T
-     * @param string|object   $target
-     * @param string          $property
+     * @param string|object $target
+     * @param string $property
      * @param class-string<T> $class
      * @return ?T
      */
@@ -173,8 +164,8 @@ class AttributeLoader
      * Get class attribute
      *
      * @template T
-     * @param string|object   $target
-     * @param string          $method
+     * @param string|object $target
+     * @param string $method
      * @param class-string<T> $class
      * @return ?T
      */
@@ -188,25 +179,22 @@ class AttributeLoader
      * Get all method parameters attributes
      *
      * @param string|object $target
-     * @param string        $method
+     * @param string $method
      * @return array<string,mixed>
      */
     public static function getAllParameterAttributes(string|object $target, string $method)
     {
-        if (is_object($target))
-        {
+        if (is_object($target)) {
             $target = get_class($target);
         }
 
         $lower = strtolower($method);
-        if(isset(static::$_parameter_attributes[$target][$lower]))
-        {
+        if (isset(static::$_parameter_attributes[$target][$lower])) {
             return static::$_parameter_attributes[$target][$lower];
         }
 
         $all = [];
-        foreach((new ReflectionMethod($target, $method))->getParameters() as $parameter)
-        {
+        foreach ((new ReflectionMethod($target, $method))->getParameters() as $parameter) {
             $attrs = array_map(fn($attr) => $attr->newInstance(), $parameter->getAttributes());
             $all[$parameter->getName()] = $attrs;
         }
@@ -218,8 +206,8 @@ class AttributeLoader
      * Get method parameter attributes
      *
      * @param string|object $target
-     * @param string        $method
-     * @param string        $parameter
+     * @param string $method
+     * @param string $parameter
      * @return array
      */
     public static function getParameterAttributes(string|object $target, string $method, string $parameter)
@@ -231,9 +219,9 @@ class AttributeLoader
      * Get method parameter attributes
      *
      * @template T
-     * @param string|object   $target
-     * @param string          $method
-     * @param string          $parameter
+     * @param string|object $target
+     * @param string $method
+     * @param string $parameter
      * @param class-string<T> $class
      * @return T[]
      */
@@ -246,9 +234,9 @@ class AttributeLoader
      * Get method parameter attribute
      *
      * @template T
-     * @param string|object   $target
-     * @param string          $method
-     * @param string          $parameter
+     * @param string|object $target
+     * @param string $method
+     * @param string $parameter
      * @param class-string<T> $class
      * @return T
      */
@@ -261,15 +249,14 @@ class AttributeLoader
      * Normalize calling method
      *
      * @param string|object $target
-     * @param string        $method
-     * @param array         $args
+     * @param string $method
+     * @param array $args
      * @param Closure|null $callback
      * @return array
      */
     public static function getNormalizedCallingMethod(string|object $target, string $method, array $args, Closure $callback = null)
     {
-        if (is_object($target))
-        {
+        if (is_object($target)) {
             $target = get_class($target);
         }
 
@@ -277,12 +264,9 @@ class AttributeLoader
         $parameters = $parametersAll;
         array_shift($parameters);
 
-        foreach($args as $key => $value)
-        {
-            if(is_int($key))
-            {
-                if($first = Arr::first($parameters))
-                {
+        foreach ($args as $key => $value) {
+            if (is_int($key)) {
+                if ($first = Arr::first($parameters)) {
                     $args[$first->getName()] = $value;
                     unset($args[$key]);
                 }
@@ -291,8 +275,7 @@ class AttributeLoader
 
         $notArgs = $args;
         $args = [];
-        foreach($parameters as $parameter)
-        {
+        foreach ($parameters as $parameter) {
             $value = array_key_exists($parameter->getName(), $notArgs) ?
                 $notArgs[$parameter->getName()] :
                 $parameter->getDefaultValue();
@@ -300,13 +283,11 @@ class AttributeLoader
             $args[$parameter->getName()] = $value;
             unset($notArgs[$parameter->getName()]);
 
-            if($instead = static::getParameterAttributeOf($target, $method, $parameter->getName(), ParameterPassingInstead::class))
-            {
+            if ($instead = static::getParameterAttributeOf($target, $method, $parameter->getName(), ParameterPassingInstead::class)) {
                 $value = $instead->getInsteadOf($value);
             }
 
-            if($callback)
-            {
+            if ($callback) {
                 $callback($parameter, $value);
             }
         }

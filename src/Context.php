@@ -242,7 +242,7 @@ class Context implements ArrayAccess
 
     protected function getMessage(): ?Message
     {
-        return $this->get(Update::class)?->message;
+        return $this->get(Update::class)?->getMessage();
     }
 
     protected function getCallbackQuery(): ?CallbackQuery
