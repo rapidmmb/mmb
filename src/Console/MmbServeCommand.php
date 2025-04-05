@@ -31,7 +31,11 @@ class MmbServeCommand extends Command
         // TODO
         $bot = app(BotChanneling::class)->getBot($this->option('bot') ?? 'default', null);
 
-        \Laravel\Prompts\info("Mmb is listening to updates now...");
+        $this->components->info("Mmb is listening to updates now...");
+
+        if ($this->option('dev')) {
+            $this->components->warn("Running in development mode");
+        }
 
         (new UpdateLoopHandler(
             bot: $bot,
