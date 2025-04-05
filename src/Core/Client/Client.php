@@ -22,6 +22,7 @@ abstract class Client
         protected string $token,
         public string    $method,
         public array     $args,
+        public array     $options = [],
     )
     {
     }

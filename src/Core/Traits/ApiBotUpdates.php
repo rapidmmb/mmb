@@ -63,7 +63,11 @@ trait ApiBotUpdates
             $args + $namedArgs
         );
 
-        if ($updates = $this->request('getUpdates', $args))
+        $options = array_filter([
+            'timeout' => $args['timeout'] ?? null,
+        ]);
+
+        if ($updates = $this->request('getUpdates', $args, $options))
         {
             return collect($updates)
                 ->map(fn ($update) => $this->makeData(Update::class, $update));

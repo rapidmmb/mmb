@@ -7,6 +7,7 @@ use Amp\Http\Client\Connection\DefaultConnectionFactory;
 use Amp\Http\Client\Connection\UnlimitedConnectionPool;
 use Amp\Http\Client\HttpClient;
 use Amp\Http\Client\HttpClientBuilder;
+use Amp\Http\Client\Interceptor\SetRequestTimeout;
 use Amp\Http\Client\Request as AmpRequest;
 use Amp\Socket\Socks5SocketConnector;
 use Closure;
@@ -52,6 +53,8 @@ class TelegramClient extends Client
             }
         }
 
+        $options = array_replace($options, $this->options);
+
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'proxy':
@@ -68,6 +71,12 @@ class TelegramClient extends Client
 
                 case 'proxy:socks':
                     $client = $client->usingPool(new UnlimitedConnectionPool(new DefaultConnectionFactory(new Socks5SocketConnector($value))));
+                    break;
+
+                case 'timeout':
+                    $client = $client->intercept(new SetRequestTimeout(
+                        $value, $value, $value, $value, // todo
+                    ));
                     break;
 
                 default:
