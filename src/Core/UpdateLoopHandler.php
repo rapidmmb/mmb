@@ -4,11 +4,15 @@ namespace Mmb\Core;
 
 use Amp\CancelledException;
 use Amp\DeferredCancellation;
+use Amp\Process\Process;
 use Closure;
 use Mmb\Context;
 use Mmb\Core\Updates\Update;
 use Revolt\EventLoop;
 use function Amp\async;
+use function Amp\ByteStream\getStderr;
+use function Amp\ByteStream\getStdout;
+use function Amp\ByteStream\pipe;
 use function Amp\delay;
 use function Amp\Future\await;
 
@@ -28,6 +32,7 @@ class UpdateLoopHandler
         protected int      $timeout = 30,
         protected float    $delay = 0,
         protected int      $maxTry = 5,
+        protected bool     $runAsDev = false,
     )
     {
     }
@@ -127,7 +132,7 @@ class UpdateLoopHandler
                     $limit,
                     $allowedUpdates,
                     $this->timeout,
-                    cancellation: $this->cancellation->getCancellation()
+                    cancellation: $this->cancellation->getCancellation(),
                 );
 
             } catch (\Throwable $e) {
@@ -183,7 +188,20 @@ class UpdateLoopHandler
             ($this->handling)($update);
         }
 
-        $update->handle(new Context());
+        if ($this->runAsDev) {
+            // todo: artisan path maybe not works!?
+            $process = Process::start(
+                'php artisan mmb:handle-update ' . escapeshellarg(json_encode($update->getRealData())),
+                base_path(),
+            );
+
+            async(fn () => pipe($process->getStdout(), getStdout()));
+            async(fn () => pipe($process->getStderr(), getStderr()));
+
+            $process->join();
+        } else {
+            $update->handle(new Context());
+        }
 
         if ($this->handled) {
             ($this->handled)($update);
@@ -198,7 +216,7 @@ class UpdateLoopHandler
 
         while (@$this->queue[$tag]) {
             $this->handleNow(
-                array_shift($this->queue[$tag])
+                array_shift($this->queue[$tag]),
             );
         }
 

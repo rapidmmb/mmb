@@ -14,7 +14,7 @@ class MmbServeCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'mmb:serve {--bot= : Channel name of the which bot you want to serve} {--delay= : Delay value in milliseconds, between update receiving}';
+    protected $signature = 'mmb:serve {--bot= : Channel name of the which bot you want to serve} {--delay= : Delay value in milliseconds, between update receiving} {--dev : Enable development mode, allow you to change source code in realtime, but slower}';
 
     /**
      * The console command description.
@@ -49,6 +49,7 @@ class MmbServeCommand extends Command
             },
             timeout: 120,
             delay: +$this->option('delay') ?? 0,
+            runAsDev: $this->option('dev') ?? false,
         ))->run()->wait();
     }
 
