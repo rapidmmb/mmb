@@ -145,6 +145,20 @@ class Dialog extends Menu
     }
 
     /**
+     * Create a key to invoke another class
+     *
+     * @param        $text
+     * @param string $class
+     * @param string $method
+     * @param        ...$args
+     * @return DialogKey
+     */
+    public function keyFor($text, string $class, string $method = 'main', ...$args): DialogKey
+    {
+        return $this->key($text)->invoke($class, $method, ...$args);
+    }
+
+    /**
      * Create a key with same action and id value
      *
      * @param        $text
