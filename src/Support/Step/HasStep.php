@@ -2,21 +2,46 @@
 
 namespace Mmb\Support\Step;
 
+use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Memory\StepHandler;
-use Mmb\Action\Memory\StepMemory;
+use Rapid\Laplus\Present\Present;
 
 /**
  * @property ?StepHandler $step
  */
 trait HasStep
 {
-
-    public function initializeHasStep()
-    {
-        $this->mergeFillable(['step']);
-    }
-
     protected ?StepHandler $_stepCached = null;
+
+    protected static function bootHasStep(): void
+    {
+        static::extendPresent(function (Present $present) {
+            $step = $present->json('step')->nullable()->noCast();
+
+            $step->typeHint('null|' . StepHandler::class);
+
+            $step->getUsing(function (?string $value, Model $record): ?StepHandler {
+                if ($record->_stepCached !== null) {
+                    return $record->_stepCached;
+                }
+
+                if ($value === null) {
+                    return null;
+                }
+
+                return $record->_stepCached = StepGrammar::stringToStep($value);
+            });
+
+            $step->setUsing(function (?StepHandler $value, Model $record): ?string {
+                if (!$value) {
+                    return $record->_stepCached = null;
+                }
+
+                $record->_stepCached = $value;
+                return json_encode(StepGrammar::stepToString($value));
+            });
+        });
+    }
 
     /**
      * Get current step
@@ -25,15 +50,7 @@ trait HasStep
      */
     public function getStep(): ?StepHandler
     {
-        if ($this->_stepCached === null) {
-            if (!@$this->attributes['step']) {
-                return null;
-            }
-
-            return $this->_stepCached = $this->detectStepValue();
-        }
-
-        return $this->_stepCached;
+        return $this->step;
     }
 
     /**
@@ -44,64 +61,6 @@ trait HasStep
      */
     public function setStep(?StepHandler $stepHandler)
     {
-        if (!$stepHandler) {
-            $this->_stepCached = null;
-            $this->attributes['step'] = ''; // todo: empty string or null?
-            return;
-        }
-
-        $stepHandler->save($memory = StepMemory::make());
-
-        $this->_stepCached = $stepHandler;
-        $this->attributes['step'] = json_encode([
-            '_' => get_class($stepHandler),
-            'm' => $memory->toArray(),
-        ]);
+        $this->step = $stepHandler;
     }
-
-    protected function detectStepValue(): ?StepHandler
-    {
-        if (!$value = @$this->attributes['step']) {
-            return null;
-        }
-
-        if (!is_array($data = @json_decode($value, true))) {
-            goto returnNull;
-        }
-
-        if (
-            !array_key_exists('_', $data) ||
-            !class_exists($data['_']) ||
-            !is_a($data['_'], StepHandler::class, true)
-        ) {
-            goto returnNull;
-        }
-
-        // Try to create step handler
-        try {
-            $memory = StepMemory::make(is_array(@$data['m']) ? $data['m'] : []);
-            return $data['_']::make($memory);
-        } catch (\Throwable) {
-            goto returnNull;
-        }
-
-        returnNull:
-        $this->attributes['step'] = ''; // todo: empty string or null?
-        /*
-         * or:
-         * [ '_' => null ]
-         */
-        return null;
-    }
-
-    public function getStepAttribute(): ?StepHandler
-    {
-        return $this->getStep();
-    }
-
-    public function setStepAttribute(?StepHandler $step)
-    {
-        $this->setStep($step);
-    }
-
 }

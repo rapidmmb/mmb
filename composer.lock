@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "50d6676bf6d4462726e947d3dd266714",
+    "content-hash": "24327c592236059ae83578aedba30747",
     "packages": [
         {
             "name": "amphp/amp",
@@ -4286,6 +4286,56 @@
                 }
             ],
             "time": "2024-04-27T21:32:50+00:00"
+        },
+        {
+            "name": "rapid/laplus",
+            "version": "4.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rapidphp/laplus.git",
+                "reference": "0fcc35cd8cfeb1ecba52717d906e25dfcf211fc4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rapidphp/laplus/zipball/0fcc35cd8cfeb1ecba52717d906e25dfcf211fc4",
+                "reference": "0fcc35cd8cfeb1ecba52717d906e25dfcf211fc4",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^11.1|^12.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^9.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Rapid\\Laplus\\LaplusServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Rapid\\Laplus\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mahdi Saremi",
+                    "email": "mahdisarmi00@gmail.com"
+                }
+            ],
+            "description": "Laravel Plus+",
+            "support": {
+                "issues": "https://github.com/rapidphp/laplus/issues",
+                "source": "https://github.com/rapidphp/laplus/tree/4.0.1"
+            },
+            "time": "2025-04-01T14:41:20+00:00"
         },
         {
             "name": "revolt/event-loop",
