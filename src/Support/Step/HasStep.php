@@ -5,12 +5,15 @@ namespace Mmb\Support\Step;
 use Illuminate\Database\Eloquent\Model;
 use Mmb\Action\Memory\StepHandler;
 use Rapid\Laplus\Present\Present;
+use Rapid\Laplus\Support\Traits\HasPresentAttributes;
 
 /**
  * @property ?StepHandler $step
  */
 trait HasStep
 {
+    use HasPresentAttributes;
+
     protected ?StepHandler $_stepCached = null;
 
     protected static function bootHasStep(): void
@@ -38,7 +41,7 @@ trait HasStep
                 }
 
                 $record->_stepCached = $value;
-                return json_encode(StepGrammar::stepToString($value));
+                return StepGrammar::stepToString($value);
             });
         });
     }
