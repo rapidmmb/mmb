@@ -4289,16 +4289,16 @@
         },
         {
             "name": "rapid/laplus",
-            "version": "4.0.1",
+            "version": "4.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rapidphp/laplus.git",
-                "reference": "0fcc35cd8cfeb1ecba52717d906e25dfcf211fc4"
+                "reference": "fe14e65203c303c7ea260e651b5532e5def8e6c1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rapidphp/laplus/zipball/0fcc35cd8cfeb1ecba52717d906e25dfcf211fc4",
-                "reference": "0fcc35cd8cfeb1ecba52717d906e25dfcf211fc4",
+                "url": "https://api.github.com/repos/rapidphp/laplus/zipball/fe14e65203c303c7ea260e651b5532e5def8e6c1",
+                "reference": "fe14e65203c303c7ea260e651b5532e5def8e6c1",
                 "shasum": ""
             },
             "require": {
@@ -4333,9 +4333,9 @@
             "description": "Laravel Plus+",
             "support": {
                 "issues": "https://github.com/rapidphp/laplus/issues",
-                "source": "https://github.com/rapidphp/laplus/tree/4.0.1"
+                "source": "https://github.com/rapidphp/laplus/tree/4.0.2"
             },
-            "time": "2025-04-01T14:41:20+00:00"
+            "time": "2025-04-07T06:20:25+00:00"
         },
         {
             "name": "revolt/event-loop",
