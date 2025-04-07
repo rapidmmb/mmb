@@ -5,7 +5,6 @@ namespace Mmb\Support\Action;
 use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use Mmb\Context;
-use Mmb\Core\Updates\Update;
 use Mmb\Support\Caller\Caller;
 
 class ActionCallback implements Arrayable
@@ -94,9 +93,10 @@ class ActionCallback implements Arrayable
      * @param Context $context
      * @param array $args
      * @param array $dynamicArgs
+     * @param ActionCallback[] $replacementActions
      * @return mixed
      */
-    public function invoke($object, Context $context, array $args, array $dynamicArgs)
+    public function invoke($object, Context $context, array $args, array $dynamicArgs, array $replacementActions = [])
     {
         $args = [...$this->defaultArgs, ...$this->withArgs, ...$args];
 
@@ -105,6 +105,10 @@ class ActionCallback implements Arrayable
             if (str_contains($this->action, '@')) {
                 [$class, $method] = explode($this->action, '@', 2);
                 return $class::makeByContext($context)->invokeDynamic($method, $args, $dynamicArgs);
+            }
+
+            if (isset($replacementActions[$this->action])) {
+                return $replacementActions[$this->action]->invoke($object, $context, $args, $dynamicArgs);
             }
 
             return $object->invokeDynamic($this->action, $args, $dynamicArgs);

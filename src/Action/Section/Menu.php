@@ -336,6 +336,7 @@ class Menu extends InlineAction implements KeyboardInterface
             [
                 'sender' => $this,
             ],
+            $this->onActions,
         );
     }
 
