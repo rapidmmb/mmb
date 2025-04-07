@@ -35,13 +35,14 @@ trait HasStep
                 return $record->_stepCached = StepGrammar::stringToStep($value);
             });
 
-            $step->setUsing(function (?StepHandler $value, Model $record): ?string {
+            $step->setUsing(function (?StepHandler $value, Model $record, string $key, array &$attributes): ?StepHandler {
                 if (!$value) {
                     return $record->_stepCached = null;
                 }
 
                 $record->_stepCached = $value;
-                return StepGrammar::stepToString($value);
+                $attributes[$key] = StepGrammar::stepToString($value);
+                return $value;
             });
         });
     }
