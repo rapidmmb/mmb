@@ -2,8 +2,11 @@
 
 namespace Mmb\Support\KeySchema;
 
+use Mmb\Exceptions\TrackingException;
+
 class KeyboardSchema
 {
+    protected TrackingException $trackingException;
 
     public function __construct(
         public KeyboardInterface $base,
@@ -13,6 +16,7 @@ class KeyboardSchema
         public bool              $exclude = false,
     )
     {
+        $this->trackingException = new TrackingException();
     }
 
     public function normalizeKey(bool $storable = false): array
@@ -31,7 +35,7 @@ class KeyboardSchema
         }
 
         if (!is_array($map)) {
-            throw new \TypeError("Keyboard should be array, given " . gettype($map));
+            throw new \TypeError("Keyboard should be array, given " . gettype($map), previous: $this->trackingException);
         }
 
         foreach ($map as $rowKey => $row) {
@@ -46,7 +50,7 @@ class KeyboardSchema
             }
 
             if (!is_array($row)) {
-                throw new \TypeError("Keyboard row should be array at [$rowKey], given " . gettype($map));
+                throw new \TypeError("Keyboard row should be array at [$rowKey], given " . gettype($map), previous: $this->trackingException);
             }
 
             $keyboardRow = [];
@@ -74,6 +78,7 @@ class KeyboardSchema
                 } else {
                     throw new \TypeError(
                         "Keyboard column should be array or MenuKey at [$rowKey][$columnKey], given " . gettype($column),
+                        previous: $this->trackingException,
                     );
                 }
 
@@ -84,7 +89,7 @@ class KeyboardSchema
                     $action = $key->toAction()
                 ) {
                     if ($storable && !$action->isStorable()) {
-                        throw new \TypeError("Keyboard action with Closure value is not available for storable keyboard");
+                        throw new \TypeError("Keyboard action with Closure value is not available for storable keyboard", previous: $this->trackingException);
                     }
 
                     if ($storable) {
